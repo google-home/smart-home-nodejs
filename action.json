@@ -1,0 +1,17 @@
+{
+  "actions": [{
+    "name": "actions.devices",
+    "deviceControl": {
+    },
+    "fulfillment": {
+      "conversationName": "automation"
+    }
+  }],
+  "conversations": {
+    "automation" :
+    {
+      "name": "automation",
+      "url": "https://<NGROK_DOMAIN>.ngrok.io/ha"
+    }
+  }
+}

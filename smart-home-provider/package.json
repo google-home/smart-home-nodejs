@@ -1,0 +1,26 @@
+{
+  "name": "smart-home-app-sample",
+  "version": "0.0.1",
+  "description": "Mock implementation of device manufacturer platform to facilitate development of sample device and adapter.",
+  "main": "cloud/smart-home-provider-cloud.js",
+  "scripts": {
+    "start": "node cloud/smart-home-provider-cloud.js smart-home-pub=\"https://smart-home-test.appspot.com\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "engines" : {
+    "node" : ">=6.2.2"
+  },
+  "dependencies": {
+    "actions-on-google": "^1.0.3",
+    "oauth2-server": "^2.4.0",
+    "body-parser": "^1.15.2",
+    "ejs": "^1.0.0",
+    "express": "^4.14.0",
+    "express-session": "^1.15.0",
+    "morgan": "^1.7.0",
+    "node-fetch": "^1.6.3",
+    "ngrok": "^2.2.5"
+  }
+}

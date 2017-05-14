@@ -1,0 +1,254 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-light">
+    <template>
+        <style include="iron-flex iron-flex-alignment shared-styles">
+            paper-input {
+                padding-right: 4px;
+            }
+
+            paper-button {
+                height: 40px;
+                float: right;
+                margin-right: 0px;
+            }
+
+            iron-icon {
+                padding-top: 24px;
+                padding-bottom: 24px;
+                width: 128px;
+                height: 128px;
+            }
+
+            .card {
+                height: 450px;
+                width: 300px;
+            }
+
+            .on {
+                color: black;
+            }
+
+            .off {
+                color: #eee;
+            }
+
+            .colored {
+            }
+
+            #button-bar {
+                margin-bottom: 8px;
+            }
+        </style>
+
+        <div class="card">
+            <div id="button-bar" class="layout horizontal justified">
+                <div id="light-id" class="circle">[[light.id]]</div>
+                <div class="flex"></div>
+                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
+                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
+            </div>
+
+            <!-- properties -->
+            <!--
+                  <div class="layout horizontal justified">
+                    <paper-dropdown-menu label="Type">
+                      <paper-listbox class="dropdown-content">
+                        <paper-item>Monochrome Light</paper-item>
+                        <paper-item>Color Light</paper-item>
+                      </paper-listbox>
+                    </paper-dropdown-menu>
+                  </div>
+            -->
+
+            <!-- light icon -->
+            <div class="layout horizontal center-justified">
+                <iron-icon id="light" icon="image:wb-incandescent" on-tap="_handleOnOff"></iron-icon>
+                <div class="layout vertical center-justified">
+                    <div>Brightness</div>
+                    <div id="brightness" class="circle">[[light.states.brightness]]</div>
+                </div>
+            </div>
+
+            <!-- controls -->
+            <!--
+                  <div class="layout horizontal justified">
+            -->
+            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}" on-tap="_handleNicknameChange"></paper-input>
+            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}" on-tap="_handleNameChange"></paper-input>
+            <div>Default Name: {{light.properties.name.defaultNames.0}}</div>
+            <!--
+                    <paper-slider value="50"></paper-slider>
+                  </div>
+            -->
+        </div>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'smart-light',
+
+            properties: {
+                light: {
+                    type: Object,
+                    observer: '_lightChanged'
+                }
+            },
+
+            _handleOnOff: function () {
+                this.light.states.on = !this.light.states.on;
+                this._notifyStateChange();
+            },
+
+            _handleCloud: function () {
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.light)
+                    .then(this._changeEventSource.bind(this))
+                    .catch(function (error) {
+                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
+                    });
+            },
+
+            _handleDelete: function () {
+                this.light.states.online = false;
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.light)
+                    .then(this._changeEventSource.bind(this))
+                    .catch(function (error) {
+                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
+                    });
+                if (this._source) this._source.close();
+
+                const app = document.querySelector('my-app');
+                const lights = app.lights;
+                for (var i = 0; i < lights.length; i++) {
+                    if (lights[i].id == this.light.id) {
+                        app.splice('lights', i, 1);
+                    }
+                }
+            },
+
+            _handleNameChange: function (event) {
+                this.light.properties.name.name = event.target.value;
+                this._notifyStateChange();
+            },
+
+            _handleNicknameChange: function (event) {
+                this.light.properties.name.nicknames[0] = event.target.value;
+                this._notifyStateChange();
+            },
+
+            _callSmartHomeProviderCloud: function (path, method, opt_body) {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + AUTH_TOKEN
+                    }
+                };
+//                    'Authorization': 'Bearer psokmCxKjfhk7qHLeYd1'
+                if (opt_body) options.body = JSON.stringify(opt_body);
+                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
+            },
+
+            _changeEventSource: function () {
+                if (this.light.states.online) {
+                    // going offline
+                    this._source.close();
+                    this.light.states.online = false;
+                } else {
+                    // going online
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
+                    this._source.addEventListener('change', function (e) {
+                        this._changeState(JSON.parse(e.data));
+                    }.bind(this));
+                    this._source.addEventListener('pullUp', function (e) {
+                        this._exec();
+                    }.bind(this));
+                    this._source.addEventListener('error', function (error) {
+                        if (error.eventPhase == 2) {
+                            console.log('>>> event source closed');
+                            return this._changeEventSource();
+                        } else {
+                            console.log('>>> error in event source:', error);
+                        }
+                    }.bind(this));
+                    this.light.states.online = true;
+                }
+                this._notifyStateChange();
+            },
+
+            _changeState: function (changes) {
+                for (var name in changes) {
+                    const value = changes[name];
+                    this.set('light.states.' + name, value);
+                }
+                this._notifyStateChange();
+            },
+
+            _notifyStateChange: function () {
+                this._lightChanged();
+                if (this.light.states.online) this._exec();
+            },
+
+            _lightChanged: function () {
+                this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
+//                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
+                if (this.light.states.on
+                    && this.light.states.color
+                    && this.light.states.color.spectrumRGB) {
+                    let color = this.light.states.color.spectrumRGB.toString(16);
+                    while (color.length < 6)
+                        color = '0' + color;
+                    color = '#' + color;
+                    console.log('set light color to ' + color);
+                    this.$.light.style.color = color;
+                } else if (this.light.states.on) {
+                    this.$.light.style.color = '#000';
+                } else {
+                    this.$.light.style.color = '#eee';
+                }
+//                Polymer.updateStyles();
+            },
+
+            _exec: function() {
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.light).then(function () {
+                    console.log('>>> exec to Smart Home Provider Cloud', this.light);
+                }).catch(function (error) {
+                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
+                });
+            },
+
+            _pushUp: function (type) {
+                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.light}).then(function () {
+                    console.log('>>> pushed state to Smart Home Provider Cloud', this.light);
+                }).catch(function (error) {
+                    console.log('>>> failed to push state to Smart Home Provider Cloud:', error);
+                });
+            }
+        });
+    </script>
+</dom-module>
