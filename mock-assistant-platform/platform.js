@@ -20,6 +20,7 @@ function init() {
   let doHelp = false,
     doSync = false,
     doQuery = false,
+    doExecTherm = false,
     doExec = false;
   let endpoint = 'https://example.com/smarthome';
 
@@ -31,14 +32,15 @@ function init() {
       doSync = true;
     else if (value.includes('query'))
       doQuery = true;
+    else if (value.includes('execTherm'))
+      doExecTherm = true;
     else if (value.includes('exec'))
       doExec = true;
     else if (value.includes('url='))
       endpoint = value.split('=')[1];
   });
 
-  if (doHelp || !endpoint || (!doSync && !doQuery && !doExec)) {
-    console.log(doHelp, !endpoint, !doSync, !doQuery, !doExec);
+  if (doHelp || !endpoint || (!doSync && !doQuery && !doExec && !doExecTherm)) {
     console.log("============================== platform.js ==================================");
     console.log(" ");
     console.log("Google Home Control mock requests");
@@ -52,6 +54,7 @@ function init() {
     console.log("* sync - flag to send sync intent");
     console.log("* query - flag to send query intent");
     console.log("* exec - flag to send exec intent");
+    console.log("* execTherm - flag to send exec intent for thermostats");
     console.log(" ");
     console.log("Ex. - node platform url=\"https://smart-home-provider-test.appspot.com/smarhome\" sync");
     console.log(" ");
@@ -65,6 +68,8 @@ function init() {
     query(endpoint);
   if (doExec)
     exec(endpoint);
+  if (doExecTherm)
+    execTherm(endpoint, authToken);
 }
 
 function sync(endpoint) {
@@ -76,6 +81,37 @@ function sync(endpoint) {
   });
 
   makeReq(endpoint, postData);
+}
+
+function execTherm(endpoint, authToken){
+    let postData = JSON.stringify({
+        "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
+        "inputs": [{
+            "intent": "action.devices.EXECUTE",
+            "payload": {
+                "commands": [{
+                    "devices": [{
+                        "id": "4",
+                        "customData": {
+                            "smartHomeProviderId": "FkldJVJCmDNSaoLkoq0txiz8Byf2Hr"
+                        }
+                    }],
+                    "execution": [{
+                        "command": "action.devices.commands.ThermostatTemperatureSetPoint",
+                        "params": {
+                            "thermostatTemperatureSetPoint": 30
+                        }
+                    },{
+                        "command": "action.devices.commands.ThermostatSetMode",
+                        "params": {
+                            "thermostatMode": "heat"
+                        }
+                    }]
+                }]
+            }
+        }]
+    });
+    makeReq(endpoint, postData, authToken);
 }
 
 function query(endpoint) {

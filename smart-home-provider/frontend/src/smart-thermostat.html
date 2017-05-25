@@ -1,0 +1,237 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-thermostat">
+    <template>
+        <style include="iron-flex iron-flex-alignment shared-styles">
+            paper-input {
+                padding-right: 4px;
+            }
+
+            paper-button {
+                height: 40px;
+                float: right;
+                margin-right: 0px;
+            }
+
+            iron-icon {
+                padding-top: 24px;
+                padding-bottom: 24px;
+                width: 128px;
+                height: 128px;
+            }
+
+            .card {
+                height: 450px;
+                width: 300px;
+            }
+
+            #button-bar {
+                margin-bottom: 8px;
+            }
+        </style>
+
+        <div class="card">
+            <div id="button-bar" class="layout horizontal justified">
+                <div id="thermostat-id" class="circle">[[thermostat.id]]</div>
+                <div class="flex"></div>
+                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
+                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
+            </div>
+
+            <!-- thermostat icon -->
+            <div class="layout horizontal center-justified">
+                <div id="thermostat" class="main-circle">
+                    <div id="ambient" class="vertical center-justified">[[thermostat.states.thermostatTemperatureAmbient]]ºC</div>
+                    <div id="humidity" class="sub-text vertical center-justified">[[thermostat.states.thermostatHumidityAmbient]]%</div>
+                </div>
+                <div class="layout vertical center-justified">
+                    <div>Setpoint</div>
+                    <div id="setpoint" class="circle">[[thermostat.states.thermostatTemperatureSetpoint]]</div>
+                    <div>Mode:<br/><b>[[thermostat.states.thermostatMode]]</b>
+                    </div>
+                </div>
+            </div>
+
+            <!-- controls -->
+            <paper-input id="nickname" label="Nickname" value$="{{thermostat.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{thermostat.properties.name.name}}"></paper-input>
+            <div>Default Name: {{thermostat.properties.name.defaultNames.0}}</div>
+        </div>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'smart-thermostat',
+
+            properties: {
+                thermostat: {
+                    type: Object,
+                    observer: '_thermostatChanged'
+                }
+            },
+
+            ready: function () {
+                this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
+                this.async(() => {
+                    this._handleRegister();
+                });
+            },
+
+            _handleCloud: function () {
+                // Toggle online state on button press.
+                this.thermostat.states.online = !this.thermostat.states.online;
+                this._handleRegister();
+                this._changeEventSource();
+            },
+
+            _handleRegister: function() {
+                // Register source if undefined
+                if (!this._source) {
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.thermostat.id);
+                }
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.thermostat)
+                    .then(this._changeEventSource.bind(this))
+                    .catch(function (error) {
+                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
+                    });
+            },
+
+            _handleDelete: function () {
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.thermostat)
+                    .then(this._changeEventSource.bind(this))
+                    .catch(function (error) {
+                        console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
+                    });
+                if (this._source) this._source.close();
+
+                const app = document.querySelector('my-app');
+                const thermostats = app.thermostats;
+                for (var i = 0; i < thermostats.length; i++) {
+                    if (thermostats[i].id == this.thermostat.id) {
+                        app.splice('thermostats', i, 1);
+                    }
+                }
+            },
+
+            _execNameOrNicknameChange: function (event) {
+                // occurs after enter/tab key pressed or on tapout from input field
+                if (event.target.id == 'nickname') {
+                    this.thermostat.properties.name.nicknames[0] = event.target.value;
+                }
+                else if (event.target.id == 'name') {
+                    this.thermostat.properties.name.name = event.target.value;
+                }
+                this._notifyStateChange(true);
+            },
+
+            _handleNameOrNicknameChange: function (event) {
+                if (event.which == ENTERKEY) this.blur();
+            },
+
+
+            _callSmartHomeProviderCloud: function (path, method, opt_body) {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + AUTH_TOKEN
+                    }
+                };
+
+                if (opt_body) options.body = JSON.stringify(opt_body);
+                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
+            },
+
+            _changeEventSource: function () {
+                if (!this.thermostat.states.online) {
+                    // going offline
+                    this._source.close();
+                } else {
+                    // going online
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.thermostat.id);
+                    this._source.addEventListener('change', function (e) {
+                        toChange = JSON.parse(e.data);
+                        toChange.thermostatTemperatureSetpoint = toChange.thermostatTemperatureSetpoint.toFixed(1);
+                        this._changeState(toChange);
+                    }.bind(this));
+                    this._source.addEventListener('pullUp', function (e) {
+                        this._exec();
+                    }.bind(this));
+                    this._source.addEventListener('error', function (error) {
+                        if (error.eventPhase == 2) {
+                            console.log('>>> event source closed');
+                            return this._changeEventSource();
+                        } else {
+                            console.log('>>> error in event source:', error);
+                        }
+                    }.bind(this));
+                }
+                this._notifyStateChange();
+            },
+
+            _changeState: function (changes) {
+                console.log("changes:", changes);
+                for (var name in changes) {
+                    const value = changes[name];
+                    this.set('thermostat.states.' + name, value);
+                    // console.log('thermostat.states.' + name, value);
+                }
+                this._notifyStateChange();
+            },
+
+            _notifyStateChange: function (isNameChange) {
+                this._thermostatChanged();
+                if (this.thermostat.states.online) this._exec(isNameChange);
+            },
+
+            _thermostatChanged: function () {
+                this.$.cloud.icon = this.thermostat.states.online ? 'cloud' : 'cloud-off';
+                if (this.thermostat.states.thermostatMode
+                    && this.thermostat.states.thermostatTemperatureSetPoint
+                    && this.thermostat.states.thermostatTemperatureAmbient
+                    && this.thermostat.states.thermostatHumidityAmbient) {
+                    console.log('updated thermostat');
+                } else {
+                    console.log('failed to update thermostat');
+                }
+            },
+
+            _exec: function(isNameChange) {
+                if (isNameChange) {
+                    console.log(isNameChange);
+                    this.thermostat.nameChanged = true;
+                } else {
+                    this.thermostat.nameChanged = false;
+                }
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.thermostat).then(function () {
+                    console.log('>>> exec to Smart Home Provider Cloud', this.thermostat);
+                }).catch(function (error) {
+                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
+                });
+            },
+
+            _pushUp: function (type) {
+                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.thermostat}).then(function () {
+                    console.log('>>> pushed state to Smart Home Provider Cloud', this.thermostat);
+                }).catch(function (error) {
+                    console.log('>>> failed to push state to Smart Home Provider Cloud:', error);
+                });
+            }
+        });
+    </script>
+</dom-module>

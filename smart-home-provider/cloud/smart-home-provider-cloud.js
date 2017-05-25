@@ -144,7 +144,6 @@ app.post('/smart-home-api/register-device', function (request, response) {
  * Removing a device would be supplying the device id without any traits.
  */
 app.post('/smart-home-api/remove-device', function (request, response) {
-  // console.log('post /smart-home-api/remove-device');
 
   let authToken = authProvider.getAccessToken(request);
   let uid = datastore.Auth.tokens[authToken].uid;
@@ -196,7 +195,6 @@ app.post('/smart-home-api/remove-device', function (request, response) {
  * }
  */
 app.post('/smart-home-api/exec', function (request, response) {
-  // console.log('post /smart-home-api/exec');
 
   let authToken = authProvider.getAccessToken(request);
   let uid = datastore.Auth.tokens[authToken].uid;
@@ -230,6 +228,22 @@ app.post('/smart-home-api/exec', function (request, response) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     })
     .send(executedDevice);
+});
+
+app.post('/smart-home-api/execute-scene', function(request, response) {
+
+  let authToken = authProvider.getAccessToken(request);
+  let uid = datastore.Auth.tokens[authToken].uid;
+
+  reqdata = request.body;
+  data = {
+    requestId: reqdata.requestId,
+    uid: uid,
+    auth: authToken,
+    commands: reqdata.inputs[0].payload.commands
+  };
+
+  return google_ha.registerAgent.exec(data, response);
 });
 
 /**

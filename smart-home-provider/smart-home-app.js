@@ -463,6 +463,8 @@ function registerAgent(app) {
     return resBody;
   }
 
+  registerAgent.exec = exec;
+
   /**
    *
    * @param uid

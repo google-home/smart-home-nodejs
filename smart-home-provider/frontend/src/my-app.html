@@ -22,6 +22,8 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="smart-light.html">
+<link rel="import" href="smart-thermostat.html">
+<link rel="import" href="smart-scene.html">
 
 <dom-module id="my-app">
     <template>
@@ -67,13 +69,30 @@ limitations under the License.
                 </div>
             </template>
         </iron-list>
+
+        <iron-list id="thermostat-list" items="[[thermostats]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-thermostat thermostat=[[item]]></smart-thermostat>
+                </div>
+            </template>
+        </iron-list>
+
+        <iron-list id="scene-list" items="[[scenes]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-scene scene=[[item]]></smart-scene>
+                </div>
+            </template>
+        </iron-list>
     </template>
 
-    <script>
-        var nextLightId = 1;
 
-        function getNextLightId() {
-            return nextLightId++;
+    <script>
+        var nextDeviceId = 0;
+
+        function getNextDeviceId() {
+            return nextDeviceId++;
         };
 
         Polymer({
@@ -82,12 +101,20 @@ limitations under the License.
             properties: {
                 lights: {
                     type: Array
+                },
+                thermostats: {
+                    type: Array
+                },
+                scenes: {
+                    type: Array
                 }
             },
 
             ready: function () {
                 this.lights = [];
-//                this.$.auth.addEventListener('click', this._auth.bind(this));
+                this.thermostats = [];
+                this.scenes = [];
+                // this.$.auth.addEventListener('click', this._auth.bind(this));
                 this.$.refresh.addEventListener('click', this._refresh.bind(this));
                 // this.$.add.addEventListener('click', this._addLight.bind(this));
 
@@ -95,7 +122,8 @@ limitations under the License.
                 for (var i=0; i<4; i++) {
                     this._addLight();
                 }
-
+                this._addThermostat();
+                this._addScenes();
             },
 
             showProgress: function (message) {
@@ -131,18 +159,17 @@ limitations under the License.
                         'Authorization': 'Bearer ' + AUTH_TOKEN
                     }
                 };
-                //                    'Authorization': 'Bearer psokmCxKjfhk7qHLeYd1'
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/auth', options)
                     .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
             },
 
-            _getNickname: function(lightId) {
-                var names = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
-                return names[lightId%4];
+            _getNickname: function(id) {
+                var names = ['table lamp', 'reading lamp', 'doorway', 'stairway', 'wall thermostat', 'party time', 'default'];
+                return names[id%7];
             },
 
             _addLight: function () {
-                var lightId = getNextLightId();
+                var lightId = getNextDeviceId();
                 this.push('lights', {
                     id: String(lightId),
                     properties : {
@@ -159,7 +186,7 @@ limitations under the License.
                             nicknames: [ this._getNickname(lightId) ]
                         },
                         willReportState: false,
-                        roomHint: 'living room',
+                        roomHint: '',
                         deviceInfo: {
                             manufacturer: 'Smart Home Provider',
                             model: 'g1337',
@@ -183,6 +210,85 @@ limitations under the License.
 
                 window.requestAnimationFrame(() => {
                     this.$['light-list'].fire('iron-resize');
+                });
+            },
+
+            _addThermostat: function() {
+                var thermostatId = getNextDeviceId();
+                this.push('thermostats', {
+                    id: String(thermostatId),
+                    properties : {
+                        type: 'action.devices.types.THERMOSTAT',
+                        traits: [
+                            'action.devices.traits.TemperatureSetting'
+                        ],
+                        name: {
+                            defaultNames: ['Smart Thermostat'],
+                            name: 'Smart Thermostat ' + thermostatId,
+                            nicknames: [ this._getNickname(thermostatId) ]
+                        },
+                        willReportState: false,
+                        roomHint: 'hallway',
+                        deviceInfo: {
+                            manufacturer: 'Smart Home Provider',
+                            model: 'g1338',
+                            swVersion: '1.0.31',
+                            hwVersion: '1.1'
+                        },
+                        customData: {
+                            smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
+                        }
+                    },
+                    states: {
+                        online: true,
+                        thermostatMode: 'cool',
+                        thermostatTemperatureSetpoint: 23.0,
+                        thermostatTemperatureAmbient: 25.1,
+                        thermostatHumidityAmbient: 45.3
+                    }
+                });
+
+                window.requestAnimationFrame(() => {
+                    this.$['thermostat-list'].fire('iron-resize');
+                });
+            },
+
+            _addScenes: function() {
+                var sceneId = getNextDeviceId();
+                this.push('scenes', {
+                    id: String(sceneId),
+                    properties : {
+                        type: 'action.devices.types.SCENE',
+                        traits: [
+                            'action.devices.traits.Scene'
+                        ],
+                        name: {
+                            defaultNames: [],
+                            name: this._getNickname(sceneId),
+                            nicknames: []
+                        },
+                        willReportState: false,
+                        attributes: {
+                            reversible: true
+                        },
+                         deviceInfo: {
+                            manufacturer: 'Smart Home Provider',
+                            model: 'g1339',
+                            swVersion: '1.0.31',
+                            hwVersion: '1.1'
+                        },
+                        customData: {
+                            smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
+                        }
+                    },
+                    states: {
+                        online: true,
+                        on: false
+                    }
+                });
+
+                window.requestAnimationFrame(() => {
+                    this.$['scene-list'].fire('iron-resize');
                 });
             }
         });
