@@ -99,8 +99,8 @@ limitations under the License.
             <!--
                   <div class="layout horizontal justified">
             -->
-            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}" on-tap="_handleNicknameChange"></paper-input>
-            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}" on-tap="_handleNameChange"></paper-input>
+            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}"></paper-input>
             <div>Default Name: {{light.properties.name.defaultNames.0}}</div>
             <!--
                     <paper-slider value="50"></paper-slider>
@@ -110,6 +110,7 @@ limitations under the License.
     </template>
 
     <script>
+        const ENTERKEY = 13;
         Polymer({
             is: 'smart-light',
 
@@ -118,6 +119,13 @@ limitations under the License.
                     type: Object,
                     observer: '_lightChanged'
                 }
+            },
+
+            ready: function () {
+                this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
             },
 
             _handleOnOff: function () {
@@ -134,7 +142,7 @@ limitations under the License.
             },
 
             _handleDelete: function () {
-                this.light.states.online = false;
+                // this.light.states.online = false;
                 this._callSmartHomeProviderCloud('/remove-device', 'POST', this.light)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
@@ -151,14 +159,19 @@ limitations under the License.
                 }
             },
 
-            _handleNameChange: function (event) {
-                this.light.properties.name.name = event.target.value;
-                this._notifyStateChange();
+            _execNameOrNicknameChange: function (event) {
+                // occurs after enter/tab key pressed or on tapout from input field
+                if (event.target.id == 'nickname') {
+                    this.light.properties.name.nicknames[0] = event.target.value;
+                }
+                else if (event.target.id == 'name') {
+                    this.light.properties.name.name = event.target.value;
+                }
+                this._notifyStateChange(true);
             },
 
-            _handleNicknameChange: function (event) {
-                this.light.properties.name.nicknames[0] = event.target.value;
-                this._notifyStateChange();
+            _handleNameOrNicknameChange: function (event) {
+                if (event.which == ENTERKEY) this.blur();
             },
 
             _callSmartHomeProviderCloud: function (path, method, opt_body) {
@@ -169,7 +182,6 @@ limitations under the License.
                         'Authorization': 'Bearer ' + AUTH_TOKEN
                     }
                 };
-//                    'Authorization': 'Bearer psokmCxKjfhk7qHLeYd1'
                 if (opt_body) options.body = JSON.stringify(opt_body);
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
             },
@@ -209,9 +221,9 @@ limitations under the License.
                 this._notifyStateChange();
             },
 
-            _notifyStateChange: function () {
+            _notifyStateChange: function (nameChanged) {
                 this._lightChanged();
-                if (this.light.states.online) this._exec();
+                if (this.light.states.online) this._exec(nameChanged);
             },
 
             _lightChanged: function () {
@@ -234,7 +246,12 @@ limitations under the License.
 //                Polymer.updateStyles();
             },
 
-            _exec: function() {
+            _exec: function(nameChanged) {
+                if (nameChanged) {
+                    this.light.nameChanged = true;
+                } else {
+                    this.light.nameChanged = false;
+                }
                 this._callSmartHomeProviderCloud('/exec', 'POST', this.light).then(function () {
                     console.log('>>> exec to Smart Home Provider Cloud', this.light);
                 }).catch(function (error) {

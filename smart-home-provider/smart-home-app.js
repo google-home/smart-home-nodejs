@@ -275,6 +275,7 @@ function registerAgent(app) {
     let deviceProps = {
       requestId: data.requestId,
       payload: {
+        agentUserId: data.uid,
         devices: deviceList
       }
     };
