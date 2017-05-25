@@ -1,4 +1,4 @@
-# Actions on Google Smart Home sample using Node.js
+# Actions on Google: Smart Home sample using Node.js
 
 This sample contains a fully functioning example of a Smart Home provider
 cloud service designed to work with Actions on Google. This can be used with a
