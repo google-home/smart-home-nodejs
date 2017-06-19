@@ -66,7 +66,7 @@ enable it for cloud control.
 click Add/Import Project.
 1. Create a new project or import an existing Google Cloud project.
 1. Click 'Use Actions SDK'.
-1. Update the Action Package (action.json) with the URL where your project is hosted.
+1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /ha).
 1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
 to run the command given with the 'action.json' file as your Action Package.
 1. Click Okay.
@@ -83,6 +83,7 @@ path, e.g. https://xyz123.ngrok.io/oauth
 e.g. https://xyz123.ngrok.io/token
 1. Enter any remaining necessary information you might need for
 authentication your app. Then Save.
+1. Visit your front end https://xyz123.ngrok.io and click the cloud icon to enable a device
 1. On a device with the Google Assistant logged into the same account used
 to create the project in the Actions Console, enter your Assistant settings.
 1. Click Home Control.
