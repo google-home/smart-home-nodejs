@@ -1,6 +1,20 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -11,7 +25,7 @@
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="shared-styles.html">
 
-<dom-module id="smart-thermostat">
+<dom-module id="smart-vacuum">
     <template>
         <style include="iron-flex iron-flex-alignment shared-styles">
             paper-input {
@@ -40,48 +54,36 @@
                 margin-bottom: 8px;
             }
 
-            #thermostat {
-                margin-right: 36px;
-            }
-
         </style>
 
         <div class="card">
             <div id="button-bar" class="layout horizontal justified">
-                <div id="thermostat-id" class="circle">[[thermostat.id]]</div>
+                <div id="vacuum-id" class="circle">[[vacuum.id]]</div>
                 <div class="flex"></div>
                 <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
-            <!-- thermostat icon -->
+            <!-- vacuum icon -->
             <div class="layout horizontal center-justified">
-                <div id="thermostat" class="main-circle">
-                    <img src="../images/thermometer-512.png" width="60" height="60"/>
-                    <div id="ambient" class="sub-text vertical center-justified">[[thermostat.states.thermostatTemperatureAmbient]]ºC</div>
-                </div>
-                <div class="layout vertical center-justified">
-                    <div>Setpoint</div>
-                    <div id="setpoint" class="sub-text circle">[[thermostat.states.thermostatTemperatureSetpoint]]</div>
-                    <div>Mode:<br/><b>[[thermostat.states.thermostatMode]]</b>
-                    </div>
-                </div>
+                <iron-icon id="vacuum" icon="hardware:router" on-tap="_handleOnOff"></iron-icon>
             </div>
 
             <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{thermostat.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{thermostat.properties.name.name}}"></paper-input>
+            <paper-input id="nickname" label="Nickname" value$="{{vacuum.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{vacuum.properties.name.name}}"></paper-input>
+            <!-- <div>Default Name: {{vacuum.properties.name.defaultNames.0}}</div> -->
         </div>
     </template>
 
     <script>
         Polymer({
-            is: 'smart-thermostat',
+            is: 'smart-vacuum',
 
             properties: {
-                thermostat: {
+                vacuum: {
                     type: Object,
-                    observer: '_thermostatChanged'
+                    observer: '_vacuumChanged'
                 }
             },
 
@@ -96,9 +98,14 @@
                 });
             },
 
+            _handleOnOff: function () {
+                this.vacuum.states.on = !this.vacuum.states.on;
+                this._notifyStateChange();
+            },
+
             _handleCloud: function () {
                 // Toggle online state on button press.
-                this.thermostat.states.online = !this.thermostat.states.online;
+                this.vacuum.states.online = !this.vacuum.states.online;
                 this._handleRegister();
                 this._changeEventSource();
             },
@@ -106,9 +113,9 @@
             _handleRegister: function() {
                 // Register source if undefined
                 if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.thermostat.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
                 }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.thermostat)
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.vacuum)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
@@ -116,7 +123,8 @@
             },
 
             _handleDelete: function () {
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.thermostat)
+                this.vacuum.states.online = true;
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.vacuum)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
@@ -124,20 +132,21 @@
                 if (this._source) this._source.close();
 
                 const app = document.querySelector('my-app');
-                const thermostats = app.thermostats;
-                for (var i = 0; i < thermostats.length; i++) {
-                    if (thermostats[i].id == this.thermostat.id) {
-                        app.splice('thermostats', i, 1);
+                const vacuums = app.vacuums;
+                for (var i = 0; i < vacuums.length; i++) {
+                    if (vacuums[i].id == this.vacuum.id) {
+                        app.splice('vacuums', i, 1);
                     }
                 }
             },
 
             _execNameOrNicknameChange: function (event) {
+                // occurs after enter/tab key pressed or on tapout from input field
                 if (event.target.id == 'nickname') {
-                    this.thermostat.properties.name.nicknames[0] = event.target.value;
+                    this.vacuum.properties.name.nicknames[0] = event.target.value;
                 }
                 else if (event.target.id == 'name') {
-                    this.thermostat.properties.name.name = event.target.value;
+                    this.vacuum.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
             },
@@ -145,7 +154,6 @@
             _handleNameOrNicknameChange: function (event) {
                 if (event.which == ENTERKEY) this.blur();
             },
-
 
             _callSmartHomeProviderCloud: function (path, method, opt_body) {
                 const options = {
@@ -155,18 +163,19 @@
                         'Authorization': 'Bearer ' + AUTH_TOKEN
                     }
                 };
-
                 if (opt_body) options.body = JSON.stringify(opt_body);
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
             },
 
             _changeEventSource: function () {
-                if (!this.thermostat.states.online) {
-                    // going offline
-                    this._source.close();
+                console.log("vacuum", this.vacuum);
+                if (!this.vacuum.states.online) {
+                    if (this._source) {
+                        this._source.close();
+                    }
                 } else {
                     // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.thermostat.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
                     this._source.addEventListener('change', function (e) {
                         this._changeState(JSON.parse(e.data));
                     }.bind(this));
@@ -186,47 +195,49 @@
             },
 
             _changeState: function (changes) {
-                changes.thermostatTemperatureSetpoint = parseFloat(changes.thermostatTemperatureSetpoint).toFixed(1);
+                console.log("changes:", changes);
                 for (var name in changes) {
                     const value = changes[name];
-                    this.set('thermostat.states.' + name, value);
+                    this.set('vacuum.states.' + name, value);
                 }
                 this._notifyStateChange();
             },
 
             _notifyStateChange: function (isNameChange) {
-                this._thermostatChanged();
-                if (this.thermostat.states.online) this._exec(isNameChange);
+                this._vacuumChanged();
+                if (this.vacuum.states.online) this._exec(isNameChange);
             },
 
-            _thermostatChanged: function () {
-                this.$.cloud.icon = this.thermostat.states.online ? 'cloud' : 'cloud-off';
-                if (this.thermostat.states.thermostatMode
-                    && this.thermostat.states.thermostatTemperatureSetPoint
-                    && this.thermostat.states.thermostatTemperatureAmbient
-                    && this.thermostat.states.thermostatHumidityAmbient) {
-                    console.log('updated thermostat');
+            _vacuumChanged: function () {
+                this.$.cloud.icon = this.vacuum.states.online ? 'cloud' : 'cloud-off';
+                if (this.vacuum.states.on) {
+                    this.$.vacuum.style.color = '#9bea00';
                 } else {
-                    console.log('failed to update thermostat');
+                    this.$.vacuum.style.color = '#eee';
                 }
             },
 
             _exec: function(isNameChange) {
-                this.thermostat.nameChanged = isNameChange ? true : false;
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.thermostat).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.thermostat);
+                if (isNameChange) {
+                    this.vacuum.nameChanged = true;
+                } else {
+                    this.vacuum.nameChanged = false;
+                }
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.vacuum).then(function () {
+                    console.log('>>> exec to Smart Home Provider Cloud', this.vacuum);
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
             },
 
             _pushUp: function (type) {
-                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.thermostat}).then(function () {
-                    console.log('>>> pushed state to Smart Home Provider Cloud', this.thermostat);
+                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.vacuum}).then(function () {
+                    console.log('>>> pushed state to Smart Home Provider Cloud', this.vacuum);
                 }).catch(function (error) {
                     console.log('>>> failed to push state to Smart Home Provider Cloud:', error);
                 });
-            }
+            },
         });
+
     </script>
 </dom-module>

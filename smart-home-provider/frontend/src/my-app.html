@@ -24,6 +24,8 @@ limitations under the License.
 <link rel="import" href="smart-light.html">
 <link rel="import" href="smart-thermostat.html">
 <link rel="import" href="smart-scene.html">
+<link rel="import" href="smart-camera.html">
+<link rel="import" href="smart-vacuum.html">
 
 <dom-module id="my-app">
     <template>
@@ -42,6 +44,61 @@ limitations under the License.
             app-header paper-icon-button {
                 --paper-icon-button-ink-color: white;
             }
+
+            #modal {
+                width: 42%;
+                display: -webkit-flex; /* Safari */
+                -webkit-justify-content: space-around; /* Safari 6.1+ */
+                display: flex;
+                justify-content: space-around;
+                overflow-y: scroll;
+                padding: 24px 0px;
+            }
+
+            .square {
+                height: 180px;
+                width: 180px;
+                margin: auto;
+                background: none;
+                border: none;
+                outline: none;
+            }
+
+            .square:hover {
+                background-color: rgb(238,238,238);
+            }
+
+            iron-icon {
+                height:55%;
+                width: 55%;
+                color: #757575;
+            }
+
+            #close {
+                height: 30px;
+                width: 30px;
+                margin-top: 0px;
+                float: right;
+            }
+
+            #close > iron-icon {
+                height: 100%;
+                width: 100%;
+                cursor: pointer;
+                cursor: hand;
+            }
+
+            p {
+                color: #757575;
+                font-family: 'Roboto', 'Noto', sans-serif;
+                font-size: 15px;
+            }
+
+            #no-devices-msg {
+                width: 60%;
+                margin: 20% auto;
+            }
+
         </style>
 
         <!-- Main content -->
@@ -49,10 +106,8 @@ limitations under the License.
             <app-toolbar>
                 <paper-icon-button id="account" icon="account-box" on-tap="_showAccount"></paper-icon-button>
                 <div main-title>Smart Home Provider</div>
-                <!--<paper-icon-button id="auth" icon="face"></paper-icon-button>-->
                 <div>[[USERNAME]]</div>
-                <paper-icon-button id="refresh" icon="autorenew"></paper-icon-button>
-                <!-- <paper-icon-button id="add" icon="add"></paper-icon-button> -->
+                <paper-icon-button id="add" icon="add"></paper-icon-button>
             </app-toolbar>
         </app-header>
 
@@ -61,6 +116,41 @@ limitations under the License.
         <paper-dialog id="progress-dialog">
             <p id="progress-dialog-content"></p>
         </paper-dialog>
+
+        <paper-dialog id="modal" modal>
+            <div id="close">
+                <iron-icon icon="icons:close" dialog-confirm autofocus></iron-icon>
+            </div>
+            <div class="layout horizontal center-justified">
+                <h1>Add a new device</h1>
+                <button dialog-confirm autofocus class="square" id="lightSelector" on-tap="_addLight">
+                    <iron-icon icon="image:wb-incandescent"></iron-icon>
+                    <p>Light</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="thermostatSelector" on-tap="_addThermostat">
+                    <iron-icon icon="image:brightness-7"></iron-icon>
+                    <p>Thermostat</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="sceneSelector" on-tap="_addScene">
+                    <iron-icon icon="image:slideshow"></iron-icon>
+                    <p>Scene</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="cameraSelector" on-tap="_addCamera">
+                    <iron-icon icon="image:camera-alt"></iron-icon>
+                    <p>Camera</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="vacuumSelector" on-tap="_addVacuum">
+                    <iron-icon icon="hardware:router"></iron-icon>
+                    <p>Vacuum</p>
+                </button>
+            </div>
+        </paper-dialog>
+
+        <div id="no-devices-msg" hidden="[[hide]]">
+            <p class="layout horizontal center-justified">
+                You currently don't have any devices set up. To set up a device, click the "+" button and take it online.
+            </p>
+        </div>
 
         <iron-list id="light-list" items="[[lights]]" as="item" grid>
             <template>
@@ -85,8 +175,23 @@ limitations under the License.
                 </div>
             </template>
         </iron-list>
-    </template>
 
+        <iron-list id="camera-list" items="[[cameras]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-camera camera=[[item]]></smart-camera>
+                </div>
+            </template>
+        </iron-list>
+
+        <iron-list id="vacuum-list" items="[[vacuums]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-vacuum vacuum=[[item]]></smart-vacuum>
+                </div>
+            </template>
+        </iron-list>
+    </template>
 
     <script>
         var nextDeviceId = 0;
@@ -99,6 +204,10 @@ limitations under the License.
             is: 'my-app',
 
             properties: {
+                hide: {
+                    type: Boolean,
+                    value: true
+                },
                 lights: {
                     type: Array
                 },
@@ -107,6 +216,12 @@ limitations under the License.
                 },
                 scenes: {
                     type: Array
+                },
+                cameras: {
+                    type: Array
+                },
+                vacuums: {
+                    type: Array
                 }
             },
 
@@ -114,16 +229,15 @@ limitations under the License.
                 this.lights = [];
                 this.thermostats = [];
                 this.scenes = [];
-                // this.$.auth.addEventListener('click', this._auth.bind(this));
-                this.$.refresh.addEventListener('click', this._refresh.bind(this));
-                // this.$.add.addEventListener('click', this._addLight.bind(this));
-
+                this.cameras = [];
+                this.vacuums = [];
+                this.$.add.addEventListener('click', e => this.$.modal.open());
                 this._auth();
                 for (var i=0; i<4; i++) {
                     this._addLight();
                 }
                 this._addThermostat();
-                this._addScenes();
+                this._addScene();
             },
 
             showProgress: function (message) {
@@ -133,6 +247,14 @@ limitations under the License.
 
             hideProgress: function () {
                 this.$['progress-dialog'].close();
+            },
+
+            showNoDeviceMessage: function () {
+                this.hide = false;
+            },
+
+            hideNoDeviceMessage: function () {
+                this.hide = true;
             },
 
             _showAccount: function () {
@@ -148,7 +270,51 @@ limitations under the License.
                         'Authorization': 'Bearer ' + AUTH_TOKEN
                     }
                 };
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options);
+
+                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
+                    .then(function(response) {
+                        return response.json();
+                    }).then(function(json) {
+                        for (const key in json) {
+                            devices[key] = json[key];
+                        }
+                        return app._handleRefresh(app);
+                    });
+            },
+
+            _handleRefresh: function (app) {
+                if (Object.keys(devices).length == 0) {
+                    console.log("no devices");
+                    app.showNoDeviceMessage();
+                } else {
+                    for (const id of Object.keys(devices)) {
+                        devices[id].id = id;
+                        delete devices[id].properties.id;
+                        devices[id].states.on = false;
+                        devices[id].states.online = false;
+                        switch(devices[id].properties.type) {
+                            case 'action.devices.types.LIGHT':
+                                app._addLight(null, devices[id]);
+                                break;
+                            case 'action.devices.types.THERMOSTAT':
+                                app._addThermostat(null, devices[id]);
+                                break;
+                            case 'action.devices.types.SCENE':
+                                app._addScene(null, devices[id]);
+                                break;
+                            case 'action.devices.types.CAMERA':
+                                app._addCamera(null, devices[id]);
+                                break;
+                            case 'action.devices.types.VACUUM':
+                                app._addVacuum(null, devices[id]);
+                                break;
+                            default:
+                                break;
+                        }
+                        nextDeviceId = parseInt(id)+1;
+                    }
+                }
+                return app;
             },
 
             _auth: function(){
@@ -165,132 +331,272 @@ limitations under the License.
 
             _getNickname: function(id) {
                 var names = ['table lamp', 'reading lamp', 'doorway', 'stairway', 'wall thermostat', 'party time', 'default'];
-                return names[id%7];
+                if (id < names.length) {
+                    return names[id];
+                } else {
+                    return `device_nickname_${id}`;
+                }
             },
 
-            _addLight: function () {
-                var lightId = getNextDeviceId();
-                this.push('lights', {
-                    id: String(lightId),
-                    properties : {
-                        type: 'action.devices.types.LIGHT',
-                        traits: [
-                            'action.devices.traits.OnOff',
-                            'action.devices.traits.Brightness',
-                            'action.devices.traits.ColorTemperature',
-                            'action.devices.traits.ColorSpectrum'
-                        ],
-                        name: {
-                            defaultNames: ['Smart Light'],
-                            name: 'Smart Light ' + lightId,
-                            nicknames: [ this._getNickname(lightId) ]
+            _addLight: function (event, light) {
+                this.hideNoDeviceMessage();
+                if (light && light.hasOwnProperty("id")) {
+                    this.push('lights', light);
+                } else {
+                    var lightId = getNextDeviceId();
+                    this.push('lights', {
+                        id: String(lightId),
+                        properties : {
+                            type: 'action.devices.types.LIGHT',
+                            traits: [
+                                'action.devices.traits.OnOff',
+                                'action.devices.traits.Brightness',
+                                'action.devices.traits.ColorTemperature',
+                                'action.devices.traits.ColorSpectrum'
+                            ],
+                            name: {
+                                defaultNames: ['Smart Light'],
+                                name: 'Smart Light ' + lightId,
+                                nicknames: [ this._getNickname(lightId) ]
+                            },
+                            willReportState: true,
+                            roomHint: '',
+                            deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1337',
+                                swVersion: '1.0.11',
+                                hwVersion: '1.0'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                            }
                         },
-                        willReportState: false,
-                        roomHint: '',
-                        deviceInfo: {
-                            manufacturer: 'Smart Home Provider',
-                            model: 'g1337',
-                            swVersion: '1.0.11',
-                            hwVersion: '1.0'
-                        },
-                        customData: {
-                            smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                        states: {
+                            on: false,
+                            online: true,
+                            brightness: 80,
+                            color: {
+                                name: 'cerulean',
+                                spectrumRGB: 31655
+                            }
                         }
-                    },
-                    states: {
-                        on: false,
-                        online: true,
-                        brightness: 80,
-                        color: {
-                            name: 'cerulean',
-                            spectrumRGB: 31655
-                        }
-                    }
-                });
+                    });
 
-                window.requestAnimationFrame(() => {
-                    this.$['light-list'].fire('iron-resize');
-                });
+                    window.requestAnimationFrame(() => {
+                        this.$['light-list'].fire('iron-resize');
+                    });
+                }
             },
 
-            _addThermostat: function() {
-                var thermostatId = getNextDeviceId();
-                this.push('thermostats', {
-                    id: String(thermostatId),
-                    properties : {
-                        type: 'action.devices.types.THERMOSTAT',
-                        traits: [
-                            'action.devices.traits.TemperatureSetting'
-                        ],
-                        name: {
-                            defaultNames: ['Smart Thermostat'],
-                            name: 'Smart Thermostat ' + thermostatId,
-                            nicknames: [ this._getNickname(thermostatId) ]
+            _addThermostat: function(event, thermostat) {
+                this.hideNoDeviceMessage();
+                if (thermostat && thermostat.hasOwnProperty("id")) {
+                    this.push('thermostats', thermostat);
+                } else {
+                    var thermostatId = getNextDeviceId();
+                    this.push('thermostats', {
+                        id: String(thermostatId),
+                        properties : {
+                            type: 'action.devices.types.THERMOSTAT',
+                            traits: [
+                                'action.devices.traits.TemperatureSetting'
+                            ],
+                            name: {
+                                defaultNames: ['Smart Thermostat'],
+                                name: 'Smart Thermostat ' + thermostatId,
+                                nicknames: [ this._getNickname(thermostatId) ]
+                            },
+                            willReportState: false,
+                            roomHint: 'hallway',
+                            deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1338',
+                                swVersion: '1.0.31',
+                                hwVersion: '1.1'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
+                            }
                         },
-                        willReportState: false,
-                        roomHint: 'hallway',
-                        deviceInfo: {
-                            manufacturer: 'Smart Home Provider',
-                            model: 'g1338',
-                            swVersion: '1.0.31',
-                            hwVersion: '1.1'
-                        },
-                        customData: {
-                            smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
+                        states: {
+                            online: true,
+                            thermostatMode: 'cool',
+                            thermostatTemperatureSetpoint: 23.0,
+                            thermostatTemperatureAmbient: 25.1,
+                            thermostatHumidityAmbient: 45.3
                         }
-                    },
-                    states: {
-                        online: true,
-                        thermostatMode: 'cool',
-                        thermostatTemperatureSetpoint: 23.0,
-                        thermostatTemperatureAmbient: 25.1,
-                        thermostatHumidityAmbient: 45.3
-                    }
-                });
-
-                window.requestAnimationFrame(() => {
-                    this.$['thermostat-list'].fire('iron-resize');
-                });
+                    });
+                    window.requestAnimationFrame(() => {
+                        this.$['thermostat-list'].fire('iron-resize');
+                    });
+                }
             },
 
-            _addScenes: function() {
-                var sceneId = getNextDeviceId();
-                this.push('scenes', {
-                    id: String(sceneId),
-                    properties : {
-                        type: 'action.devices.types.SCENE',
-                        traits: [
-                            'action.devices.traits.Scene'
-                        ],
-                        name: {
-                            defaultNames: [],
-                            name: this._getNickname(sceneId),
-                            nicknames: []
+            _addScene: function(event, scene) {
+                this.hideNoDeviceMessage();
+                if (scene && scene.hasOwnProperty("id")) {
+                    this.push('scenes', scene);
+                } else {
+                    var sceneId = getNextDeviceId();
+                    this.push('scenes', {
+                        id: String(sceneId),
+                        properties : {
+                            type: 'action.devices.types.SCENE',
+                            traits: [
+                                'action.devices.traits.Scene'
+                            ],
+                            name: {
+                                defaultNames: [],
+                                name: this._getNickname(sceneId),
+                                nicknames: []
+                            },
+                            willReportState: false,
+                            attributes: {
+                                sceneReversible: true
+                            },
+                             deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1339',
+                                swVersion: '1.0.31',
+                                hwVersion: '1.1'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
+                            }
                         },
-                        willReportState: false,
-                        attributes: {
-                            reversible: true
-                        },
-                         deviceInfo: {
-                            manufacturer: 'Smart Home Provider',
-                            model: 'g1339',
-                            swVersion: '1.0.31',
-                            hwVersion: '1.1'
-                        },
-                        customData: {
-                            smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
+                        states: {
+                            online: true,
+                            on: false
                         }
-                    },
-                    states: {
-                        online: true,
-                        on: false
-                    }
-                });
+                    });
+                    window.requestAnimationFrame(() => {
+                        this.$['scene-list'].fire('iron-resize');
+                    });
+                }
+            },
 
-                window.requestAnimationFrame(() => {
-                    this.$['scene-list'].fire('iron-resize');
-                });
+            _addCamera: function(event, camera) {
+                this.hideNoDeviceMessage();
+                if (camera && camera.hasOwnProperty("id")) {
+                    this.push('cameras', camera);
+                } else {
+                    var cameraId = getNextDeviceId();
+                    this.push('cameras', {
+                        id: String(cameraId),
+                        properties : {
+                            type: 'action.devices.types.CAMERA',
+                            traits: [
+                                // 'action.devices.traits.OnOff',
+                                'action.devices.traits.CameraStream',
+                                'action.devices.traits.CameraPhoto',
+                                'action.devices.traits.CameraClip'
+                            ],
+                            name: {
+                                defaultNames: ['Smart Camera ' + cameraId],
+                                name: this._getNickname(cameraId),
+                                nicknames: ['security camera']
+                            },
+                            willReportState: false,
+                            attributes: {
+                                'cameraStreamSupportedProtocols': ["mp4", "hls"]
+                            },
+                             deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1340',
+                                swVersion: '1.0.31',
+                                hwVersion: '1.1'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
+                            }
+                        },
+                        states: {
+                            online: true,
+                            on: false
+                        }
+                    });
+                    window.requestAnimationFrame(() => {
+                        this.$['camera-list'].fire('iron-resize');
+                    });
+                }
+            },
+
+            _addVacuum: function (event, vacuum) {
+                this.hideNoDeviceMessage();
+                if (vacuum && vacuum.hasOwnProperty("id")) {
+                    this.push('vacuums', vacuum);
+                } else {
+                    var vacuumId = getNextDeviceId();
+                    this.push('vacuums', {
+                        id: String(vacuumId),
+                        properties : {
+                            type: 'action.devices.types.VACUUM',
+                            traits: [
+                                'action.devices.traits.OnOff',
+                                'action.devices.traits.StartStop',
+                                'action.devices.traits.Modes',
+                                'action.devices.traits.Toggles',
+                                'action.devices.traits.Dock'
+                            ],
+                            name: {
+                                defaultNames: ['Smart Vacuum'],
+                                name: 'Smart Vacuum ' + vacuumId,
+                                nicknames: ['Robo Vacuum']
+                            },
+                            willReportState: false,
+                            attributes: {
+                                availableToggles: [{
+                                    name: "quiet",
+                                    name_values: [{
+                                        name_synonym: ["quiet", "silent"],
+                                        lang: "ENGLISH"
+                                    }, {
+                                        name_synonym: ["ruhig", "still"],
+                                        lang: "GERMAN"
+                                    }]
+                                }],
+                                availableModes: [{
+                                    name: "speed",
+                                    name_values: [{
+                                        name_synonym: ["speed", "velocity"],
+                                        lang: "ENGLISH"
+                                    }],
+                                    settings: [{
+                                        setting_name: "slow",
+                                        setting_values: [{
+                                            setting_synonym: ["slow", "sluggish"]
+                                        }]
+                                    }, {
+                                        setting_name: "fast",
+                                        setting_values: [{
+                                            setting_synonym: ["fast", "quick"]
+                                        }]
+                                    }]
+                                }]
+                            },
+                            roomHint: '',
+                            deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1400',
+                                swVersion: '1.0.11',
+                                hwVersion: '1.0'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                            }
+                        },
+                        states: {
+                            on: false,
+                            online: true
+                        }
+                    });
+                    window.requestAnimationFrame(() => {
+                        this.$['vacuum-list'].fire('iron-resize');
+                    });
+                }
             }
+
+
         });
     </script>
 </dom-module>
