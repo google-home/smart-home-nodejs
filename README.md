@@ -83,7 +83,6 @@ path, e.g. https://xyz123.ngrok.io/oauth
 e.g. https://xyz123.ngrok.io/token
 1. Enter any remaining necessary information you might need for
 authentication your app. Then Save.
-1. Visit your front end https://xyz123.ngrok.io and click the cloud icon to enable a device
 1. On a device with the Google Assistant logged into the same account used
 to create the project in the Actions Console, enter your Assistant settings.
 1. Click Home Control.
@@ -91,6 +90,9 @@ to create the project in the Actions Console, enter your Assistant settings.
 1. Find your app in the list of providers.
 1. Log in to your service.
 1. Start using the Google Assistant or Simulator in the Actions Console to control your devices. Try saying 'turn my lights on'.
+
+:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://xyz123.ngrok.io and click the cloud icon to enable a device you will need to unlink and then re-link your account to see the new or removed devices.
+
 
 ### Steps for testing with mock-assistant-platform
 
