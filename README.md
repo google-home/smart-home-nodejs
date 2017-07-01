@@ -66,7 +66,7 @@ enable it for cloud control.
 click Add/Import Project.
 1. Create a new project or import an existing Google Cloud project.
 1. Click 'Use Actions SDK'.
-1. Update the Action Package (action.json) with the URL where your project is hosted.
+1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /ha).
 1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
 to run the command given with the 'action.json' file as your Action Package.
 1. Click Okay.
@@ -90,6 +90,9 @@ to create the project in the Actions Console, enter your Assistant settings.
 1. Find your app in the list of providers.
 1. Log in to your service.
 1. Start using the Google Assistant or Simulator in the Actions Console to control your devices. Try saying 'turn my lights on'.
+
+:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://xyz123.ngrok.io and click the cloud icon to enable a device you will need to unlink and then re-link your account to see the new or removed devices.
+
 
 ### Steps for testing with mock-assistant-platform
 
