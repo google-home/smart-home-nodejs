@@ -34,6 +34,17 @@ See the developer guide and release notes at [https://developers.google.com/acti
 
 ### Steps for testing with Google Assistant
 
+1. Navigate to the [Actions Console](https://console.actions.google.com) and
+click Add/Import Project.
+1. Create a new project or import an existing Google Cloud project.
+1. Navigate to the
+[Google Cloud Console API Manager](https://console.developers.google.com/apis)
+for your project.
+1. Click Credentials
+1. Click 'Create credentials'
+1. Click 'API key'
+1. Copy the API key shown and insert it in
+`smart-home-provider/cloud/config-provider.js`
 1. Set up the web portal
 
         cd smart-home-provider/frontend
@@ -50,7 +61,7 @@ See the developer guide and release notes at [https://developers.google.com/acti
 
     * If running in a hosted env,
 
-          node cloud/smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
+          node smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
@@ -62,10 +73,7 @@ See the developer guide and release notes at [https://developers.google.com/acti
 1. This is a web portal to your Smart Home devices. Configure the smart lights
 shown as you please. Click the cloud icon shown above at least one of them to
 enable it for cloud control.
-1. Navigate to the [Actions Console](https://console.actions.google.com) and
-click Add/Import Project.
-1. Create a new project or import an existing Google Cloud project.
-1. Click 'Use Actions SDK'.
+1. Return to the Actions Console project. Click 'Use Actions SDK'.
 1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /ha).
 1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
 to run the command given with the 'action.json' file as your Action Package.
@@ -112,7 +120,7 @@ to create the project in the Actions Console, enter your Assistant settings.
 
     * If running in a hosted env,
 
-          node cloud/smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
+          node smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
