@@ -229,8 +229,8 @@ Your app will need to handle these 3 basic requests from the Google Assistant.
                         "command": "action.devices.commands.ChangeColor",
                         "params": {
                             "color": {
-                                "name": "cerulian",
-                                "spectrumRGB": 523435
+                                "name": "red",
+                                "spectrumRGB": 65280
                             }
                         }
                     },{
