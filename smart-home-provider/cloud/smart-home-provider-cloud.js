@@ -397,6 +397,14 @@ const appPort = process.env.PORT || config.devPortSmartHome;
 const server = app.listen(appPort, function () {
   const host = server.address().address;
   const port = server.address().port;
+  // Check that the API key was changed from the default
+  if (config.smartHomeProviderApiKey === '<API_KEY>') {
+    console.warn('You need to set the API key in config-provider.\n' +
+      'Visit the Google Cloud Console to generate an API key for your project.\n' +
+      'https://console.cloud.google.com\n' +
+      'Exiting...');
+    process.exit();
+  }
   console.log('Smart Home Cloud and App listening at %s:%s', host, port);
 
   if (config.isLocal) {
