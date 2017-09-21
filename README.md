@@ -142,8 +142,6 @@ enable it for cloud control.
        node platform url="https://<NGROK_DOMAIN>.ngrok.io/ha" query
        node platform url="https://<NGROK_DOMAIN>.ngrok.io/ha" ex
 
-For more detailed information on deployment, see the [documentation](https://developers.google.com/actions/samples/).
-
 ### Examples of SYNC, QUERY, and EXEC requests
 
 Your app will need to handle these 3 basic requests from the Google Assistant.
