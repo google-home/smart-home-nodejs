@@ -255,7 +255,7 @@ function registerAgent(app) {
    * }
    */
   function sync(data, response) {
-    console.log('query', data);
+    console.log('sync', data);
     let devices = app. smartHomePropertiesSync(data.uid);
     if (!devices) {
       response.status(500).set({
