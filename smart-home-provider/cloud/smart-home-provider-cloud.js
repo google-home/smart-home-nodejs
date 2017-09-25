@@ -39,6 +39,7 @@ app.use(session({
   cookie: {secure: false}
 }));
 const deviceConnections = {};
+const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key';
 
 /**
  * auth method
@@ -126,6 +127,8 @@ app.post('/smart-home-api/register-device', function (request, response) {
     return;
   }
 
+  app.requestSync(authToken, uid);
+
   // otherwise, all good!
   response.status(200)
     .set({
@@ -164,6 +167,8 @@ app.post('/smart-home-api/remove-device', function (request, response) {
     }).json({error: "failed to remove device"});
     return;
   }
+
+  app.requestSync(authToken, uid);
 
   // otherwise, all good!
   response.status(200)
@@ -212,7 +217,8 @@ app.post('/smart-home-api/exec', function (request, response) {
   }
 
   if (request.body.nameChanged) {
-       console.log("need to update name by relinking account");
+       console.log("calling request sync from exec to update name");
+       app.requestSync(authToken, uid);
   }
 
   // otherwise, all good!
@@ -390,6 +396,26 @@ app.changeState = function (command) {
       reject(new Error('Unknown change type "' + command.type + '"'));
     }
   });
+};
+
+app.requestSync = function (authToken, uid) {
+  //REQUEST_SYNC
+  const apiKey = config.smartHomeProviderApiKey;
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    }
+  };
+  optBody = {
+    'agentUserId': uid
+  };
+  options.body = JSON.stringify(optBody);
+  fetch(requestSyncEndpoint + apiKey, options).
+    then(function(res) {
+      console.log("request-sync response", res.status);
+    });
 };
 
 const appPort = process.env.PORT || config.devPortSmartHome;
