@@ -19,7 +19,7 @@ The primary AoG intent handlers are stored in
 `smart-home-provider/smart-home-app.js`. Here, you can find listeners for POST
 requests similar to the one your app will receive from the Google Assistant
 when SYNCing, QUERYing, or EXECuting smart home device control with your cloud.
-The path for requests to this app is '/ha'.
+The path for requests to this app is '/smarthome'.
 
 This sample also includes a mock-assistant-platform module that you can use to
 locally test your Smart Home app with mocked requests for the SYNC, QUERY, and
@@ -74,7 +74,7 @@ for your project.
 shown as you please. Click the cloud icon shown above at least one of them to
 enable it for cloud control.
 1. Return to the Actions Console project. Click 'Use Actions SDK'.
-1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /ha).
+1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /smarthome).
 1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
 to run the command given with the 'action.json' file as your Action Package.
 1. Click Okay.
@@ -138,9 +138,9 @@ enable it for cloud control.
 
        cd mock-assistant-platform
        node platform help
-       node platform url="https://<NGROK_DOMAIN>.ngrok.io/ha" sync
-       node platform url="https://<NGROK_DOMAIN>.ngrok.io/ha" query
-       node platform url="https://<NGROK_DOMAIN>.ngrok.io/ha" ex
+       node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" sync
+       node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" query
+       node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" ex
 
 ### Examples of SYNC, QUERY, and EXEC requests
 
@@ -148,7 +148,7 @@ Your app will need to handle these 3 basic requests from the Google Assistant.
 
 #### Sync
 
-    POST /ha HTTP/1.1
+    POST /smarthome HTTP/1.1
     Host: <something>.ngrok.io
     Accept: application/json
     Content-Type: application/json
@@ -165,7 +165,7 @@ Your app will need to handle these 3 basic requests from the Google Assistant.
 
 #### Query
 
-    POST /ha HTTP/1.1
+    POST /smarthome HTTP/1.1
     Host: <something>.ngrok.io
     Accept: application/json
     Content-Type: application/json
@@ -196,7 +196,7 @@ Your app will need to handle these 3 basic requests from the Google Assistant.
 
 #### Execute
 
-    POST /ha HTTP/1.1
+    POST /smarthome HTTP/1.1
     Host: <something>.ngrok.io
     Accept: application/json
     Content-Type: application/json

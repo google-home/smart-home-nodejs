@@ -35,10 +35,10 @@ function registerAgent(app) {
    *   }
    * }
    */
-  app.post('/ha', function (request, response) {
-    console.log('post /ha', request.headers);
+  app.post('/smarthome', function (request, response) {
+    console.log('post /smarthome', request.headers);
     let reqdata = request.body;
-    console.log('post /ha', reqdata);
+    console.log('post /smarthome', reqdata);
 
     let authToken = authProvider.getAccessToken(request);
     let uid = datastore.Auth.tokens[authToken].uid;
@@ -61,7 +61,7 @@ function registerAgent(app) {
       }
       switch (intent) {
         case "action.devices.SYNC":
-          console.log('post /ha SYNC');
+          console.log('post /smarthome SYNC');
           /**
            * request:
            * {
@@ -78,7 +78,7 @@ function registerAgent(app) {
           }, response);
           break;
         case "action.devices.QUERY":
-          console.log('post /ha QUERY');
+          console.log('post /smarthome QUERY');
           /**
            * request:
            * {
@@ -114,7 +114,7 @@ function registerAgent(app) {
 
           break;
         case "action.devices.EXECUTE":
-          console.log('post /ha EXECUTE');
+          console.log('post /smarthome EXECUTE');
           /**
            * request:
            * {
@@ -169,7 +169,7 @@ function registerAgent(app) {
   /**
    * Enables prelight (OPTIONS) requests made cross-domain.
    */
-  app.options('/ha', function (request, response) {
+  app.options('/smarthome', function (request, response) {
     response.status(200).set({
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'

@@ -21,7 +21,7 @@ function init() {
     doSync = false,
     doQuery = false,
     doExec = false;
-  let endpoint = 'https://example.com/ha';
+  let endpoint = 'https://example.com/smarthome';
 
   process.argv.forEach(function (value, i, arr) {
     console.log(value);
@@ -45,7 +45,7 @@ function init() {
     console.log(" ");
     console.log("Usage:");
     console.log(" ");
-    console.log("url=< http://example.com/ha > - your Home Control agent server");
+    console.log("url=< http://example.com/smarthome > - your Home Control agent server");
     console.log("url defaults to the public endpoint at smart-home-provider-test.appspot.com");
     console.log(" ");
     console.log("Then one or more of the following flags:");
@@ -53,7 +53,7 @@ function init() {
     console.log("* query - flag to send query intent");
     console.log("* exec - flag to send exec intent");
     console.log(" ");
-    console.log("Ex. - node platform url=\"https://smart-home-provider-test.appspot.com/ha\" sync");
+    console.log("Ex. - node platform url=\"https://smart-home-provider-test.appspot.com/smarhome\" sync");
     console.log(" ");
     console.log("============================================================================");
     return;

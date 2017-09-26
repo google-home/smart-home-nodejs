@@ -451,7 +451,7 @@ const server = app.listen(appPort, function () {
       // Add note about action.json
       console.log("=====");
       console.log("Replace the automation URL in action.json with:");
-      console.log("    " + url + "/ha");
+      console.log("    " + url + "/smarthome");
       console.log("Then run gactions test --action_package action.json --project <YOUR PROJECT ID>");
       
       console.log("=====");

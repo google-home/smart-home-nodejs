@@ -11,7 +11,7 @@
     "automation" :
     {
       "name": "automation",
-      "url": "https://<NGROK_DOMAIN>.ngrok.io/ha"
+      "url": "https://<NGROK_DOMAIN>.ngrok.io/smarthome"
     }
   }
 }
