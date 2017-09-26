@@ -255,7 +255,7 @@ function registerAgent(app) {
    * }
    */
   function sync(data, response) {
-    console.log('query', data);
+    console.log('sync', JSON.stringify(data));
     let devices = app. smartHomePropertiesSync(data.uid);
     if (!devices) {
       response.status(500).set({
@@ -279,6 +279,7 @@ function registerAgent(app) {
         devices: deviceList
       }
     };
+    console.log('sync response', JSON.stringify(deviceProps));
     response.status(200).json(deviceProps);
     return deviceProps;
   }
@@ -326,7 +327,7 @@ function registerAgent(app) {
    * }
    */
   function query(data, response) {
-    console.log('query', data);
+    console.log('query', JSON.stringify(data));
     let deviceIds = getDeviceIds(data.devices);
 
     let devices = app.smartHomeQueryStates(data.uid, deviceIds);
@@ -343,6 +344,7 @@ function registerAgent(app) {
         devices: devices
       }
     };
+    console.log('query response', JSON.stringify(deviceStates));
     response.status(200).json(deviceStates);
     return deviceStates;
   }
@@ -431,7 +433,7 @@ function registerAgent(app) {
    * }
    */
   function exec(data, response) {
-    console.log('exec', data);
+    console.log('exec', JSON.stringify(data));
     let respCommands = [];
     for (let i = 0; i < data.commands.length; i++) {
       let curCommand = data.commands[i];
@@ -446,6 +448,7 @@ function registerAgent(app) {
         commands: respCommands
       }
     };
+    console.log('exec response', JSON.stringify(data));
     response.status(200).json(resBody);
     return resBody;
   }
