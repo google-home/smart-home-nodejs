@@ -20,6 +20,7 @@ const Auth = {};
 const authstore = require('./datastore').Auth;
 const util = require('util');
 const session = require('express-session');
+const path = require('path');
 
 Auth.getAccessToken = function (request) {
   return request.headers.authorization ? request.headers.authorization.split(' ')[1] : null;
@@ -193,7 +194,7 @@ Auth.registerAuth = function (app) {
   });
 
   app.set('view engine', 'ejs');
-
+  app.set('views', path.join(__dirname, 'views'));
   // Get login.
   app.get('/login', function (req, res) {
     return login(req, res);

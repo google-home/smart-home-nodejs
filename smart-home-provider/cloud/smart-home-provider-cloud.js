@@ -23,6 +23,7 @@ const google_ha = require('./../smart-home-app');
 const datastore = require('./datastore');
 const authProvider = require('./auth-provider');
 const config = require('./config-provider');
+const path = require('path');
 
 const app = express();
 app.use(morgan('dev'));
@@ -318,9 +319,11 @@ app.get('/getauthcode', function (req, resp) {
       '');
   }
 });
-app.use('/frontend', express.static('../frontend'));
-app.use('/frontend/', express.static('../frontend'));
-app.use('/', express.static('../frontend'));
+
+const frontendPath = path.join(__dirname, '../frontend');
+app.use('/frontend', express.static(frontendPath));
+app.use('/frontend/', express.static(frontendPath));
+app.use('/', express.static(frontendPath));
 
 app.smartHomeSync = function (uid) {
   // console.log('smartHomeSync');
