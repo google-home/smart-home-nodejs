@@ -175,16 +175,15 @@ limitations under the License.
                         online: true,
                         brightness: 80,
                         color: {
-                            name: 'cerulian',
+                            name: 'cerulean',
                             spectrumRGB: 31655
                         }
                     }
                 });
 
-                // hack to make more light show when they are added
-                setTimeout(function () {
+                window.requestAnimationFrame(() => {
                     this.$['light-list'].fire('iron-resize');
-                }.bind(this), 10);
+                });
             }
         });
     </script>

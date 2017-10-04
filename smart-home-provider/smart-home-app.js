@@ -256,7 +256,7 @@ function registerAgent(app) {
    */
   function sync(data, response) {
     console.log('sync', JSON.stringify(data));
-    let devices = app. smartHomePropertiesSync(data.uid);
+    let devices = app.smartHomePropertiesSync(data.uid);
     if (!devices) {
       response.status(500).set({
         'Access-Control-Allow-Origin': '*',
@@ -267,6 +267,7 @@ function registerAgent(app) {
     let deviceList = [];
     Object.keys(devices).forEach(function (key) {
       if (devices.hasOwnProperty(key) && devices[key]) {
+        console.log("Getting device information for id '" + key + "'");
         let device = devices[key];
         device.id = key;
         deviceList.push(device);
@@ -439,7 +440,16 @@ function registerAgent(app) {
       let curCommand = data.commands[i];
       for (let j = 0; j < curCommand.execution.length; j++) {
         let curExec = curCommand.execution[j];
-        respCommands.push(execDevices(data.uid, curExec, curCommand.devices));
+        let devices = curCommand.devices;
+        for (let k = 0; k < devices.length; k++) {
+          let executionResponse = execDevice(data.uid, curExec, devices[k]);
+          console.log("Device exec response", JSON.stringify(executionResponse));
+          respCommands.push({
+            ids: [devices[k].id],
+            status: executionResponse.status,
+            errorCode: executionResponse.errorCode ? executionResponse.errorCode : undefined
+          });
+        }
       }
     }
     let resBody = {
@@ -448,73 +458,10 @@ function registerAgent(app) {
         commands: respCommands
       }
     };
-    console.log('exec response', JSON.stringify(data));
+    console.log('exec response', JSON.stringify(resBody));
     response.status(200).json(resBody);
     return resBody;
   }
-
-  /**
-   *
-   * @param uid
-   * @param command
-   * {
-   *   "command": "action.devices.commands.OnOff",
-   *   "params": {
-   *       "on": true
-   *   }
-   * }
-   * @param devices
-   * [{
-   *   "id": "123",
-   *   "customData": {
-   *      "fooValue": 74,
-   *      "barValue": false
-   *   }
-   * }, {
-   *   "id": "456",
-   *   "customData": {
-   *      "fooValue": 12,
-   *      "barValue": true
-   *   }
-   * }, {
-   *   "id": "987",
-   *   "customData": {
-   *      "fooValue": 35,
-   *      "barValue": false,
-   *      "bazValue": "sheep dip"
-   *   }
-   * }]
-   * @return {Array}
-   * [{
-   *   "ids": ["123"],
-   *   "status": "SUCCESS"
-   *   "states": {
-   *     "on": true,
-   *     "online": true
-   *   }
-   * }, {
-   *   "ids": ["456"],
-   *   "status": "SUCCESS"
-   *   "states": {
-   *     "on": true,
-   *     "online": true
-   *   }
-   * }, {
-   *   "ids": ["987"],
-   *   "status": "OFFLINE",
-   *   "states": {
-   *     "online": false
-   *   }
-   * }]
-   */
-  function execDevices(uid, command, devices) {
-    let payload = [];
-    for (let i = 0; i < devices.length; i++) {
-      payload.push(execDevice(uid, command, devices[i]));
-    }
-    return payload;
-  }
-
 
   /**
    *
@@ -560,9 +507,11 @@ function registerAgent(app) {
       states: {}
     };
     let execDevice = app.smartHomeExec(uid, curDevice);
-    if (!execDevice) {
-      payLoadDevice.status = "OFFLINE";
-      return execDevice;
+    console.info("execDevice", JSON.stringify(execDevice[device.id]));
+    // Check whether the device exists or whether it exists and it is disconnected.
+    if (!execDevice || !execDevice[device.id].states.online) {
+      console.warn("The device you want to control is offline");
+      return {status: "ERROR", errorCode: "deviceOffline"};
     }
     let deviceCommand = {
       type: 'change',
@@ -580,11 +529,11 @@ function registerAgent(app) {
     Object.keys(command.params).forEach(function (key) {
       if (command.params.hasOwnProperty(key)) {
         if (payLoadDevice.states[key] != command.params[key]) {
-          payLoadDevice.status = "FAILURE";
+          return {status: "ERROR", errorCode: "notSupported"};
         }
       }
     });
-    return payLoadDevice;
+    return {status: "SUCCESS"};
   }
 }
 

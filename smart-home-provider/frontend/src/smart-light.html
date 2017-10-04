@@ -70,7 +70,7 @@ limitations under the License.
             <div id="button-bar" class="layout horizontal justified">
                 <div id="light-id" class="circle">[[light.id]]</div>
                 <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud" on-tap="_handleCloud"></paper-icon-button>
+                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
@@ -126,6 +126,10 @@ limitations under the License.
                 this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
                 this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
                 this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
+                this.async(() => {
+                    this._handleRegister();
+                });
             },
 
             _handleOnOff: function () {
@@ -134,6 +138,17 @@ limitations under the License.
             },
 
             _handleCloud: function () {
+                // Toggle online state on button press.
+                this.light.states.online = !this.light.states.online;
+                this._handleRegister();
+                this._changeEventSource();
+            },
+
+            _handleRegister: function() {
+                // Register source if undefined
+                if (!this._source) {
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
+                }
                 this._callSmartHomeProviderCloud('/register-device', 'POST', this.light)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
@@ -144,7 +159,6 @@ limitations under the License.
             _handleDelete: function () {
                 // this.light.states.online = false;
                 this._callSmartHomeProviderCloud('/remove-device', 'POST', this.light)
-                    .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
                     });
@@ -187,10 +201,9 @@ limitations under the License.
             },
 
             _changeEventSource: function () {
-                if (this.light.states.online) {
+                if (!this.light.states.online) {
                     // going offline
                     this._source.close();
-                    this.light.states.online = false;
                 } else {
                     // going online
                     this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
@@ -208,7 +221,6 @@ limitations under the License.
                             console.log('>>> error in event source:', error);
                         }
                     }.bind(this));
-                    this.light.states.online = true;
                 }
                 this._notifyStateChange();
             },
@@ -227,6 +239,7 @@ limitations under the License.
             },
 
             _lightChanged: function () {
+                console.log("Light changed!", this.light.states);
                 this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
 //                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
                 if (this.light.states.on

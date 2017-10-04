@@ -39,7 +39,7 @@ app.use(session({
   cookie: {secure: false}
 }));
 const deviceConnections = {};
-const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key';
+const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
 
 /**
  * auth method
@@ -108,6 +108,7 @@ app.post('/smart-home-api/register-device', function (request, response) {
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
+    console.error("Invalid auth", authToken, "for user", uid);
     response.status(403).set({
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
@@ -149,6 +150,7 @@ app.post('/smart-home-api/remove-device', function (request, response) {
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
+    console.error("Invalid auth", authToken, "for user", uid);
     response.status(403).set({
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
@@ -368,7 +370,7 @@ app.smartHomeExec = function (uid, device) {
   // console.log('smartHomeExec', device);
   datastore.execDevice(uid, device);
   let executedDevice = datastore.getStatus(uid, [device.id]);
-  console.log('smartHomeExec executedDevice', executedDevice);
+  console.log('smartHomeExec executedDevice', JSON.stringify(executedDevice));
   return executedDevice;
 };
 
@@ -412,9 +414,10 @@ app.requestSync = function (authToken, uid) {
     'agentUserId': uid
   };
   options.body = JSON.stringify(optBody);
+  console.info("POST REQUEST_SYNC", requestSyncEndpoint + apiKey);
   fetch(requestSyncEndpoint + apiKey, options).
     then(function(res) {
-      console.log("request-sync response", res.status);
+      console.log("request-sync response", res.status, res.statusText);
     });
 };
 
@@ -461,6 +464,7 @@ const server = app.listen(appPort, function () {
       console.log("");
       console.log("Then set the Token URL to:");
       console.log("    " + url + "/token");
+      console.log("");
 
       registerGoogleHa(app);
       registerAuth(app);
