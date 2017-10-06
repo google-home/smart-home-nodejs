@@ -1,0 +1,248 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>Smart Home Provider</title>
+    <meta name="description" content="Smart Home virtual devices">
+
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- See https://goo.gl/OOhYW5 for web app manifests -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- See https://goo.gl/qRE0vM for Chrome on Android theme-color attribute -->
+    <meta name="theme-color" content="#3f51b5">
+
+    <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Smart Home Gizmos">
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Smart Home Gizmos">
+
+    <!-- Homescreen icons -->
+    <link rel="apple-touch-icon" href="images/manifest/icon-48x48.png">
+    <link rel="apple-touch-icon" sizes="72x72"
+          href="images/manifest/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96"
+          href="images/manifest/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="144x144"
+          href="images/manifest/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="192x192"
+          href="images/manifest/icon-192x192.png">
+
+    <!-- Tile icon for Windows 8 (144x144 + tile color) -->
+    <meta name="msapplication-TileImage"
+          content="images/manifest/icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#3f51b5">
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <!-- login -->
+    <meta name="google-signin-scope" content="profile email">
+
+    <script>
+        const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = '/smart-home-api';
+
+        // Setup Polymer options
+        window.Polymer = {
+            dom: 'shadow',
+            lazyRegister: true
+        };
+
+        // Load webcomponentsjs polyfill if browser does not support native Web Components
+        (function () {
+            'use strict';
+
+            var onload = function () {
+                // For native Imports, manually fire WebComponentsReady so user code
+                // can use the same code path for native and polyfill'd imports.
+                if (!window.HTMLImports) {
+                    document.dispatchEvent(
+                            new CustomEvent('WebComponentsReady', {bubbles: true})
+                    );
+                }
+            };
+
+            var webComponentsSupported = (
+                    'registerElement' in document
+                    && 'import' in document.createElement('link')
+                    && 'content' in document.createElement('template')
+            );
+
+            if (!webComponentsSupported) {
+                var script = document.createElement('script');
+                script.async = true;
+                script.src = 'bower_components/webcomponentsjs/webcomponents-lite.min.js';
+                script.onload = onload;
+                document.head.appendChild(script);
+            } else {
+                onload();
+            }
+        })();
+
+        // Load pre-caching Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('service-worker.js');
+            });
+        }
+    </script>
+
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <link rel="import" href="bower_components/app-layout/app-header/app-header.html">
+    <link rel="import" href="bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+    <link rel="import" href="bower_components/app-layout/app-toolbar/app-toolbar.html">
+    <link rel="import" href="bower_components/iron-icon/iron-icon.html">
+    <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="bower_components/iron-icons/communication-icons.html">
+    <link rel="import" href="bower_components/iron-icons/social-icons.html">
+    <link rel="import" href="bower_components/iron-list/iron-list.html">
+    <link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+    <link rel="import" href="bower_components/paper-input/paper-input.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', 'Noto', sans-serif;
+            line-height: 1.5;
+            min-height: 100vh;
+            background-color: #eeeeee;
+        }
+    </style>
+</head>
+<body>
+    <style>
+        app-header {
+            color: #fff;
+            background-color: #4285f4;
+        }
+
+        app-header paper-icon-button {
+            --paper-icon-button-ink-color: white;
+        }
+
+        div.main {
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            width: 100%;
+        }
+
+        div.main > h1 {
+            color: #333;
+        }
+
+        paper-input {
+            width: calc(100% - 40px);
+            margin-left: 20px;
+            text-align: left;
+        }
+
+        paper-input iron-icon {
+            margin-right: 16px;
+            color: #555;
+        }
+
+        paper-button {
+            color: white;
+            background-color: #4285f4;
+        }
+
+        @media (max-width:800px) {
+            div.main > h1 {
+                font-size: 16pt;
+            }
+        }
+
+        @media (min-width:800px) {
+            div.main {
+                width: 600px;
+            }
+            paper-input {
+                margin-left: 80px;
+            }
+        }
+    </style>
+
+    <app-header condenses reveals effects="waterfall">
+        <app-toolbar>
+            <paper-icon-button icon="home"></paper-icon-button>
+            <div main-title>Smart Home Provider</div>
+            <div>Welcome</div>
+        </app-toolbar>
+    </app-header>
+
+    <div class='main'>
+        <h1>Link your devices to Google</h1>
+        <img src='images/assistant-small.png' />
+
+        <form action='/login' method='post' id='loginform'>
+            <paper-input label="Username" value="rick" name="username">
+                <iron-icon icon="social:person" prefix></iron-icon>
+            </paper-input>
+            <paper-input label="Password" value="oldman" type="password" name="password">
+                <iron-icon icon="communication:vpn-key" prefix></iron-icon>
+            </paper-input>
+
+            <input type="hidden" name="redirect">
+            <input type="hidden" name="client_id">
+            <input type="hidden" name="redirect_uri">
+            <input type="hidden" name="state" />
+
+            <paper-button raised onclick="formSubmit()">Login</paper-button>
+        </form>
+    </div>
+
+    <script>
+        function getUrlParameters () {
+            // Get each parameter
+            let query = window.location.search.substr(1);
+            // Split each parameter into a key-value pair
+            let keyValues = query.split('&');
+            let parameterMap = new Map();
+            for (let i in keyValues) {
+                // Split into <key>=<value>
+                let param = keyValues[i];
+                let splitParam = param.split('=');
+                parameterMap.set(splitParam[0], splitParam[1]);
+            }
+            return parameterMap;
+        }
+
+        function formSubmit () {
+            console.log(1);
+            // Get URL parameters
+            let params = getUrlParameters();
+            // Set each hidden input from a value obtained from the URL
+            document.querySelector('[name="redirect_uri"]').value = params.get('redirect_uri');
+            document.querySelector('[name="client_id"]').value = params.get('client_id');
+            document.querySelector('[name="redirect_uri"]').value = params.get('redirect_uri');
+            document.querySelector('[name="state"]').value = params.get('state');
+            document.querySelector('#loginform').submit();
+        }
+    </script>
+</body>
+</html>

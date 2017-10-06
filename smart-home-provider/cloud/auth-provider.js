@@ -17,6 +17,7 @@
  */
 
 const Auth = {};
+const express = require('express');
 const authstore = require('./datastore').Auth;
 const util = require('util');
 const session = require('express-session');
@@ -192,12 +193,7 @@ Auth.registerAuth = function (app) {
 
   });
 
-  app.set('view engine', 'ejs');
-
-  // Get login.
-  app.get('/login', function (req, res) {
-    return login(req, res);
-  });
+  app.use('/login', express.static('../frontend/login.html'));
 
   // Post login.
   app.post('/login', function (req, res) {
