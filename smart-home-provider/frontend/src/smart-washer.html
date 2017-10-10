@@ -14,7 +14,7 @@ limitations under the License.
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -25,7 +25,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="shared-styles.html">
 
-<dom-module id="smart-vacuum">
+<dom-module id="smart-washer">
     <template>
         <style include="iron-flex iron-flex-alignment shared-styles">
             paper-input {
@@ -58,32 +58,32 @@ limitations under the License.
 
         <div class="card">
             <div id="button-bar" class="layout horizontal justified">
-                <div id="vacuum-id" class="circle">[[vacuum.id]]</div>
+                <div id="washer-id" class="circle">[[washer.id]]</div>
                 <div class="flex"></div>
                 <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
+                <paper-icon-button id="delete" icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
-            <!-- vacuum icon -->
+            <!-- washer icon -->
             <div class="layout horizontal center-justified">
-                <iron-icon id="vacuum" icon="hardware:router" on-tap="_handleOnOff"></iron-icon>
+                <iron-icon id="washer" icon="icons:save" on-tap="_handleOnOff"></iron-icon>
             </div>
 
             <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{vacuum.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{vacuum.properties.name.name}}"></paper-input>
-            <!-- <div>Default Name: {{vacuum.properties.name.defaultNames.0}}</div> -->
+            <paper-input id="nickname" label="Nickname" value$="{{washer.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{washer.properties.name.name}}"></paper-input>
+            <!-- <div>Default Name: {{washer.properties.name.defaultNames.0}}</div> -->
         </div>
     </template>
 
     <script>
         Polymer({
-            is: 'smart-vacuum',
+            is: 'smart-washer',
 
             properties: {
-                vacuum: {
+                washer: {
                     type: Object,
-                    observer: '_vacuumChanged'
+                    observer: '_washerChanged'
                 }
             },
 
@@ -99,13 +99,13 @@ limitations under the License.
             },
 
             _handleOnOff: function () {
-                this.vacuum.states.on = !this.vacuum.states.on;
+                this.washer.states.on = !this.washer.states.on;
                 this._notifyStateChange();
             },
 
             _handleCloud: function () {
                 // Toggle online state on button press.
-                this.vacuum.states.online = !this.vacuum.states.online;
+                this.washer.states.online = !this.washer.states.online;
                 this._handleRegister();
                 this._changeEventSource();
             },
@@ -113,9 +113,9 @@ limitations under the License.
             _handleRegister: function() {
                 // Register source if undefined
                 if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.washer.id);
                 }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.vacuum)
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.washer)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
@@ -123,8 +123,8 @@ limitations under the License.
             },
 
             _handleDelete: function () {
-                this.vacuum.states.online = true;
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.vacuum)
+                this.washer.states.online = true;
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.washer)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
@@ -132,10 +132,10 @@ limitations under the License.
                 if (this._source) this._source.close();
 
                 const app = document.querySelector('my-app');
-                const vacuums = app.vacuums;
-                for (var i = 0; i < vacuums.length; i++) {
-                    if (vacuums[i].id == this.vacuum.id) {
-                        app.splice('vacuums', i, 1);
+                const washers = app.washers;
+                for (var i = 0; i < washers.length; i++) {
+                    if (washers[i].id == this.washer.id) {
+                        app.splice('washers', i, 1);
                     }
                 }
             },
@@ -143,10 +143,10 @@ limitations under the License.
             _execNameOrNicknameChange: function (event) {
                 // occurs after enter/tab key pressed or on tapout from input field
                 if (event.target.id == 'nickname') {
-                    this.vacuum.properties.name.nicknames[0] = event.target.value;
+                    this.washer.properties.name.nicknames[0] = event.target.value;
                 }
                 else if (event.target.id == 'name') {
-                    this.vacuum.properties.name.name = event.target.value;
+                    this.washer.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
             },
@@ -168,14 +168,11 @@ limitations under the License.
             },
 
             _changeEventSource: function () {
-                console.log("vacuum", this.vacuum);
-                if (!this.vacuum.states.online) {
-                    if (this._source) {
-                        this._source.close();
-                    }
+                if (!this.washer.states.online) {
+                    if (this._source) this._source.close();
                 } else {
                     // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.washer.id);
                     this._source.addEventListener('change', function (e) {
                         this._changeState(JSON.parse(e.data));
                     }.bind(this));
@@ -184,7 +181,6 @@ limitations under the License.
                     }.bind(this));
                     this._source.addEventListener('error', function (error) {
                         if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
                             return this._changeEventSource();
                         } else {
                             console.log('>>> error in event source:', error);
@@ -195,70 +191,76 @@ limitations under the License.
             },
 
             _changeState: function (changes) {
-                if (!this.vacuum.states.online) {
+                if (!this.washer.states.online) {
                     console.log("device offline, nothing changed");
                 } else {
                     for (var name in changes) {
                         if (name == "start") {
-                            this.vacuum.states.isRunning = changes[name];
+                            this.washer.states.isRunning = changes[name];
                             // starting off device -> turn it on and start it
-                            if (this.vacuum.states.isRunning) {
-                                this.vacuum.states.on = true;
+                            if (this.washer.states.isRunning) {
+                                this.washer.states.on = true;
                             }
                             // if a device has been started/stopped, it can't be paused
-                            this.vacuum.states.isPaused = false;
+                            this.washer.states.isPaused = false;
                         } else if (name == "pause") {
-                            // else if still running and pausable, set isPaused to whatever is in changes                        
-                            if (this.vacuum.properties.attributes.pausable) {
-                                if (this.vacuum.states.isRunning || this.vacuum.states.isPaused) {
-                                    this.vacuum.states.isPaused = changes[name];
-                                    this.vacuum.states.isRunning = !changes[name];
+                            // else if still running and pausable, set isPaused to whatever is in changes
+                            if (this.washer.properties.attributes.pausable) {
+                                if (this.washer.states.isRunning || this.washer.states.isPaused) {
+                                    this.washer.states.isPaused = changes[name];
+                                    this.washer.states.isRunning = !changes[name];
                                 }
-                            } else this.vacuum.states.isRunning = false;
+                            } else this.washer.states.isRunning = false;
                         } else {
                             const value = changes[name];
-                            this.set('vacuum.states.' + name, value);
+                            this.set('washer.states.' + name, value);
                         }
                     }
                 }
-                if (!this.vacuum.states.on) {
+                if (!this.washer.states.on) {
                     // device off, stop everything
-                    this.vacuum.states.isRunning = false;
-                    this.vacuum.states.isPaused = false;
-                } 
+                    this.washer.states.isRunning = false;
+                    this.washer.states.isPaused = false;
+                }
                 this._notifyStateChange();
             },
 
             _notifyStateChange: function (isNameChange) {
-                this._vacuumChanged();
-                if (this.vacuum.states.online) this._exec(isNameChange);
+                this._washerChanged();
+                if (this.washer.states.online) this._exec(isNameChange);
             },
 
-            _vacuumChanged: function () {
-                this.$.cloud.icon = this.vacuum.states.online ? 'cloud' : 'cloud-off';
-                if (this.vacuum.states.on) {
-                    this.$.vacuum.style.color = '#9bea00';
-                } else {
-                    this.$.vacuum.style.color = '#eee';
+            _washerChanged: function () {
+                this.$.cloud.icon = this.washer.states.online ? 'cloud' : 'cloud-off';
+                console.log(this.washer.states);
+                if (this.washer.states.isPaused) {
+                    this.$.washer.style.color = '#ff7733';
+                } else if (this.washer.states.isRunning) {
+                    this.$.washer.style.color = '#3399ff';
+                } else if (this.washer.states.on) {
+                    this.$.washer.style.color = '#9bea00';
+                }
+                if (!this.washer.states.on) {
+                    this.$.washer.style.color = '#eee';
                 }
             },
 
             _exec: function(isNameChange) {
                 if (isNameChange) {
-                    this.vacuum.nameChanged = true;
+                    this.washer.nameChanged = true;
                 } else {
-                    this.vacuum.nameChanged = false;
+                    this.washer.nameChanged = false;
                 }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.vacuum).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.vacuum);
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.washer).then(function () {
+                    // console.log('>>> exec to Smart Home Provider Cloud', this.washer);
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
             },
 
             _pushUp: function (type) {
-                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.vacuum}).then(function () {
-                    console.log('>>> pushed state to Smart Home Provider Cloud', this.vacuum);
+                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.washer}).then(function () {
+                    // console.log('>>> pushed state to Smart Home Provider Cloud', this.washer);
                 }).catch(function (error) {
                     console.log('>>> failed to push state to Smart Home Provider Cloud:', error);
                 });

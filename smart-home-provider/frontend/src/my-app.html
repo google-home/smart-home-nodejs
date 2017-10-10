@@ -21,11 +21,13 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.3.3.css">
 <link rel="import" href="smart-light.html">
 <link rel="import" href="smart-thermostat.html">
 <link rel="import" href="smart-scene.html">
 <link rel="import" href="smart-camera.html">
 <link rel="import" href="smart-vacuum.html">
+<link rel="import" href="smart-washer.html">
 
 <dom-module id="my-app">
     <template>
@@ -99,6 +101,10 @@ limitations under the License.
                 margin: 20% auto;
             }
 
+            #check {
+                display: none;
+            }
+
         </style>
 
         <!-- Main content -->
@@ -142,6 +148,10 @@ limitations under the License.
                 <button dialog-confirm autofocus class="square" id="vacuumSelector" on-tap="_addVacuum">
                     <iron-icon icon="hardware:router"></iron-icon>
                     <p>Vacuum</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="washerSelector" on-tap="_addWasher">
+                    <iron-icon icon="icons:save"></iron-icon>
+                    <p>Washer</p>
                 </button>
             </div>
         </paper-dialog>
@@ -191,6 +201,14 @@ limitations under the License.
                 </div>
             </template>
         </iron-list>
+
+        <iron-list id="washer-list" items="[[washers]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-washer washer=[[item]]></smart-washer>
+                </div>
+            </template>
+        </iron-list>
     </template>
 
     <script>
@@ -206,7 +224,7 @@ limitations under the License.
             properties: {
                 hide: {
                     type: Boolean,
-                    value: true
+                    value: false
                 },
                 lights: {
                     type: Array
@@ -222,6 +240,9 @@ limitations under the License.
                 },
                 vacuums: {
                     type: Array
+                },
+                washers: {
+                    type: Array
                 }
             },
 
@@ -231,6 +252,8 @@ limitations under the License.
                 this.scenes = [];
                 this.cameras = [];
                 this.vacuums = [];
+                this.washers = [];
+                // this.$.check.addEventListener('click', this._startTests.bind(this));
                 this.$.add.addEventListener('click', e => this.$.modal.open());
                 this._auth();
                 for (var i=0; i<4; i++) {
@@ -275,17 +298,19 @@ limitations under the License.
                     .then(function(response) {
                         return response.json();
                     }).then(function(json) {
+                        const uid = json.uid;
+                        delete json.uid;
                         for (const key in json) {
                             devices[key] = json[key];
                         }
-                        return app._handleRefresh(app);
+                        console.log(devices);
+                        return app._handleRefresh(app, uid);
                     });
             },
 
-            _handleRefresh: function (app) {
+            _handleRefresh: function (app, uid) {
                 if (Object.keys(devices).length == 0) {
                     console.log("no devices");
-                    app.showNoDeviceMessage();
                 } else {
                     for (const id of Object.keys(devices)) {
                         devices[id].id = id;
@@ -306,7 +331,14 @@ limitations under the License.
                                 app._addCamera(null, devices[id]);
                                 break;
                             case 'action.devices.types.VACUUM':
+                                devices[id].states.isRunning = false;
+                                devices[id].states.isPaused = false;
                                 app._addVacuum(null, devices[id]);
+                                break;
+                            case 'action.devices.types.WASHER':
+                                devices[id].states.isRunning = false;
+                                devices[id].states.isPaused = false;
+                                app._addWasher(null, devices[id]);
                                 break;
                             default:
                                 break;
@@ -572,7 +604,8 @@ limitations under the License.
                                             setting_synonym: ["fast", "quick"]
                                         }]
                                     }]
-                                }]
+                                }],
+                                pausable: false
                             },
                             roomHint: '',
                             deviceInfo: {
@@ -587,16 +620,119 @@ limitations under the License.
                         },
                         states: {
                             on: false,
-                            online: true
+                            online: true,
+                            isRunning: false,
+                            isPaused: false,
+                            currentToggleSettings: {
+                                quiet: false
+                            }
                         }
                     });
                     window.requestAnimationFrame(() => {
                         this.$['vacuum-list'].fire('iron-resize');
                     });
                 }
+            },
+
+            _addWasher: function (event, washer) {
+                this.hideNoDeviceMessage();
+                if (washer && washer.hasOwnProperty("id")) {
+                    this.push('washers', washer);
+                } else {
+                    var washerId = getNextDeviceId();
+                    this.push('washers', {
+                        id: String(washerId),
+                        properties : {
+                            type: 'action.devices.types.WASHER',
+                            traits: [
+                                'action.devices.traits.OnOff',
+                                'action.devices.traits.StartStop',
+                                'action.devices.traits.Modes',
+                                'action.devices.traits.Toggles',
+                                'action.devices.traits.RunCycle'
+                            ],
+                            name: {
+                                defaultNames: ['Smart Washer'],
+                                name: 'Smart Washer ' + washerId,
+                                nicknames: ['Washing Machine']
+                            },
+                            willReportState: false,
+                            attributes: {
+                                availableModes: [
+                                    {
+                                        name: "load",
+                                        name_values: [{
+                                            name_synonym:  [ "load", "size", "load size" ],
+                                            lang: "ENGLISH" }],
+                                        settings: [{
+                                            setting_name: "small",
+                                            setting_values: [{
+                                                setting_synonym: [ "small", "half" ],
+                                                lang: "ENGLISH"
+                                            }]
+                                        }, {
+                                            setting_name: "large",
+                                            setting_values: [{
+                                                setting_synonym: [ "large", "full"],
+                                                lang: "ENGLISH"
+                                            }]
+                                        }],
+                                        ordered: true
+                                    }
+                                ],
+                                availableToggles: [
+                                    {
+                                    name: "extraRinse",
+                                    name_values: [{
+                                        name_synonym: ["extra", "rinse"],
+                                        lang: "ENGLISH" }]
+                                    }, {
+                                    name: "permanentPress",
+                                    name_values: [{
+                                        name_synonym: ["permanent", "press"],
+                                        lang: "ENGLISH" }]
+                                    },
+                                ],
+                                pausable: true
+                            },
+                            roomHint: '',
+                            deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'g1401',
+                                swVersion: '1.0.11',
+                                hwVersion: '1.0'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                            }
+                        },
+                        states: {
+                            on: false,
+                            online: true,
+                            isRunning: false,
+                            isPaused: false,
+                            currentRunCycle: [{
+                                currentCycle: "rinse",
+                                nextCycle: "spin",
+                                lang: "en"
+                            }],
+                            currentTotalRemainingTime: 3600,
+                            currentCycleRemainingTime: 1800,
+                            currentModeSettings: {
+                                load: "large"
+                            },
+                            currentToggleSettings: {
+                                extraRinse: false,
+                                permanentPress: false
+                            }
+                        }
+                    });
+
+                    window.requestAnimationFrame(() => {
+                        this.$['washer-list'].fire('iron-resize');
+                    });
+                }
             }
-
-
         });
     </script>
 </dom-module>
