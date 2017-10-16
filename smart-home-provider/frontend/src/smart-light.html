@@ -87,25 +87,17 @@ limitations under the License.
             -->
 
             <!-- light icon -->
-            <div class="layout horizontal center-justified">
+            <div align="center">
+                <paper-slider id="brightness" title="Brightness" editable="true"
+                    disabled="[[!light.states.on]]" value="{{light.states.brightness}}"
+                    on-value-change="_handleBrightness"></paper-slider>
                 <iron-icon id="light" icon="image:wb-incandescent" on-tap="_handleOnOff"></iron-icon>
-                <div class="layout vertical center-justified">
-                    <div>Brightness</div>
-                    <div id="brightness" class="circle">[[light.states.brightness]]</div>
-                </div>
             </div>
 
             <!-- controls -->
-            <!--
-                  <div class="layout horizontal justified">
-            -->
-            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}"></paper-input>
             <paper-input id="name" label="Name" value$="{{light.properties.name.name}}"></paper-input>
+            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}"></paper-input>
             <div>Default Name: {{light.properties.name.defaultNames.0}}</div>
-            <!--
-                    <paper-slider value="50"></paper-slider>
-                  </div>
-            -->
         </div>
     </template>
 
@@ -134,6 +126,11 @@ limitations under the License.
 
             _handleOnOff: function () {
                 this.light.states.on = !this.light.states.on;
+                this._notifyStateChange();
+            },
+
+            _handleBrightness: function () {
+                this.light.states.brightness = this.$.brightness.value;
                 this._notifyStateChange();
             },
 
@@ -256,6 +253,7 @@ limitations under the License.
                 } else {
                     this.$.light.style.color = '#eee';
                 }
+                this.$.brightness.disabled = !this.light.states.on;
 //                Polymer.updateStyles();
             },
 
