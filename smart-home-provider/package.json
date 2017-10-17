@@ -4,7 +4,7 @@
   "description": "Mock implementation of device manufacturer platform to facilitate development of sample device and adapter.",
   "main": "cloud/smart-home-provider-cloud.js",
   "scripts": {
-    "start": "node cloud/smart-home-provider-cloud.js smart-home-pub=\"https://smart-home-test.appspot.com\"",
+    "start": "cd cloud && nodejs smart-home-provider-cloud.js isLocal",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
