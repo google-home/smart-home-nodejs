@@ -369,17 +369,17 @@ limitations under the License.
                     .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
             },
 
-            _getNickname: function(id) {
-                var names = ['table lamp', 'reading lamp', 'doorway', 'stairway', 'wall thermostat', 'party time', 'default'];
-                if (id < names.length) {
-                    return names[id];
+            _getNickname: function(nicknames, typeSize, id) {
+                if (nicknames && typeSize < nicknames.length) {
+                    return nicknames[typeSize];
                 } else {
-                    return `device_nickname_${id}`;
+                    return `smart device ${id}`;
                 }
             },
 
             _addLight: function (event, light) {
                 this.hideNoDeviceMessage();
+                let nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
                 if (light && light.hasOwnProperty("id")) {
                     this.push('lights', light);
                 } else {
@@ -396,7 +396,7 @@ limitations under the License.
                             name: {
                                 defaultNames: ['Smart Light'],
                                 name: 'Smart Light ' + lightId,
-                                nicknames: [ this._getNickname(lightId) ]
+                                nicknames: [ this._getNickname(nicknames, this.lights.length, lightId) ]
                             },
                             willReportState: true,
                             roomHint: '',
@@ -429,6 +429,7 @@ limitations under the License.
 
             _addThermostat: function(event, thermostat) {
                 this.hideNoDeviceMessage();
+                let nicknames = ['wall thermostat', 'upstairs thermostat'];
                 if (thermostat && thermostat.hasOwnProperty("id")) {
                     this.push('thermostats', thermostat);
                 } else {
@@ -443,7 +444,7 @@ limitations under the License.
                             name: {
                                 defaultNames: ['Smart Thermostat'],
                                 name: 'Smart Thermostat ' + thermostatId,
-                                nicknames: [ this._getNickname(thermostatId) ]
+                                nicknames: [ this._getNickname(nicknames, this.thermostats.length, thermostatId) ]
                             },
                             willReportState: false,
                             roomHint: 'hallway',
@@ -490,8 +491,8 @@ limitations under the License.
                             ],
                             name: {
                                 defaultNames: [],
-                                name: this._getNickname(sceneId),
-                                nicknames: []
+                                name: 'Smart Scene ' + sceneId,
+                                nicknames: [ this._getNickname(undefined, this.scenes.length, sceneId) ]
                             },
                             willReportState: false,
                             attributes: {
@@ -520,6 +521,7 @@ limitations under the License.
 
             _addCamera: function(event, camera) {
                 this.hideNoDeviceMessage();
+                let nicknames = ['backyard camera', 'security camera'];
                 if (camera && camera.hasOwnProperty("id")) {
                     this.push('cameras', camera);
                 } else {
@@ -533,8 +535,8 @@ limitations under the License.
                             ],
                             name: {
                                 defaultNames: ['Smart Camera ' + cameraId],
-                                name: this._getNickname(cameraId),
-                                nicknames: ['security camera']
+                                name: 'Smart Camera ' + cameraId,
+                                nicknames: [this._getNickname(nicknames, this.cameras.length, cameraId)]
                             },
                             willReportState: false,
                             attributes: {
@@ -563,6 +565,7 @@ limitations under the License.
 
             _addVacuum: function (event, vacuum) {
                 this.hideNoDeviceMessage();
+                let nicknames = ['kitchen vacuum', 'robo vacuum']
                 if (vacuum && vacuum.hasOwnProperty("id")) {
                     this.push('vacuums', vacuum);
                 } else {
@@ -581,7 +584,7 @@ limitations under the License.
                             name: {
                                 defaultNames: ['Smart Vacuum'],
                                 name: 'Smart Vacuum ' + vacuumId,
-                                nicknames: ['Robo Vacuum']
+                                nicknames: [this._getNickname(nicknames, this.vacuums.length, vacuumId)]
                             },
                             willReportState: false,
                             attributes: {
@@ -644,6 +647,7 @@ limitations under the License.
 
             _addWasher: function (event, washer) {
                 this.hideNoDeviceMessage();
+                let nicknames = ['washing machine', 'acme washer']
                 if (washer && washer.hasOwnProperty("id")) {
                     this.push('washers', washer);
                 } else {
@@ -662,7 +666,7 @@ limitations under the License.
                             name: {
                                 defaultNames: ['Smart Washer'],
                                 name: 'Smart Washer ' + washerId,
-                                nicknames: ['Washing Machine']
+                                nicknames: [this._getNickname(nicknames, this.washers.length, washerId)]
                             },
                             willReportState: false,
                             attributes: {
