@@ -247,20 +247,28 @@ limitations under the License.
             },
 
             ready: function () {
+                // Reset all user devices
                 this.lights = [];
                 this.thermostats = [];
                 this.scenes = [];
                 this.cameras = [];
                 this.vacuums = [];
                 this.washers = [];
-                // this.$.check.addEventListener('click', this._startTests.bind(this));
-                this.$.add.addEventListener('click', e => this.$.modal.open());
-                this._auth();
-                for (var i=0; i<4; i++) {
-                    this._addLight();
-                }
-                this._addThermostat();
-                this._addScene();
+
+                window.requestAnimationFrame(() => {
+                    this.$.add.addEventListener('click', e => this.$.modal.open());
+                    this._auth()
+                        .then(() => {
+                            const options = {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + AUTH_TOKEN
+                                }
+                            };
+                            return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/reset-devices', options)
+                        });
+                });
             },
 
             showProgress: function (message) {

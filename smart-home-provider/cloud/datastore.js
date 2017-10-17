@@ -447,6 +447,20 @@ Data.registerDevice = function (uid, device) {
 };
 
 /**
+ * resets user account, deleting all devices on page refresh
+ */
+Data.resetDevices = function (uid) {
+  // Deletes all devices for the user.
+  if (!Data[uid]) {
+    console.error("cannot remove a device without first registering the user!");
+    return;
+  }
+  console.info("Deleting all devices for " + uid);
+  Data[uid] = {};
+  Data.version = 0;
+}
+
+/**
  * removes a device from authstore
  *
  * @param uid
@@ -457,6 +471,7 @@ Data.removeDevice = function (uid, device) {
     console.error("cannot remove a device without first registering the user!");
     return;
   }
+  console.info("Deleting device " + device.id + " for " + uid);
   delete Data[uid][device.id];
   Data.version++;
 };
@@ -486,5 +501,6 @@ exports.registerUser = Data.registerUser;
 exports.removeUser = Data.removeUser;
 exports.execDevice = Data.execDevice;
 exports.registerDevice = Data.registerDevice;
+exports.resetDevices = Data.resetDevices;
 exports.removeDevice = Data.removeDevice;
 exports.Auth = Auth;
