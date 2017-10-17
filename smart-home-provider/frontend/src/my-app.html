@@ -383,7 +383,6 @@ limitations under the License.
                             traits: [
                                 'action.devices.traits.OnOff',
                                 'action.devices.traits.Brightness',
-                                'action.devices.traits.ColorTemperature',
                                 'action.devices.traits.ColorSpectrum'
                             ],
                             name: {
@@ -445,6 +444,10 @@ limitations under the License.
                                 model: 'g1338',
                                 swVersion: '1.0.31',
                                 hwVersion: '1.1'
+                            },
+                            attributes: {
+                                availableThermostatModes: 'off,heat,cool,on',
+                                thermostatTemperatureUnit: 'C'
                             },
                             customData: {
                                 smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
@@ -518,10 +521,7 @@ limitations under the License.
                         properties : {
                             type: 'action.devices.types.CAMERA',
                             traits: [
-                                // 'action.devices.traits.OnOff',
-                                'action.devices.traits.CameraStream',
-                                'action.devices.traits.CameraPhoto',
-                                'action.devices.traits.CameraClip'
+                                'action.devices.traits.CameraStream'
                             ],
                             name: {
                                 defaultNames: ['Smart Camera ' + cameraId],
