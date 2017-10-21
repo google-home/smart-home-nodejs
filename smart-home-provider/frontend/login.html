@@ -200,10 +200,10 @@ limitations under the License.
         <img src='images/assistant-small.png' />
 
         <form action='/login' method='post' id='loginform'>
-            <paper-input label="Username" value="rick" name="username">
+            <paper-input label="Username" value="rick" name="paper_username">
                 <iron-icon icon="social:person" prefix></iron-icon>
             </paper-input>
-            <paper-input label="Password" value="oldman" type="password" name="password">
+            <paper-input label="Password" value="oldman" type="password" name="paper_password">
                 <iron-icon icon="communication:vpn-key" prefix></iron-icon>
             </paper-input>
 
@@ -211,6 +211,8 @@ limitations under the License.
             <input type="hidden" name="client_id">
             <input type="hidden" name="redirect_uri">
             <input type="hidden" name="state" />
+            <input type="hidden" name="username">
+            <input type="hidden" name="password" />
 
             <paper-button raised onclick="formSubmit()">Login</paper-button>
         </form>
@@ -241,6 +243,8 @@ limitations under the License.
             document.querySelector('[name="client_id"]').value = params.get('client_id');
             document.querySelector('[name="redirect_uri"]').value = params.get('redirect_uri');
             document.querySelector('[name="state"]').value = params.get('state');
+            document.querySelector('[name="username"]').value = document.querySelector('paper-input[name="paper_username"]').value;
+            document.querySelector('[name="password"]').value = document.querySelector('paper-input[name="paper_password"]').value;
             document.querySelector('#loginform').submit();
         }
     </script>
