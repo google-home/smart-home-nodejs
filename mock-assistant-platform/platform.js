@@ -69,7 +69,7 @@ function init() {
   if (doExec)
     exec(endpoint);
   if (doExecTherm)
-    execTherm(endpoint, authToken);
+    execTherm(endpoint);
 }
 
 function sync(endpoint) {
@@ -83,7 +83,7 @@ function sync(endpoint) {
   makeReq(endpoint, postData);
 }
 
-function execTherm(endpoint, authToken){
+function execTherm(endpoint){
     let postData = JSON.stringify({
         "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
         "inputs": [{
@@ -111,7 +111,7 @@ function execTherm(endpoint, authToken){
             }
         }]
     });
-    makeReq(endpoint, postData, authToken);
+    makeReq(endpoint, postData);
 }
 
 function query(endpoint) {

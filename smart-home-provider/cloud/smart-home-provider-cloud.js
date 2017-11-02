@@ -19,10 +19,19 @@ const ngrok = require('ngrok');
 const session = require('express-session');
 
 // internal app deps
-const google_ha = require('./../smart-home-app');
+const google_ha = require('../smart-home-app');
 const datastore = require('./datastore');
 const authProvider = require('./auth-provider');
 const config = require('./config-provider');
+
+// Check that the API key was changed from the default
+if (config.smartHomeProviderApiKey === '<API_KEY>') {
+  console.warn('You need to set the API key in config-provider.\n' +
+    'Visit the Google Cloud Console to generate an API key for your project.\n' +
+    'https://console.cloud.google.com\n' +
+    'Exiting...');
+  process.exit();
+}
 
 const app = express();
 app.use(morgan('dev'));
@@ -31,7 +40,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set('trust proxy', 1); // trust first proxy
 app.use(session({
   genid: function (req) {
-    return authProvider.genRandomString()
+    return authProvider.genRandomString();
   },
   secret: 'xyzsecret',
   resave: false,
@@ -340,9 +349,9 @@ app.get('/getauthcode', function (req, resp) {
       '');
   }
 });
-app.use('/frontend', express.static('../frontend'));
-app.use('/frontend/', express.static('../frontend'));
-app.use('/', express.static('../frontend'));
+app.use('/frontend', express.static('./frontend'));
+app.use('/frontend/', express.static('./frontend'));
+app.use('/', express.static('./frontend'));
 
 app.smartHomeSync = function (uid) {
   // console.log('smartHomeSync');
@@ -440,14 +449,7 @@ const appPort = process.env.PORT || config.devPortSmartHome;
 const server = app.listen(appPort, function () {
   const host = server.address().address;
   const port = server.address().port;
-  // Check that the API key was changed from the default
-  if (config.smartHomeProviderApiKey === '<API_KEY>') {
-    console.warn('You need to set the API key in config-provider.\n' +
-      'Visit the Google Cloud Console to generate an API key for your project.\n' +
-      'https://console.cloud.google.com\n' +
-      'Exiting...');
-    process.exit();
-  }
+
   console.log('Smart Home Cloud and App listening at %s:%s', host, port);
 
   if (config.isLocal) {
@@ -470,22 +472,16 @@ const server = app.listen(appPort, function () {
       console.log("Replace the automation URL in action.json with:");
       console.log("    " + url + "/smarthome");
       console.log("Then run gactions test --action_package action.json --project <YOUR PROJECT ID>");
-      
+
       console.log("=====");
       console.log("In the Actions console, set the Authorization URL to:");
       console.log("    " + url + "/oauth");
-      
+
       console.log("");
       console.log("Then set the Token URL to:");
       console.log("    " + url + "/token");
       console.log("");
-
-      registerGoogleHa(app);
-      registerAuth(app);
     });
-  } else {
-    registerGoogleHa(app);
-    registerAuth(app);
   }
 
 });
@@ -493,6 +489,18 @@ const server = app.listen(appPort, function () {
 function registerGoogleHa(app) {
   google_ha.registerAgent(app);
 }
+
 function registerAuth(app) {
   authProvider.registerAuth(app);
 }
+
+registerGoogleHa(app);
+registerAuth(app);
+
+console.log("\n\nRegistered routes:");
+app._router.stack.forEach(function(r){
+  if (r.route && r.route.path){
+    console.log(r.route.path);
+  }
+})
+

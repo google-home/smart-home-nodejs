@@ -58,7 +58,7 @@ SmartHomeModel.genUser = function (username, password) {
     uid: uid,
     accessToken: token,
     refreshToken: token
-  }
+  };
 };
 
 SmartHomeModel.generateAuthCode = function (uid, clientId) {
@@ -161,10 +161,10 @@ Auth.registerAuth = function (app) {
     let authCode = req.query.code;
 
     if ('code' != response_type)
-      return res.error('response_type ' + response_type + ' must equal "code"');
+      return res.status(500).send('response_type ' + response_type + ' must equal "code"');
 
     if (!authstore.clients[client_id])
-      return res.error('client_id ' + client_id + ' invalid');
+      return res.status(500).send('client_id ' + client_id + ' invalid');
 
     // if you have an authcode use that
     if (authCode) {
@@ -193,7 +193,7 @@ Auth.registerAuth = function (app) {
 
   });
 
-  app.use('/login', express.static('../frontend/login.html'));
+  app.use('/login', express.static('./frontend/login.html'));
 
   // Post login.
   app.post('/login', function (req, res) {
@@ -343,17 +343,17 @@ function handleAuthCode(req, res) {
 function handleRefreshToken(req, res) {
   let client_id = req.query.client_id ? req.query.client_id : req.body.client_id;
   let client_secret = req.query.client_secret ? req.query.client_secret : req.body.client_secret;
-  let refresh_token = req.refresh_token.code ? req.query.refresh_token : req.body.refresh_token;
+  let refresh_token = req.query.refresh_token ? req.query.refresh_token : req.body.refresh_token;
 
   let client = SmartHomeModel.getClient(client_id, client_secret);
   if (!client) {
     console.error('invalid client id or secret %s, %s', client_id, client_secret);
-    return res.error('invalid client id or secret');
+    return res.status(500).send('invalid client id or secret');
   }
 
   if (!refresh_token) {
     console.error('missing required parameter');
-    return res.error('missing required parameter');
+    return res.status(500).send('missing required parameter');
   }
 
   res.status(200).json({

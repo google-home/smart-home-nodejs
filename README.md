@@ -8,7 +8,7 @@ user authentication service with sample users and a user web portal to
 demonstrate the user experience when controlling their lights with your action.
 
 An example of a Smart Home IoT cloud engine is stored in
-`smart-home-provider/cloud`. This consists of both the main
+`smart-home-provider`. This consists of both the main
 `smart-home-provider-cloud.js` main web service, as well as the web portal used
 to interact with virtual devices in `frontend/`. `smart-home-provider-cloud.js`
 is the entry point to the Node.js Express app that runs the IoT cloud service,
@@ -25,7 +25,7 @@ This sample also includes a mock-assistant-platform module that you can use to
 locally test your Smart Home app with mocked requests for the SYNC, QUERY, and
 EXEC intents that you will receive from the Google Assistant. See below for
 instructions on how to use. It is hard coded to use the account under username
-'rick' given in `smart-home-provider/cloud/datastore.js`. However you swap the
+'rick' given in `smart-home-provider/datastore.js`. However you swap the
 appropriate Bearer token in the makeReq method of the mock-assistant-platform.
 
 ## Setup Instructions
@@ -44,7 +44,9 @@ for your project.
 1. Click 'Create credentials'
 1. Click 'API key'
 1. Copy the API key shown and insert it in
-`smart-home-provider/cloud/config-provider.js`
+`smart-home-provider/config-provider.js`
+   Enable Request-Sync API using [these
+   instructions](https://developers.google.com/actions/smarthome/create-app#request-sync).
 1. Set up the web portal
 
         cd smart-home-provider/frontend
@@ -52,16 +54,15 @@ for your project.
         bower install
         cd ..
 
-1. Run cloud/smart-home-provider-cloud.js, either locally or hosted
+1. Run smart-home-provider-cloud.js, either locally or hosted
     * If running locally
 
-          cd cloud/
           npm install
           node smart-home-provider-cloud.js isLocal
 
     * If running in a hosted env,
 
-          node smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
+          node smart-home-provider-cloud.js smart-home="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
@@ -111,10 +112,9 @@ to create the project in the Actions Console, enter your Assistant settings.
        bower install
        cd ..
 
-1. Run cloud/smart-home-provider-cloud.js, either locally or hosted
+1. Run smart-home-provider-cloud.js, either locally or hosted
 
-	  cd cloud/
-	  npm install
+       npm install
 
     * If running locally:
 

@@ -22,5 +22,5 @@ env_variables:
   NODE_ENV: 'production'
 handlers:
 - url: .*
-  script: 'smart-home-provider-cloud.js smart-home-pub="https://smart-home-provider-test.appspot.com"'
+  script: 'index.js smart-home="https://smart-home-provider-test.appspot.com"'
 # [END app_yaml]

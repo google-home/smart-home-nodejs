@@ -36,6 +36,7 @@
  * }
  */
 
+const config = require('./config-provider');
 const Data = {};
 
 /**
@@ -193,6 +194,11 @@ const Auth = {
   authcodes: {}
 };
 
+Auth.clients[config.smartHomeProviderGoogleClientId] = {
+  clientId: config.smartHomeProviderGoogleClientId,
+  clientSecret: config.smartHomeProvideGoogleClientSecret
+};
+
 Data.version = 0;
 
 /**
@@ -328,8 +334,8 @@ Data.getStatus = function (uid, deviceIds = undefined) {
   }
 
   // console.log('getStatus deviceIds', deviceIds);
-  if (!deviceIds || deviceIds == {}
-    || (Object.keys(deviceIds).length === 0 && deviceIds.constructor === Object))
+  if (!deviceIds || deviceIds == {} ||
+      (Object.keys(deviceIds).length === 0 && deviceIds.constructor === Object))
     return Data.getUid(uid);
 
   let devices = {};
