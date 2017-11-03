@@ -289,7 +289,7 @@ limitations under the License.
             },
 
             _showAccount: function () {
-                this.$.toast.text = window.userProfile.getEmail();
+                this.$.toast.text = `Welcome ${window.USERNAME}`;
                 this.$.toast.open();
             },
 
@@ -398,7 +398,7 @@ limitations under the License.
                                 name: 'Smart Light ' + lightId,
                                 nicknames: [ this._getNickname(nicknames, this.lights.length, lightId) ]
                             },
-                            willReportState: true,
+                            willReportState: false,
                             roomHint: '',
                             deviceInfo: {
                                 manufacturer: 'Smart Home Provider',

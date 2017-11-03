@@ -70,6 +70,7 @@ limitations under the License.
             <div id="button-bar" class="layout horizontal justified">
                 <div id="light-id" class="circle">[[light.id]]</div>
                 <div class="flex"></div>
+                <paper-icon-button id="reportState" icon="arrow-upward" on-tap="_handleReportState"></paper-icon-button>
                 <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
@@ -95,8 +96,8 @@ limitations under the License.
             </div>
 
             <!-- controls -->
-            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}"></paper-input>
             <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}"></paper-input>
             <div>Default Name: {{light.properties.name.defaultNames.0}}</div>
         </div>
     </template>
@@ -141,6 +142,12 @@ limitations under the License.
                 this.light.states.online = !this.light.states.online;
                 this._handleRegister();
                 this._changeEventSource();
+            },
+
+            _handleReportState: function() {
+                this.light.properties.willReportState = !this.light.properties.willReportState;
+                this._handleRegister(); // Update reporting state
+                this._lightChanged(); // Update UI
             },
 
             _handleRegister: function() {
@@ -199,6 +206,33 @@ limitations under the License.
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
             },
 
+            _reportState: function () {
+                // Send a JSON payload with the device's updated state to HomeGraph
+                let report = {
+                    devices: [{
+                        id: this.light.id,
+                        traits: {
+                            'action.devices.traits.OnOff': {
+                                on: this.light.states.on
+                            },
+                            'action.devices.traits.Brightness': {
+                                brightness: this.light.states.brightness
+                            },
+                            'action.devices.traits.ColorSpectrum': {
+                                color: {
+                                    name: this.light.states.color.name,
+                                    spectrumRgb: this.light.states.color.spectrumRGB
+                                }
+                            }
+                      }
+                    }]
+                }
+                this._callSmartHomeProviderCloud('/report-state', 'POST', report)
+                    .catch(function (error) {
+                        console.log('>>> failed to update state to HomeGraph:', error);
+                    });
+            },
+
             _changeEventSource: function () {
                 if (!this.light.states.online) {
                     // going offline
@@ -234,12 +268,15 @@ limitations under the License.
 
             _notifyStateChange: function (nameChanged) {
                 this._lightChanged();
+                // if (this.light.properties.willReportState) this._reportState();
                 if (this.light.states.online) this._exec(nameChanged);
             },
 
             _lightChanged: function () {
                 console.log("Light changed!", this.light.states);
                 this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
+                this.$.reportState.style.color = this.light.properties.willReportState ? '#9bea00' : '#757575'
+                this.$.reportState.icon = this.light.properties.willReportState ? 'arrow-upward' : 'arrow-downward'
 //                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
                 if (this.light.states.on
                     && this.light.states.color
