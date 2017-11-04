@@ -61,7 +61,7 @@ for your project.
 
     * If running in a hosted env,
 
-          node smart-home-provider-cloud.js smart-home-pub="https://your_domain.com"
+          node smart-home-provider-cloud.js smart-home="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
