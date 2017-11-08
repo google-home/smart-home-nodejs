@@ -40,6 +40,7 @@ click Add/Import Project.
 1. Navigate to the
 [Google Cloud Console API Manager](https://console.developers.google.com/apis)
 for your project.
+1. Enable the [Google HomeGraph API](https://console.cloud.google.com/apis/api/homegraph.googleapis.com/overview). This will be used to request a new sync and to report the state back to the HomeGraph.
 1. Click Credentials
 1. Click 'Create credentials'
 1. Click 'API key'
