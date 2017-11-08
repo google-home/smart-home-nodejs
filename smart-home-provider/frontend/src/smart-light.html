@@ -130,8 +130,10 @@ limitations under the License.
             },
 
             _handleBrightness: function () {
-                this.light.states.brightness = this.$.brightness.value;
-                this._notifyStateChange();
+                this.async(() => {
+                    this.light.states.brightness = this.$.brightness.value;
+                    this._notifyStateChange();
+                });
             },
 
             _handleCloud: function () {
