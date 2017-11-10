@@ -58,15 +58,15 @@ for your project.
     * If running locally
 
           npm install
-          node smart-home-provider-cloud.js isLocal
+          npm start
 
     * If running in a hosted env,
 
-          node smart-home-provider-cloud.js smart-home="https://your_domain.com"
+          node cloud/smart-home-provider-cloud.js smart-home="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
-1. Log in with one of the sample user accounts, for instance
+1. Log in with one of the sample user accounts, for instance:
 
        user: rick
        password: oldman
