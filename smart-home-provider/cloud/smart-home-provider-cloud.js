@@ -149,6 +149,38 @@ app.post('/smart-home-api/register-device', function (request, response) {
 });
 
 /**
+ * Can be used to reset all devices for a user account.
+ */
+app.post('/smart-home-api/reset-devices', function (request, response) {
+
+  let authToken = authProvider.getAccessToken(request);
+  let uid = datastore.Auth.tokens[authToken].uid;
+
+  if (!datastore.isValidAuth(uid, authToken)) {
+    console.error("Invalid auth", authToken, "for user", uid);
+    response.status(403).set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }).json({error: "invalid auth"});
+    return;
+  }
+
+  let device = request.body;
+  datastore.resetDevices(uid);
+
+  // Resync for the user
+  app.requestSync(authToken, uid);
+
+  // otherwise, all good!
+  response.status(200)
+    .set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    })
+    .send(datastore.getUid(uid));
+});
+
+/**
  * Can be used to unregister a device.
  * Removing a device would be supplying the device id without any traits.
  */
