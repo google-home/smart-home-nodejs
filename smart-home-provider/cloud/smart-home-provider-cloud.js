@@ -499,20 +499,20 @@ const server = app.listen(appPort, function () {
       console.log("|                                                   |");
       console.log("|###################################################|");
 
-      // Add note about action.json
       console.log("=====");
-      console.log("Replace the automation URL in action.json with:");
+      console.log("Visit the Actions on Google console at http://console.actions.google.com")
+      console.log("Replace the webhook URL in the Actions section with:");
       console.log("    " + url + "/smarthome");
-      console.log("Then run gactions test --action_package action.json --project <YOUR PROJECT ID>");
 
-      console.log("=====");
-      console.log("In the Actions console, set the Authorization URL to:");
+      console.log("In the console, set the Authorization URL to:");
       console.log("    " + url + "/oauth");
 
       console.log("");
       console.log("Then set the Token URL to:");
       console.log("    " + url + "/token");
       console.log("");
+
+      console.log("Finally press the 'TEST DRAFT' button");
     });
   }
 

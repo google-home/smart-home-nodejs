@@ -80,10 +80,7 @@ enable it for cloud control.
 
 #### Use Actions on Google console
 
-1. Return to the Actions Console project. Click 'Use Actions SDK'.
-1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /smarthome).
-1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
-to run the command given with the 'action.json' file as your Action Package.
+1. Return to the Actions Console project. Click 'Smart home actions'.
 1. Click Okay.
 1. Click ADD under App information.
 1. Give your App some information like an invocation name, some description, and
@@ -108,9 +105,9 @@ to create the project in the Actions Console, enter your Assistant settings.
 1. Click the '+' sign to add a device.
 1. Find your app in the list of providers.
 1. Log in to your service.
-1. Start using the Google Assistant or Simulator in the Actions Console to control your devices. Try saying 'turn my lights on'.
+1. Start using the Google Assistant in the Actions Console to control your devices. Try saying 'turn my lights on'.
 
-:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://xyz123.ngrok.io and click the cloud icon to enable a device you will need to unlink and then re-link your account to see the new or removed devices.
+:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://xyz123.ngrok.io and click the add icon to create a device your server will receive a new SYNC command.
 
 
 ### Steps for testing with mock-assistant-platform
