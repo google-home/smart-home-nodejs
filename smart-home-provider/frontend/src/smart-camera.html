@@ -146,7 +146,7 @@ limitations under the License.
 
                 for (var i = 0; i < cameras.length; i++) {
                     if (cameras[i].id == this.camera.id) {
-                        app.splice('cameras', i, 1);
+                        app.removeDevice('cameras', i);
                     }
                 }
             },

@@ -135,7 +135,7 @@ limitations under the License.
                 const vacuums = app.vacuums;
                 for (var i = 0; i < vacuums.length; i++) {
                     if (vacuums[i].id == this.vacuum.id) {
-                        app.splice('vacuums', i, 1);
+                        app.removeDevice('vacuums', i);
                     }
                 }
             },

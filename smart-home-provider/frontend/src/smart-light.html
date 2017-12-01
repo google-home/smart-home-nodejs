@@ -174,7 +174,7 @@ limitations under the License.
                 const lights = app.lights;
                 for (var i = 0; i < lights.length; i++) {
                     if (lights[i].id == this.light.id) {
-                        app.splice('lights', i, 1);
+                        app.removeDevice('lights', i);
                     }
                 }
             },

@@ -101,6 +101,10 @@ limitations under the License.
                 margin: 20% auto;
             }
 
+            #no-devices-msg > p {
+                text-align: center;
+            }
+
             #check {
                 display: none;
             }
@@ -226,6 +230,10 @@ limitations under the License.
                     type: Boolean,
                     value: false
                 },
+                deviceCount: {
+                    type: Number,
+                    value: 0
+                },
                 lights: {
                     type: Array
                 },
@@ -286,6 +294,11 @@ limitations under the License.
 
             hideNoDeviceMessage: function () {
                 this.hide = true;
+            },
+
+            removeDevice: function(type, index) {
+                this.splice(type, index, 1);
+                this.hide = --this.deviceCount > 0;
             },
 
             _showAccount: function () {
@@ -379,6 +392,7 @@ limitations under the License.
 
             _addLight: function (event, light) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 let nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
                 if (light && light.hasOwnProperty("id")) {
                     this.push('lights', light);
@@ -429,6 +443,7 @@ limitations under the License.
 
             _addThermostat: function(event, thermostat) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 let nicknames = ['wall thermostat', 'upstairs thermostat'];
                 if (thermostat && thermostat.hasOwnProperty("id")) {
                     this.push('thermostats', thermostat);
@@ -478,6 +493,7 @@ limitations under the License.
 
             _addScene: function(event, scene) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 if (scene && scene.hasOwnProperty("id")) {
                     this.push('scenes', scene);
                 } else {
@@ -521,6 +537,7 @@ limitations under the License.
 
             _addCamera: function(event, camera) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 let nicknames = ['backyard camera', 'security camera'];
                 if (camera && camera.hasOwnProperty("id")) {
                     this.push('cameras', camera);
@@ -565,6 +582,7 @@ limitations under the License.
 
             _addVacuum: function (event, vacuum) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 let nicknames = ['kitchen vacuum', 'robo vacuum']
                 if (vacuum && vacuum.hasOwnProperty("id")) {
                     this.push('vacuums', vacuum);
@@ -647,6 +665,7 @@ limitations under the License.
 
             _addWasher: function (event, washer) {
                 this.hideNoDeviceMessage();
+                this.deviceCount++;
                 let nicknames = ['washing machine', 'acme washer']
                 if (washer && washer.hasOwnProperty("id")) {
                     this.push('washers', washer);

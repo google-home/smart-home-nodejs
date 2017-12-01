@@ -135,7 +135,7 @@ limitations under the License.
                 const washers = app.washers;
                 for (var i = 0; i < washers.length; i++) {
                     if (washers[i].id == this.washer.id) {
-                        app.splice('washers', i, 1);
+                        app.removeDevice('washers', i);
                     }
                 }
             },

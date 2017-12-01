@@ -167,7 +167,7 @@
                 const scenes = app.scenes;
                 for (var i = 0; i < scenes.length; i++) {
                     if (scenes[i].id == this.scene.id) {
-                        app.splice('scenes', i, 1);
+                        app.removeDevice('scenes', i);
                     }
                 }
             },

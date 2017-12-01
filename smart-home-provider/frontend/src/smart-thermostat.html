@@ -135,7 +135,7 @@
                 const thermostats = app.thermostats;
                 for (var i = 0; i < thermostats.length; i++) {
                     if (thermostats[i].id == this.thermostat.id) {
-                        app.splice('thermostats', i, 1);
+                        app.removeDevice('thermostats', i);
                     }
                 }
             },
