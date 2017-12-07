@@ -49,7 +49,6 @@ app.use(session({
 }));
 const deviceConnections = {};
 const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
-const reportStateEndpoint = 'https://homegraph.googleapis.com/v1/devices?key=';
 
 /**
  * auth method
@@ -182,35 +181,6 @@ app.post('/smart-home-api/reset-devices', function (request, response) {
 });
 
 /**
- * Pushes the current state of a device to the HomeGraph
- */
-app.post('/smart-home-api/report-state', function (request, response) {
-
-  let authToken = authProvider.getAccessToken(request);
-  let uid = datastore.Auth.tokens[authToken].uid;
-
-  if (!datastore.isValidAuth(uid, authToken)) {
-    console.error("Invalid auth", authToken, "for user", uid);
-    response.status(403).set({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }).json({error: "invalid auth"});
-    return;
-  }
-
-  let device = request.body;
-  app.reportState(authToken, uid, device);
-
-  // otherwise, all good!
-  response.status(200)
-    .set({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    })
-    .send({status: 'OK'});
-});
-
-/**
  * Can be used to unregister a device.
  * Removing a device would be supplying the device id without any traits.
  */
@@ -290,11 +260,6 @@ app.post('/smart-home-api/exec', function (request, response) {
   if (request.body.nameChanged) {
     console.log("calling request sync from exec to update name");
     app.requestSync(authToken, uid);
-  }
-
-  if (request.body.willReportState) {
-    console.log('calling report state from exec to update HomeGraph');
-    app.reportState(authToken, uid, executedDevice);
   }
 
   // otherwise, all good!
@@ -508,28 +473,6 @@ app.requestSync = function (authToken, uid) {
   fetch(requestSyncEndpoint + apiKey, options).
     then(function(res) {
       console.log("request-sync response", res.status, res.statusText);
-    });
-};
-
-app.reportState = function (authToken, uid, device) {
-  // REPORT_STATE
-  const apiKey = config.smartHomeProviderApiKey;
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  };
-  optBody = device;
-  optBody['agentUserId'] = uid;
-  // Generate a random request id.
-  optBody['requestId'] = 'request-' + Math.random();
-  options.body = JSON.stringify(optBody);
-  console.info("POST REPORT_STATE", reportStateEndpoint + apiKey);
-  console.info(`POST payload: ${JSON.stringify(options)}`);
-  fetch(reportStateEndpoint + apiKey, options).
-    then(function(res) {
-      console.log("report-state response", res.status, res.statusText);
     });
 };
 
