@@ -213,9 +213,10 @@
                     this._source.addEventListener('error', function (error) {
                         if (error.eventPhase == 2) {
                             console.log('>>> event source closed');
-                            return this._changeEventSource();
+                            setTimeout(this._changeEventSource.bind(this), 5000);
+                            return;
                         } else {
-                            console.log('>>> error in event source:', error);
+                            console.error('>>> error in event source:', error);
                         }
                     }.bind(this));
                 }
