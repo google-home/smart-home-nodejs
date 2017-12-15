@@ -137,7 +137,11 @@ limitations under the License.
                 <h1>Add a new device</h1>
                 <button dialog-confirm autofocus class="square" id="lightSelector" on-tap="_addLight">
                     <iron-icon icon="image:wb-incandescent"></iron-icon>
-                    <p>Light</p>
+                    <p>RGB Light</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="lightSelector" on-tap="_addMonochromeLight">
+                    <iron-icon icon="image:wb-iridescent"></iron-icon>
+                    <p>Monochrome Light</p>
                 </button>
                 <button dialog-confirm autofocus class="square" id="thermostatSelector" on-tap="_addThermostat">
                     <iron-icon icon="image:brightness-7"></iron-icon>
@@ -463,7 +467,7 @@ limitations under the License.
                                 manufacturer: 'Smart Home Provider',
                                 model: 'g1337',
                                 swVersion: '1.0.11',
-                                hwVersion: '1.0'
+                                hwVersion: '1.1'
                             },
                             customData: {
                                 smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
@@ -476,6 +480,61 @@ limitations under the License.
                             color: {
                                 name: 'cerulean',
                                 spectrumRGB: 31655
+                            }
+                        }
+                    });
+
+                    window.requestAnimationFrame(() => {
+                        this.$['light-list'].fire('iron-resize');
+                    });
+                }
+            },
+
+            _addMonochromeLight: function (event, light) {
+                this.hideNoDeviceMessage();
+                this.deviceCount++;
+                let nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
+                if (light && light.hasOwnProperty("id")) {
+                    this.push('lights', light);
+                } else {
+                    var lightId = getNextDeviceId();
+                    this.push('lights', {
+                        id: String(lightId),
+                        properties : {
+                            type: 'action.devices.types.LIGHT',
+                            traits: [
+                                'action.devices.traits.OnOff',
+                                'action.devices.traits.Brightness',
+                                'action.devices.traits.ColorTemperature'
+                            ],
+                            attributes: {
+                                'temperatureMinK': 2000,
+                                'temperatureMaxK': 6500
+                            },
+                            name: {
+                                defaultNames: ['Smart Light'],
+                                name: 'Smart Light ' + lightId,
+                                nicknames: [ this._getNickname(nicknames, this.lights.length, lightId) ]
+                            },
+                            willReportState: false,
+                            roomHint: '',
+                            deviceInfo: {
+                                manufacturer: 'Smart Home Provider',
+                                model: 'h1337',
+                                swVersion: '1.0.9',
+                                hwVersion: '1.0'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                            }
+                        },
+                        states: {
+                            on: false,
+                            online: true,
+                            brightness: 80,
+                            color: {
+                                name: 'soft white',
+                                temperature: 2700
                             }
                         }
                     });

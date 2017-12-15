@@ -31,26 +31,22 @@ limitations under the License.
     <template>
         <smart-device id="smart-device" device="{{device}}" type="lights">
             <div slot="device-controls">
-                <paper-slider id="brightness" title="Brightness" editable="true"
-                    disabled="[[!device.states.on]]" value="{{device.states.brightness}}"
+                <paper-slider id="brightness" title="Brightness" editable="true" disabled="[[!device.states.on]]" value="{{device.states.brightness}}"
                     on-value-change="_handleBrightness"></paper-slider>
             </div>
-            <iron-icon id="deviceIcon" on-tap="_handleOnOff" slot="device-icon" icon="image:wb-incandescent"></iron-icon>
+            <iron-icon id="light" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
         </smart-device>
     </template>
 
     <script>
-
         class SmartLight extends SmartDevice {
             static get is() { return 'smart-light' }
 
-            constructor() {
-                super();
-            }
-
             _handleOnOff() {
-                this.device.states.on = !this.device.states.on;
-                this._notifyStateChange();
+                if (this.device) {
+                    this.device.states.on = !this.device.states.on;
+                    this._notifyStateChange();
+                }
             }
 
             _handleBrightness() {
@@ -58,8 +54,6 @@ limitations under the License.
                     return;
                 }
                 window.requestAnimationFrame(() => {
-                    console.log(this.device);
-
                     this.device.states.brightness = this.$.brightness.value;
                     this._notifyStateChange();
                 });
@@ -67,6 +61,12 @@ limitations under the License.
 
             _deviceChanged() {
                 super._deviceChanged();
+
+                if (this.device.states.color.spectrumRGB) {
+                    this.$.light.icon = "image:wb-incandescent"
+                } else {
+                    this.$.light.icon = "image:wb-iridescent"
+                }
 
                 if (this.device.states.on
                     && this.device.states.color
@@ -76,9 +76,24 @@ limitations under the License.
                         color = '0' + color;
                     color = '#' + color;
                     console.log('set light color to ' + color);
-                    this.$.deviceIcon.style.color = color;
+                    this.$.light.style.color = color;
+                } else if (this.device.states.on
+                    && this.device.states.color
+                    && this.device.states.color.temperature) {
+                    console.log('set light temperature to ' +
+                        this.device.states.color.temperature);
+                    this.$.light.style.color = '#fffacd';
                 } else if (this.device.states.on) {
-                    this.$.deviceIcon.style.color = '#000';
+                    this.$.light.style.color = '#000';
+                } else {
+                    this.$.light.style.color = '#eee';
+                }
+                this.$.brightness.disabled = !this.device.states.on;
+            }
+
+            _exec(nameChanged) {
+                if (nameChanged) {
+                    this.light.nameChanged = true;
                 } else {
                     this.$.deviceIcon.style.color = '#eee';
                 }

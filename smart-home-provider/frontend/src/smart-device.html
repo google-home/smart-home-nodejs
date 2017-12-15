@@ -73,8 +73,6 @@ limitations under the License.
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
-            <!-- TODO Some stuff -->
-
             <!-- icon -->
             <div align="center">
                 <slot name="device-controls"></slot>
@@ -85,7 +83,9 @@ limitations under the License.
             <!-- controls -->
             <paper-input id="nickname" label="Nickname" value$="{{device.properties.name.nicknames.0}}"></paper-input>
             <paper-input id="name" label="Name" value$="{{device.properties.name.name}}"></paper-input>
-            <div>Default Name: <span id='defaultName'>{{device.properties.name.defaultNames.0}}</span></div>
+            <div>Default Name:
+                <span id='defaultName'>{{device.properties.name.defaultNames.0}}</span>
+            </div>
         </div>
     </template>
 
