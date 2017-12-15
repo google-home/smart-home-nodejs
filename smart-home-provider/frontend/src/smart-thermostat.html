@@ -27,12 +27,12 @@
             iron-icon {
                 padding-top: 24px;
                 padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
+                width: 80px;
+                height: 80px;
             }
 
             .card {
-                height: 390px;
+                height: 450px;
                 width: 300px;
             }
 
@@ -46,10 +46,9 @@
 
             #ambient {
                 /* Get ambient input field to fit inside circle */
-                width: 50px;
-                margin-left: 25px;
+                width: 60px;
+                margin-right: 20px;
             }
-
         </style>
 
         <div class="card">
@@ -59,7 +58,6 @@
                 <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
-
             <div class="layout horizontal center-justified">
                 <strong>Setpoint</strong>
                 <!-- Set potential setpoints to 60F (15C) - 83F (28C) -->
@@ -70,18 +68,18 @@
             </div>
 
             <!-- thermostat icon -->
+            <div align="center">
+                <iron-icon id="thermostat" icon="image:brightness-7"></iron-icon>
+            </div>
             <div class="layout horizontal center-justified">
-                <div id="thermostat" class="main-circle">
-                    <img src="../images/thermometer-512.png" width="45" height="45"/>
-                    <paper-input
-                        id="ambient"
-                        label="Current"
-                        value="[[thermostat.states.thermostatTemperatureAmbient]]"
-                        on-input="_handleAmbient"
-                        auto-validate pattern="[0-9]+[.]?[0-9]*">
-                        <div suffix>ºC</div>
-                    </paper-input>
-                </div>
+                <paper-input
+                    id="ambient"
+                    label="Current"
+                    value="[[thermostat.states.thermostatTemperatureAmbient]]"
+                    on-input="_handleAmbient"
+                    auto-validate pattern="[0-9]+[.]?[0-9]*">
+                    <div suffix>ºC</div>
+                </paper-input>
                 <div class="layout vertical center-justified">
                     <div>Mode:<br/><b>[[thermostat.states.thermostatMode]]</b>
                     </div>
