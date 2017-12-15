@@ -44,6 +44,12 @@
                 margin-right: 36px;
             }
 
+            #ambient {
+                /* Get ambient input field to fit inside circle */
+                width: 50px;
+                margin-left: 25px;
+            }
+
         </style>
 
         <div class="card">
@@ -54,15 +60,29 @@
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
+            <div class="layout horizontal center-justified">
+                <strong>Setpoint</strong>
+                <!-- Set potential setpoints to 60F (15C) - 83F (28C) -->
+                <paper-slider id="setpoint" title="Set Point" editable="true"
+                    value="[[thermostat.states.thermostatTemperatureSetpoint]]"
+                    on-value-change="_handleSetpoint"
+                    min="15" max="28"></paper-slider>
+            </div>
+
             <!-- thermostat icon -->
             <div class="layout horizontal center-justified">
                 <div id="thermostat" class="main-circle">
-                    <img src="../images/thermometer-512.png" width="60" height="60"/>
-                    <div id="ambient" class="sub-text vertical center-justified">[[thermostat.states.thermostatTemperatureAmbient]]ºC</div>
+                    <img src="../images/thermometer-512.png" width="45" height="45"/>
+                    <paper-input
+                        id="ambient"
+                        label="Current"
+                        value="[[thermostat.states.thermostatTemperatureAmbient]]"
+                        on-input="_handleAmbient"
+                        auto-validate pattern="[0-9]+[.]?[0-9]*">
+                        <div suffix>ºC</div>
+                    </paper-input>
                 </div>
                 <div class="layout vertical center-justified">
-                    <div>Setpoint</div>
-                    <div id="setpoint" class="sub-text circle">[[thermostat.states.thermostatTemperatureSetpoint]]</div>
                     <div>Mode:<br/><b>[[thermostat.states.thermostatMode]]</b>
                     </div>
                 </div>
@@ -94,6 +114,22 @@
 
                 this.async(() => {
                     this._handleRegister();
+                });
+            },
+
+            _handleSetpoint: function () {
+                this.async(() => {
+                    this.thermostat.states.thermostatTemperatureSetpoint =
+                        this.$.setpoint.value;
+                    this._notifyStateChange();
+                });
+            },
+
+            _handleAmbient: function () {
+                this.async(() => {
+                    this.thermostat.states.thermostatTemperatureAmbient =
+                        parseFloat(this.$.ambient.value);
+                    this._notifyStateChange();
                 });
             },
 
