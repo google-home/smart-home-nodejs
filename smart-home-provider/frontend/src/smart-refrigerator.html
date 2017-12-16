@@ -14,7 +14,7 @@ limitations under the License.
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../bower_components/iron-icons/places-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
@@ -25,7 +25,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="shared-styles.html">
 
-<dom-module id="smart-vacuum">
+<dom-module id="smart-refrigerator">
     <template>
         <style include="iron-flex iron-flex-alignment shared-styles">
             paper-input {
@@ -50,6 +50,14 @@ limitations under the License.
                 width: 300px;
             }
 
+            .on {
+                color: black;
+            }
+
+            .off {
+                color: #eee;
+            }
+
             #button-bar {
                 margin-bottom: 8px;
             }
@@ -61,35 +69,33 @@ limitations under the License.
 
         <div class="card">
             <div id="button-bar" class="layout horizontal justified">
-                <div id="vacuum-id" class="circle">[[vacuum.id]]</div>
+                <div id="refrigerator-id" class="circle">[[refrigerator.id]]</div>
                 <div class="flex"></div>
                 <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
-            <!-- vacuum icon -->
+            <!-- refrigerator icon -->
             <div align="center">
-                <iron-icon id="vacuum" icon="hardware:router" on-tap="_handleOnOff"></iron-icon>
+                <iron-icon id="refrigerator" on-tap="_handleOnOff" icon="places:kitchen"></iron-icon>
                 <div id='toggle-quiet' class='toggle-off'>Quiet</div>
-                <div>Speed: <b>{{vacuum.states.currentModeSettings.speed}}</b>
-                </div>
             </div>
 
             <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{vacuum.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{vacuum.properties.name.name}}"></paper-input>
-            <div>Default Name: {{vacuum.properties.name.defaultNames.0}}</div>
+            <paper-input id="nickname" label="Nickname" value$="{{refrigerator.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{refrigerator.properties.name.name}}"></paper-input>
+            <div>Default Name: {{refrigerator.properties.name.defaultNames.0}}</div>
         </div>
     </template>
 
     <script>
         Polymer({
-            is: 'smart-vacuum',
+            is: 'smart-refrigerator',
 
             properties: {
-                vacuum: {
+                refrigerator: {
                     type: Object,
-                    observer: '_vacuumChanged'
+                    observer: '_refrigeratorChanged'
                 }
             },
 
@@ -100,18 +106,19 @@ limitations under the License.
                 this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
 
                 this.async(() => {
+                    console.log(this.refrigerator);
                     this._handleRegister();
                 });
             },
 
             _handleOnOff: function () {
-                this.vacuum.states.on = !this.vacuum.states.on;
+                this.refrigerator.states.on = !this.refrigerator.states.on;
                 this._notifyStateChange();
             },
 
             _handleCloud: function () {
                 // Toggle online state on button press.
-                this.vacuum.states.online = !this.vacuum.states.online;
+                this.refrigerator.states.online = !this.refrigerator.states.online;
                 this._handleRegister();
                 this._changeEventSource();
             },
@@ -119,9 +126,9 @@ limitations under the License.
             _handleRegister: function() {
                 // Register source if undefined
                 if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.refrigerator.id);
                 }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.vacuum)
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.refrigerator)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
@@ -129,19 +136,17 @@ limitations under the License.
             },
 
             _handleDelete: function () {
-                this.vacuum.states.online = true;
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.vacuum)
-                    .then(this._changeEventSource.bind(this))
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.refrigerator)
                     .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
+                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
                     });
                 if (this._source) this._source.close();
 
                 const app = document.querySelector('my-app');
-                const vacuums = app.vacuums;
-                for (var i = 0; i < vacuums.length; i++) {
-                    if (vacuums[i].id == this.vacuum.id) {
-                        app.removeDevice('vacuums', i);
+                const refrigerators = app.refrigerators;
+                for (var i = 0; i < refrigerators.length; i++) {
+                    if (refrigerators[i].id == this.refrigerator.id) {
+                        app.removeDevice('refrigerators', i);
                     }
                 }
             },
@@ -149,10 +154,10 @@ limitations under the License.
             _execNameOrNicknameChange: function (event) {
                 // occurs after enter/tab key pressed or on tapout from input field
                 if (event.target.id == 'nickname') {
-                    this.vacuum.properties.name.nicknames[0] = event.target.value;
+                    this.refrigerator.properties.name.nicknames[0] = event.target.value;
                 }
                 else if (event.target.id == 'name') {
-                    this.vacuum.properties.name.name = event.target.value;
+                    this.refrigerator.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
             },
@@ -174,14 +179,12 @@ limitations under the License.
             },
 
             _changeEventSource: function () {
-                console.log("vacuum", this.vacuum);
-                if (!this.vacuum.states.online) {
-                    if (this._source) {
-                        this._source.close();
-                    }
+                if (!this.refrigerator.states.online) {
+                    // going offline
+                    this._source.close();
                 } else {
                     // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.refrigerator.id);
                     this._source.addEventListener('change', function (e) {
                         this._changeState(JSON.parse(e.data));
                     }.bind(this));
@@ -202,77 +205,50 @@ limitations under the License.
             },
 
             _changeState: function (changes) {
-                if (!this.vacuum.states.online) {
-                    console.log("device offline, nothing changed");
-                } else {
-                    for (var name in changes) {
-                        if (name == "start") {
-                            this.vacuum.states.isRunning = changes[name];
-                            // starting off device -> turn it on and start it
-                            if (this.vacuum.states.isRunning) {
-                                this.vacuum.states.on = true;
-                            }
-                            // if a device has been started/stopped, it can't be paused
-                            this.vacuum.states.isPaused = false;
-                        } else if (name == "pause") {
-                            // else if still running and pausable, set isPaused to whatever is in changes
-                            if (this.vacuum.properties.attributes.pausable) {
-                                if (this.vacuum.states.isRunning || this.vacuum.states.isPaused) {
-                                    this.vacuum.states.isPaused = changes[name];
-                                    this.vacuum.states.isRunning = !changes[name];
-                                }
-                            } else this.vacuum.states.isRunning = false;
-                        } else {
-                            const value = changes[name];
-                            this.set('vacuum.states.' + name, value);
-                        }
-                    }
-                }
-                if (!this.vacuum.states.on) {
-                    // device off, stop everything
-                    this.vacuum.states.isRunning = false;
-                    this.vacuum.states.isPaused = false;
+                for (var name in changes) {
+                    const value = changes[name];
+                    this.set('refrigerator.states.' + name, value);
                 }
                 this._notifyStateChange();
             },
 
-            _notifyStateChange: function (isNameChange) {
-                this._vacuumChanged();
-                if (this.vacuum.states.online) this._exec(isNameChange);
+            _notifyStateChange: function (nameChanged) {
+                this._refrigeratorChanged();
+                if (this.refrigerator.states.online) this._exec(nameChanged);
             },
 
-            _vacuumChanged: function () {
-                console.log("Vacuum changed!", this.vacuum.states);
-                this.$.cloud.icon = this.vacuum.states.online ? 'cloud' : 'cloud-off';
-                if (this.vacuum.states.updateToggleSettings) {
-                    this.vacuum.states.currentToggleSettings =
-                        this.vacuum.states.updateToggleSettings;
-                    if (this.vacuum.states.currentToggleSettings.quiet) {
+            _refrigeratorChanged: function () {
+                console.log("Refrigerator changed!", this.refrigerator.states);
+                if (this.refrigerator.states.updateToggleSettings) {
+                    this.refrigerator.states.currentToggleSettings =
+                        this.refrigerator.states.updateToggleSettings;
+                    if (this.refrigerator.states.currentToggleSettings.quiet) {
                         this.$['toggle-quiet'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-quiet'].classList.add('toggle-off');
                     }
                 }
-                if (this.vacuum.states.on) {
-                    this.$.vacuum.style.color = '#9bea00';
+
+                this.$.cloud.icon = this.refrigerator.states.online ? 'cloud' : 'cloud-off';
+                if (this.refrigerator.states.on) {
+                    this.$.refrigerator.style.color = '#333';
                 } else {
-                    this.$.vacuum.style.color = '#eee';
+                    this.$.refrigerator.style.color = '#ccc';
                 }
             },
 
-            _exec: function(isNameChange) {
-                if (isNameChange) {
-                    this.vacuum.nameChanged = true;
+            _exec: function(nameChanged) {
+                if (nameChanged) {
+                    this.refrigerator.nameChanged = true;
                 } else {
-                    this.vacuum.nameChanged = false;
+                    this.refrigerator.nameChanged = false;
                 }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.vacuum).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.vacuum);
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.refrigerator).then(function () {
+                    console.log('>>> exec to Smart Home Provider Cloud', this.refrigerator);
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
             }
         });
-
     </script>
 </dom-module>
