@@ -336,6 +336,11 @@ limitations under the License.
                 this.hide = --this.deviceCount > 0;
             },
 
+            showToast: function(toastmsg) {
+                this.$.toast.text = toastmsg;
+                this.$.toast.open();
+            },
+
             _showAccount: function () {
                 this.$.toast.text = `Welcome ${window.USERNAME}`;
                 this.$.toast.open();

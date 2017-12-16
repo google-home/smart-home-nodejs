@@ -241,6 +241,10 @@ limitations under the License.
 
             _washerChanged: function () {
                 console.log('Washer changed!', this.washer.states);
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.washer.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.washer.states.online ? 'cloud' : 'cloud-off';
                 if (this.washer.states.updateToggleSettings) {
                     this.washer.states.currentToggleSettings =

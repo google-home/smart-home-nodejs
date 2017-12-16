@@ -238,6 +238,9 @@
             },
 
             _thermostatChanged: function () {
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.thermostat.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.thermostat.states.online ? 'cloud' : 'cloud-off';
                 if (this.thermostat.states.thermostatMode
                     && this.thermostat.states.thermostatTemperatureSetPoint

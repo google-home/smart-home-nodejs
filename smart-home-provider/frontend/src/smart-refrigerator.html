@@ -219,6 +219,10 @@ limitations under the License.
 
             _refrigeratorChanged: function () {
                 console.log("Refrigerator changed!", this.refrigerator.states);
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.refrigerator.properties.name.nicknames[0]} state changed`);
+
                 if (this.refrigerator.states.updateToggleSettings) {
                     this.refrigerator.states.currentToggleSettings =
                         this.refrigerator.states.updateToggleSettings;

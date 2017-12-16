@@ -239,6 +239,9 @@
             },
 
             _sceneChanged: function () {
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.scene.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.scene.states.online ? 'cloud' : 'cloud-off';
             },
 

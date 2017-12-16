@@ -243,6 +243,10 @@ limitations under the License.
 
             _vacuumChanged: function () {
                 console.log("Vacuum changed!", this.vacuum.states);
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.vacuum.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.vacuum.states.online ? 'cloud' : 'cloud-off';
                 if (this.vacuum.states.updateToggleSettings) {
                     this.vacuum.states.currentToggleSettings =

@@ -240,6 +240,10 @@ limitations under the License.
 
             _lightChanged: function () {
                 console.log("Light changed!", this.light.states);
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.light.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
 //                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
                 if (this.light.states.on

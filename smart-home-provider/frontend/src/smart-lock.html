@@ -214,6 +214,10 @@ limitations under the License.
 
             _lockChanged: function () {
                 console.log("Lock changed!", this.lock.states);
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.lock.properties.name.nicknames[0]} state changed`);
+
                 this.lock.states.isLocked = this.lock.states.lock;
                 this.$.cloud.icon = this.lock.states.online ? 'cloud' : 'cloud-off';
                 if (this.lock.states.isLocked) {

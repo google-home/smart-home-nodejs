@@ -219,6 +219,9 @@ limitations under the License.
             },
 
             _cameraChanged: function () {
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.camera.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.camera.states.online ? 'cloud' : 'cloud-off';
                 if (this.camera.states.on) {
                     this.$.camera.style.color = '#9bea00';
