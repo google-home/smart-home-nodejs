@@ -27,277 +27,92 @@ limitations under the License.
 
 <dom-module id="smart-washer">
     <template>
-        <style include="iron-flex iron-flex-alignment shared-styles">
-            paper-input {
-                padding-right: 4px;
-            }
-
-            paper-button {
-                height: 40px;
-                float: right;
-                margin-right: 0px;
-            }
-
-            iron-icon {
-                padding-top: 24px;
-                padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
-            }
-
-            .card {
-                height: 450px;
-                width: 300px;
-            }
-
-            #button-bar {
-                margin-bottom: 8px;
-            }
-
-            .toggle-off {
-                text-decoration: line-through;
-            }
-        </style>
-
-        <div class="card">
-            <div id="button-bar" class="layout horizontal justified">
-                <div id="washer-id" class="circle">[[washer.id]]</div>
-                <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button id="delete" icon="delete" on-tap="_handleDelete"></paper-icon-button>
-            </div>
-
-            <!-- washer icon -->
-            <div align="center">
-                <iron-icon id="washer" icon="icons:save" on-tap="_handleOnOff"></iron-icon>
+        <style include="shared-styles"></style>
+        <smart-device id="smart-device" device="{{device}}" type="washers">
+            <iron-icon id="washer" icon="icons:save" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
+            <div slot="device-states">
                 <div id='toggle-extra-rinse' class='toggle-off'>Extra Rinse</div>
                 <div id='toggle-permanent-press' class='toggle-off'>Permanent Press</div>
-                <div>Load: <b>{{washer.states.currentModeSettings.load}}</b>
-                </div>
+                <div>Load: <b>{{device.states.currentModeSettings.load}}</b>
             </div>
-
-            <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{washer.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{washer.properties.name.name}}"></paper-input>
-            <div>Default Name: {{washer.properties.name.defaultNames.0}}</div>
-        </div>
+        </smart-device>
     </template>
 
     <script>
-        class SmartWasher extends Polymer.Element {
+        class SmartWasher extends SmartDevice {
             static get is() { return 'smart-washer' }
-
-            static get properties() {
-                return {
-                    washer: {
-                        type: Object,
-                        observer: '_washerChanged'
-                    }
-                }
-            }
 
             constructor() {
                 super();
-                this._initialized = false;
-            }
-
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.light || this._initialized) {
-                        return;
-                    }
-                    this._initialized = true;
-                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-
-                    this._handleRegister();
-                });
             }
 
             _handleOnOff() {
-                this.washer.states.on = !this.washer.states.on;
-                this._notifyStateChange();
-            }
-
-            _handleCloud() {
-                // Toggle online state on button press.
-                this.washer.states.online = !this.washer.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
-
-            _handleRegister() {
-                // Register source if undefined
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.washer.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.washer)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
-
-            _handleDelete() {
-                this.washer.states.online = true;
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.washer)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
-                    });
-                if (this._source) this._source.close();
-
-                const app = document.querySelector('my-app');
-                const washers = app.washers;
-                for (var i = 0; i < washers.length; i++) {
-                    if (washers[i].id == this.washer.id) {
-                        app.removeDevice('washers', i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.washer.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.washer.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.washer.states.online) {
-                    if (this._source) this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.washer.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 5000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
+                this.device.states.on = !this.device.states.on;
                 this._notifyStateChange();
             }
 
             _changeState(changes) {
-                if (!this.washer.states.online) {
+                if (!this.device.states.online) {
                     console.log("device offline, nothing changed");
                 } else {
                     for (var name in changes) {
                         if (name == "start") {
-                            this.washer.states.isRunning = changes[name];
+                            this.device.states.isRunning = changes[name];
                             // starting off device -> turn it on and start it
-                            if (this.washer.states.isRunning) {
-                                this.washer.states.on = true;
+                            if (this.device.states.isRunning) {
+                                this.device.states.on = true;
                             }
                             // if a device has been started/stopped, it can't be paused
-                            this.washer.states.isPaused = false;
+                            this.device.states.isPaused = false;
                         } else if (name == "pause") {
                             // else if still running and pausable, set isPaused to whatever is in changes
-                            if (this.washer.properties.attributes.pausable) {
-                                if (this.washer.states.isRunning || this.washer.states.isPaused) {
-                                    this.washer.states.isPaused = changes[name];
-                                    this.washer.states.isRunning = !changes[name];
+                            if (this.device.properties.attributes.pausable) {
+                                if (this.device.states.isRunning || this.device.states.isPaused) {
+                                    this.device.states.isPaused = changes[name];
+                                    this.device.states.isRunning = !changes[name];
                                 }
-                            } else this.washer.states.isRunning = false;
+                            } else this.device.states.isRunning = false;
                         } else {
                             const value = changes[name];
-                            this.set('washer.states.' + name, value);
+                            this.set('device.states.' + name, value);
                         }
                     }
                 }
-                if (!this.washer.states.on) {
+                if (!this.device.states.on) {
                     // device off, stop everything
-                    this.washer.states.isRunning = false;
-                    this.washer.states.isPaused = false;
+                    this.device.states.isRunning = false;
+                    this.device.states.isPaused = false;
                 }
                 this._notifyStateChange();
             }
 
-            _notifyStateChange(isNameChange) {
-                this._washerChanged();
-                if (this.washer.states.online) this._exec(isNameChange);
-            }
-
-            _washerChanged() {
-                console.log('Washer changed!', this.washer.states);
-                if (!this._initialized) {
-                    this.initialize();
-                }
-
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.washer.properties.name.nicknames[0]} state changed`);
-
-                this.$.cloud.icon = this.washer.states.online ? 'cloud' : 'cloud-off';
-                if (this.washer.states.updateToggleSettings) {
-                    this.washer.states.currentToggleSettings =
-                        this.washer.states.updateToggleSettings;
-                    if (this.washer.states.currentToggleSettings.extraRinse) {
+            _deviceChanged() {
+                super._deviceChanged();
+                if (this.device.states.updateToggleSettings) {
+                    this.device.states.currentToggleSettings =
+                        this.device.states.updateToggleSettings;
+                    if (this.device.states.currentToggleSettings.extraRinse) {
                         this.$['toggle-extra-rinse'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-extra-rinse'].classList.add('toggle-off');
                     }
-                    if (this.washer.states.currentToggleSettings.permanentPress) {
+                    if (this.device.states.currentToggleSettings.permanentPress) {
                         this.$['toggle-permanent-press'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-permanent-press'].classList.add('toggle-off');
                     }
                 }
 
-                if (this.washer.states.isPaused) {
+                if (this.device.states.isPaused) {
                     this.$.washer.style.color = '#ff7733';
-                } else if (this.washer.states.isRunning) {
+                } else if (this.device.states.isRunning) {
                     this.$.washer.style.color = '#3399ff';
-                } else if (this.washer.states.on) {
+                } else if (this.device.states.on) {
                     this.$.washer.style.color = '#9bea00';
                 }
-                if (!this.washer.states.on) {
+                if (!this.device.states.on) {
                     this.$.washer.style.color = '#eee';
                 }
-            }
-
-            _exec(isNameChange) {
-                if (isNameChange) {
-                    this.washer.nameChanged = true;
-                } else {
-                    this.washer.nameChanged = false;
-                }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.washer).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                }).catch(function (error) {
-                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
-                });
             }
         }
         customElements.define(SmartWasher.is, SmartWasher);

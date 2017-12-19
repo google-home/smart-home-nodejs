@@ -23,269 +23,50 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="smart-vacuum">
     <template>
-        <style include="iron-flex iron-flex-alignment shared-styles">
-            paper-input {
-                padding-right: 4px;
-            }
-
-            paper-button {
-                height: 40px;
-                float: right;
-                margin-right: 0px;
-            }
-
-            iron-icon {
-                padding-top: 24px;
-                padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
-            }
-
-            .card {
-                height: 450px;
-                width: 300px;
-            }
-
-            #button-bar {
-                margin-bottom: 8px;
-            }
-
-            .toggle-off {
-                text-decoration: line-through;
-            }
-        </style>
-
-        <div class="card">
-            <div id="button-bar" class="layout horizontal justified">
-                <div id="vacuum-id" class="circle">[[vacuum.id]]</div>
-                <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
-            </div>
-
-            <!-- vacuum icon -->
-            <div align="center">
-                <iron-icon id="vacuum" icon="hardware:router" on-tap="_handleOnOff"></iron-icon>
+        <style include="shared-styles"></style>
+        <smart-device id="smart-device" device="{{device}}" type="vacuums">
+            <iron-icon id="vacuum" icon="hardware:router" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
+            <div slot='device-states'>
                 <div id='toggle-quiet' class='toggle-off'>Quiet</div>
-                <div>Speed: <b>{{vacuum.states.currentModeSettings.speed}}</b>
-                </div>
+                <div>Speed: <b>{{device.states.currentModeSettings.speed}}</b>
             </div>
-
-            <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{vacuum.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{vacuum.properties.name.name}}"></paper-input>
-            <div>Default Name: {{vacuum.properties.name.defaultNames.0}}</div>
-        </div>
+        </smart-device>
     </template>
 
     <script>
-        class SmartVacuum extends Polymer.Element {
+        class SmartVacuum extends SmartDevice {
             static get is() { return 'smart-vacuum' }
-
-            static get properties() {
-                return {
-                    vacuum: {
-                        type: Object,
-                        observer: '_vacuumChanged'
-                    }
-                }
-            }
 
             constructor() {
                 super();
-                this._initialized = false;
-            }
-
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.light || this._initialized) {
-                        return;
-                    }
-                    this._initialized = true;
-                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-
-                    this._handleRegister();
-                });
             }
 
             _handleOnOff() {
-                this.vacuum.states.on = !this.vacuum.states.on;
+                this.device.states.on = !this.device.states.on;
                 this._notifyStateChange();
             }
 
-            _handleCloud() {
-                // Toggle online state on button press.
-                this.vacuum.states.online = !this.vacuum.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
-
-            _handleRegister() {
-                // Register source if undefined
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.vacuum)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
-
-            _handleDelete() {
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.vacuum)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
-                    });
-                if (this._source) this._source.close();
-
-                const app = document.querySelector('my-app');
-                const vacuums = app.vacuums;
-                for (var i = 0; i < vacuums.length; i++) {
-                    if (vacuums[i].id == this.vacuum.id) {
-                        app.removeDevice('vacuums', i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.vacuum.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.vacuum.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.vacuum.states.online) {
-                    // going offline
-                    this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.vacuum.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 5000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                if (!this.vacuum.states.online) {
-                    console.log("device offline, nothing changed");
-                } else {
-                    for (var name in changes) {
-                        if (name == "start") {
-                            this.vacuum.states.isRunning = changes[name];
-                            // starting off device -> turn it on and start it
-                            if (this.vacuum.states.isRunning) {
-                                this.vacuum.states.on = true;
-                            }
-                            // if a device has been started/stopped, it can't be paused
-                            this.vacuum.states.isPaused = false;
-                        } else if (name == "pause") {
-                            // else if still running and pausable, set isPaused to whatever is in changes
-                            if (this.vacuum.properties.attributes.pausable) {
-                                if (this.vacuum.states.isRunning || this.vacuum.states.isPaused) {
-                                    this.vacuum.states.isPaused = changes[name];
-                                    this.vacuum.states.isRunning = !changes[name];
-                                }
-                            } else this.vacuum.states.isRunning = false;
-                        } else {
-                            const value = changes[name];
-                            this.set('vacuum.states.' + name, value);
-                        }
-                    }
-                }
-                if (!this.vacuum.states.on) {
-                    // device off, stop everything
-                    this.vacuum.states.isRunning = false;
-                    this.vacuum.states.isPaused = false;
-                }
-                this._notifyStateChange();
-            }
-
-            _notifyStateChange(isNameChange) {
-                this._vacuumChanged();
-                if (this.vacuum.states.online) this._exec(isNameChange);
-            }
-
-            _vacuumChanged() {
-                console.log("Vacuum changed!", this.vacuum.states);
-                if (!this._initialized) {
-                    this.initialize();
-                }
-
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.vacuum.properties.name.nicknames[0]} state changed`);
-
-                this.$.cloud.icon = this.vacuum.states.online ? 'cloud' : 'cloud-off';
-                if (this.vacuum.states.updateToggleSettings) {
-                    this.vacuum.states.currentToggleSettings =
-                        this.vacuum.states.updateToggleSettings;
-                    if (this.vacuum.states.currentToggleSettings.quiet) {
+            _deviceChanged() {
+                super._deviceChanged();
+                if (this.device.states.updateToggleSettings) {
+                    this.device.states.currentToggleSettings =
+                        this.device.states.updateToggleSettings;
+                    if (this.device.states.currentToggleSettings.quiet) {
                         this.$['toggle-quiet'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-quiet'].classList.add('toggle-off');
                     }
                 }
-                if (this.vacuum.states.on) {
+                if (this.device.states.on) {
                     this.$.vacuum.style.color = '#9bea00';
                 } else {
                     this.$.vacuum.style.color = '#eee';
                 }
-            }
-
-            _exec(isNameChange) {
-                if (isNameChange) {
-                    this.vacuum.nameChanged = true;
-                } else {
-                    this.vacuum.nameChanged = false;
-                }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.vacuum).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                }).catch(function (error) {
-                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
-                });
             }
         }
         customElements.define(SmartVacuum.is, SmartVacuum);

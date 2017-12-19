@@ -24,264 +24,65 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="smart-light">
     <template>
-        <style include="iron-flex iron-flex-alignment shared-styles">
-            paper-input {
-                padding-right: 4px;
-            }
-
-            paper-button {
-                height: 40px;
-                float: right;
-                margin-right: 0px;
-            }
-
-            iron-icon {
-                padding-top: 24px;
-                padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
-            }
-
-            .card {
-                height: 450px;
-                width: 300px;
-            }
-
-            .on {
-                color: black;
-            }
-
-            .off {
-                color: #eee;
-            }
-
-            .colored {
-            }
-
-            #button-bar {
-                margin-bottom: 8px;
-            }
-        </style>
-
-        <div class="card">
-            <div id="button-bar" class="layout horizontal justified">
-                <div id="light-id" class="circle">[[light.id]]</div>
-                <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
-            </div>
-
-            <!-- light icon -->
-            <div align="center">
+        <smart-device id="smart-device" device="{{device}}" type="lights">
+            <div slot="device-controls">
                 <paper-slider id="brightness" title="Brightness" editable="true"
-                    disabled="[[!light.states.on]]" value="{{light.states.brightness}}"
+                    disabled="[[!device.states.on]]" value="{{device.states.brightness}}"
                     on-value-change="_handleBrightness"></paper-slider>
-                <iron-icon id="light" icon="image:wb-incandescent" on-tap="_handleOnOff"></iron-icon>
             </div>
-
-            <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{light.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{light.properties.name.name}}"></paper-input>
-            <div>Default Name: {{light.properties.name.defaultNames.0}}</div>
-        </div>
+            <iron-icon id="deviceIcon" on-tap="_handleOnOff" slot="device-icon" icon="image:wb-incandescent"></iron-icon>
+        </smart-device>
     </template>
 
     <script>
-        const ENTERKEY = 13;
 
-        class SmartLight extends Polymer.Element {
+        class SmartLight extends SmartDevice {
             static get is() { return 'smart-light' }
-
-            static get properties() {
-                return {
-                    light: {
-                        type: Object,
-                        observer: '_lightChanged'
-                    }
-                }
-            }
 
             constructor() {
                 super();
-                this._initialized = false;
-            }
-
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.light || this._initialized) {
-                        return;
-                    }
-                    this._initialized = true;
-                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-
-                    this._handleRegister();
-                });
             }
 
             _handleOnOff() {
-                this.light.states.on = !this.light.states.on;
+                this.device.states.on = !this.device.states.on;
                 this._notifyStateChange();
             }
 
             _handleBrightness() {
-                if (!this.light) {
+                if (!this.device) {
                     return;
                 }
                 window.requestAnimationFrame(() => {
-                    console.log(this.light);
+                    console.log(this.device);
 
-                    this.light.states.brightness = this.$.brightness.value;
+                    this.device.states.brightness = this.$.brightness.value;
                     this._notifyStateChange();
                 });
             }
 
-            _handleCloud() {
-                // Toggle online state on button press.
-                this.light.states.online = !this.light.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
+            _deviceChanged() {
+                super._deviceChanged();
 
-            _handleRegister() {
-                // Register source if undefined
-                console.log(this);
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.light)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
-
-            _handleDelete() {
-                // this.light.states.online = false;
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.light)
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
-                    });
-                if (this._source) this._source.close();
-
-                const app = document.querySelector('my-app');
-                const lights = app.lights;
-                for (var i = 0; i < lights.length; i++) {
-                    if (lights[i].id == this.light.id) {
-                        app.removeDevice('lights', i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.light.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.light.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.light.states.online) {
-                    // going offline
-                    this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 30000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                for (var name in changes) {
-                    const value = changes[name];
-                    this.set('light.states.' + name, value);
-                }
-                this._notifyStateChange();
-            }
-
-            _notifyStateChange(nameChanged) {
-                this._lightChanged();
-                if (this.light.states.online) this._exec(nameChanged);
-            }
-
-            _lightChanged() {
-                console.log("Light changed!", this.light.states);
-                if (!this._initialized) {
-                    this.initialize();
-                }
-
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.light.properties.name.nicknames[0]} state changed`);
-
-                this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
-//                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
-                if (this.light.states.on
-                    && this.light.states.color
-                    && this.light.states.color.spectrumRGB) {
-                    let color = this.light.states.color.spectrumRGB.toString(16);
+                if (this.device.states.on
+                    && this.device.states.color
+                    && this.device.states.color.spectrumRGB) {
+                    let color = this.device.states.color.spectrumRGB.toString(16);
                     while (color.length < 6)
                         color = '0' + color;
                     color = '#' + color;
                     console.log('set light color to ' + color);
-                    this.$.light.style.color = color;
-                } else if (this.light.states.on) {
-                    this.$.light.style.color = '#000';
+                    this.$.deviceIcon.style.color = color;
+                } else if (this.device.states.on) {
+                    this.$.deviceIcon.style.color = '#000';
                 } else {
-                    this.$.light.style.color = '#eee';
+                    this.$.deviceIcon.style.color = '#eee';
                 }
-                this.$.brightness.disabled = !this.light.states.on;
-            }
-
-            _exec(nameChanged) {
-                if (nameChanged) {
-                    this.light.nameChanged = true;
-                } else {
-                    this.light.nameChanged = false;
-                }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.light).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                });
+                this.$.brightness.disabled = !this.device.states.on;
             }
         }
         customElements.define(SmartLight.is, SmartLight);

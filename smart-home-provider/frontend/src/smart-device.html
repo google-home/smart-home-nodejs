@@ -1,0 +1,283 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-device">
+    <template>
+        <style include="iron-flex iron-flex-alignment shared-styles">
+            paper-input {
+                padding-right: 4px;
+            }
+
+            paper-button {
+                height: 40px;
+                float: right;
+                margin-right: 0px;
+            }
+
+            ::slotted(iron-icon) {
+                padding-top: 24px;
+                padding-bottom: 24px;
+                width: 128px;
+                height: 128px;
+            }
+
+            .card {
+                height: 450px;
+                width: 300px;
+            }
+
+            .on {
+                color: black;
+            }
+
+            .off {
+                color: #eee;
+            }
+
+            #button-bar {
+                margin-bottom: 8px;
+            }
+        </style>
+
+        <div class="card">
+            <div id="button-bar" class="layout horizontal justified">
+                <div id="device-id" class="circle"></div>
+                <div class="flex"></div>
+
+                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
+                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
+            </div>
+
+            <!-- TODO Some stuff -->
+
+            <!-- icon -->
+            <div align="center">
+                <slot name="device-controls"></slot>
+                <slot name="device-icon"></slot>
+                <slot name="device-states"></slot>
+            </div>
+
+            <!-- controls -->
+            <paper-input id="nickname" label="Nickname" value$="{{device.properties.name.nicknames.0}}"></paper-input>
+            <paper-input id="name" label="Name" value$="{{device.properties.name.name}}"></paper-input>
+            <div>Default Name: <span id='defaultName'>{{device.properties.name.defaultNames.0}}</span></div>
+        </div>
+    </template>
+
+    <script>
+        const ENTERKEY = 13;
+
+        class SmartDevice extends Polymer.Element {
+            static get is() { return 'smart-device' }
+
+            static get properties() {
+                return {
+                    device: {
+                        type: Object,
+                        observer: '_deviceChanged'
+                    },
+                    type: {
+                        type: String
+                    }
+                }
+            }
+
+            constructor() {
+                super();
+                this._initialized = false;
+            }
+
+            initialize() {
+                window.requestAnimationFrame(() => {
+                    if (!this.device || this._initialized) {
+                        return;
+                    }
+
+                    console.log(this.device);
+                    console.log(this.$);
+
+                    if (this.$['smart-device'] && !this._smartDevice) {
+                        // Obtain the containing 'smart-device' of a child element
+                        // This value is used to change common element components
+                        this._smartDevice = this.$['smart-device'];
+                    }
+
+                    this._initialized = true;
+                    console.log(this);
+                    console.log(this.$);
+
+                    if (this._smartDevice) {
+                        // Functions to run on child elements.
+                        this._smartDevice.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                        this._smartDevice.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                        this._smartDevice.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                        this._smartDevice.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
+                        // Set the initial properties of common fields
+                        this._smartDevice.$['device-id'].innerHTML = this.device.id;
+                        this._smartDevice.$.nickname.value = this.device.properties.name.nicknames[0];
+                        this._smartDevice.$.name.value = this.device.properties.name.name;
+                        this._smartDevice.$.defaultName.innerHTML = this.device.properties.name.defaultNames[0];
+
+                        this._handleRegister();
+                    }
+                });
+            }
+
+            _handleCloud() {
+                this.device.states.online = !this.device.states.online;
+                this._handleRegister();
+                this._changeEventSource();
+            }
+
+            _handleRegister() {
+                // Register source if undefined
+                console.log(this);
+                if (!this._source) {
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.device.id);
+                }
+                this._callSmartHomeProviderCloud('/register-device', 'POST', this.device)
+                    .then(this._changeEventSource.bind(this))
+                    .catch(function (error) {
+                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
+                    });
+            }
+
+            _handleDelete() {
+                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.device)
+                    .catch(function (error) {
+                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
+                    });
+                if (this._source) this._source.close();
+
+                const app = document.querySelector('my-app');
+                const devices = app[this.type];
+                for (var i = 0; i < devices.length; i++) {
+                    if (devices[i].id == this.device.id) {
+                        app.removeDevice(this.type, i);
+                    }
+                }
+            }
+
+            _execNameOrNicknameChange(event) {
+                // occurs after enter/tab key pressed or on tapout from input field
+                if (event.target.id == 'nickname') {
+                    this.device.properties.name.nicknames[0] = event.target.value;
+                }
+                else if (event.target.id == 'name') {
+                    this.device.properties.name.name = event.target.value;
+                }
+                this._notifyStateChange(true);
+            }
+
+            _handleNameOrNicknameChange(event) {
+                if (event.which == ENTERKEY) this.blur();
+            }
+
+            _callSmartHomeProviderCloud(path, method, opt_body) {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + AUTH_TOKEN
+                    }
+                };
+                if (opt_body) options.body = JSON.stringify(opt_body);
+                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
+            }
+
+            _changeEventSource() {
+                if (!this.device.states.online) {
+                    // going offline
+                    this._source.close();
+                } else {
+                    // going online
+                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.device.id);
+                    this._source.addEventListener('change', function (e) {
+                        this._changeState(JSON.parse(e.data));
+                    }.bind(this));
+                    this._source.addEventListener('pullUp', function (e) {
+                        this._exec();
+                    }.bind(this));
+                    this._source.addEventListener('error', function (error) {
+                        if (error.eventPhase == 2) {
+                            console.log('>>> event source closed');
+                            setTimeout(this._changeEventSource.bind(this), 30000);
+                            return;
+                        } else {
+                            console.error('>>> error in event source:', error);
+                        }
+                    }.bind(this));
+                }
+                this._notifyStateChange();
+            }
+
+            _changeState(changes) {
+                for (var name in changes) {
+                    const value = changes[name];
+                    this.set('device.states.' + name, value);
+                }
+                this._notifyStateChange();
+            }
+
+            _notifyStateChange(nameChanged) {
+                this._deviceChanged();
+                if (this.device.states.online) this._exec(nameChanged);
+            }
+
+            _deviceChanged() {
+                console.log("Device changed!", this.device.states);
+                if (!this._initialized) {
+                    this.initialize();
+                    return;
+                }
+                console.log('Go through with device setup');
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.device.properties.name.nicknames[0]} state changed`);
+
+                if (this._smartDevice) {
+                    this._smartDevice.$.cloud.icon = this.device.states.online ? 'cloud' : 'cloud-off';
+                } else {
+                    this.$.cloud.icon = this.device.states.online ? 'cloud' : 'cloud-off';
+                }
+            }
+
+            _exec(nameChanged) {
+                if (nameChanged) {
+                    this.device.nameChanged = true;
+                } else {
+                    this.device.nameChanged = false;
+                }
+                this._callSmartHomeProviderCloud('/exec', 'POST', this.device).then(function () {
+                    console.log('>>> exec to Smart Home Provider Cloud');
+                });
+            }
+        }
+        customElements.define(SmartDevice.is, SmartDevice);
+    </script>
+</dom-module>

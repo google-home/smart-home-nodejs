@@ -23,233 +23,37 @@ limitations under the License.
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="smart-lock">
     <template>
-        <style include="iron-flex iron-flex-alignment shared-styles">
-            paper-input {
-                padding-right: 4px;
-            }
-
-            paper-button {
-                height: 40px;
-                float: right;
-                margin-right: 0px;
-            }
-
-            iron-icon {
-                padding-top: 24px;
-                padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
-            }
-
-            .card {
-                height: 450px;
-                width: 300px;
-            }
-
-            .on {
-                color: black;
-            }
-
-            .off {
-                color: #eee;
-            }
-
-            #button-bar {
-                margin-bottom: 8px;
-            }
-        </style>
-
-        <div class="card">
-            <div id="button-bar" class="layout horizontal justified">
-                <div id="lock-id" class="circle">[[lock.id]]</div>
-                <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
-            </div>
-
-            <!-- lock icon -->
-            <div align="center">
-                <iron-icon id="lock" on-tap="_handleLockUnlock" icon="icons:lock"></iron-icon>
-            </div>
-
-            <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{lock.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{lock.properties.name.name}}"></paper-input>
-            <div>Default Name: {{lock.properties.name.defaultNames.0}}</div>
-        </div>
+        <smart-device id="smart-device" device="{{device}}" type="locks">
+            <iron-icon id="lock" on-tap="_handleLockUnlock" icon="icons:lock" slot="device-icon"></iron-icon>
+        </smart-device>
     </template>
 
     <script>
-        class SmartLock extends Polymer.Element {
+        class SmartLock extends SmartDevice {
             static get is() { return 'smart-lock' }
-
-            static get properties() {
-                return {
-                    lock: {
-                        type: Object,
-                        observer: '_lockChanged'
-                    }
-                }
-            }
 
             constructor() {
                 super();
-                this._initialized = false;
-            }
-
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.light || this._initialized) {
-                        return;
-                    }
-                    this._initialized = true;
-                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-
-                    this._handleRegister();
-                });
             }
 
             _handleLockUnlock() {
-                this.lock.states.isLocked = !this.lock.states.isLocked;
+                this.device.states.isLocked = !this.device.states.isLocked;
                 this._notifyStateChange();
             }
 
-            _handleCloud() {
-                // Toggle online state on button press.
-                this.lock.states.online = !this.lock.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
+            _deviceChanged() {
+                super._deviceChanged();
 
-            _handleRegister() {
-                // Register source if undefined
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.lock.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.lock)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
-
-            _handleDelete() {
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.lock)
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
-                    });
-                if (this._source) this._source.close();
-
-                const app = document.querySelector('my-app');
-                const locks = app.locks;
-                for (var i = 0; i < locks.length; i++) {
-                    if (locks[i].id == this.lock.id) {
-                        app.removeDevice('locks', i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.lock.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.lock.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.lock.states.online) {
-                    // going offline
-                    this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.lock.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 5000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                for (var name in changes) {
-                    const value = changes[name];
-                    this.set('lock.states.' + name, value);
-                }
-                this._notifyStateChange();
-            }
-
-            _notifyStateChange(nameChanged) {
-                this._lockChanged();
-                if (this.lock.states.online) this._exec(nameChanged);
-            }
-
-            _lockChanged() {
-                console.log("Lock changed!", this.lock.states);
-                if (!this._initialized) {
-                    this.initialize();
-                }
-
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.lock.properties.name.nicknames[0]} state changed`);
-
-                this.$.cloud.icon = this.lock.states.online ? 'cloud' : 'cloud-off';
-                if (this.lock.states.isLocked) {
+                if (this.device.states.isLocked) {
                     this.$.lock.icon = "icons:lock";
                 } else {
                     this.$.lock.icon = 'icons:lock-open';
                 }
-            }
-
-            _exec(nameChanged) {
-                if (nameChanged) {
-                    this.lock.nameChanged = true;
-                } else {
-                    this.lock.nameChanged = false;
-                }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.lock).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                }).catch(function (error) {
-                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
-                });
             }
         }
         customElements.define(SmartLock.is, SmartLock);

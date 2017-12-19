@@ -1,3 +1,17 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/iron-icons/image-icons.html">
@@ -9,98 +23,28 @@
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="smart-scene">
     <template>
-        <style include="iron-flex iron-flex-alignment shared-styles">
-            paper-input {
-                padding-right: 4px;
-            }
-
-            paper-button {
-                height: 40px;
-                float: right;
-                margin-right: 0px;
-            }
-
-            iron-icon {
-                padding-top: 24px;
-                padding-bottom: 24px;
-                width: 128px;
-                height: 128px;
-            }
-
-            .card {
-                height: 450px;
-                width: 300px;
-            }
-
-            #button-bar {
-                margin-bottom: 8px;
-            }
-        </style>
-
-        <div class="card">
-            <div id="button-bar" class="layout horizontal justified">
-                <div id="scene-id" class="circle">[[scene.id]]</div>
-                <div class="flex"></div>
-                <paper-icon-button id="cloud" icon="cloud-off" on-tap="_handleCloud"></paper-icon-button>
-                <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
-            </div>
-
-            <!-- scene icon -->
-            <div class="layout horizontal center-justified">
-                <div id="scene" class="main-square" on-tap="_handleOnOff"></div>
-<!--                 <div class="layout vertical center-justified">
-                    <div>Brightness</div>
-                    <div id="brightness" class="circle">[[scene.states.brightness]]</div>
-                </div> -->
-            </div>
-
-            <!-- controls -->
-            <paper-input id="nickname" label="Nickname" value$="{{scene.properties.name.nicknames.0}}"></paper-input>
-            <paper-input id="name" label="Name" value$="{{scene.properties.name.name}}" on-tap="_handleNameChange"></paper-input>
-            <div>Default Name: {{scene.properties.name.defaultNames.0}}</div>
-        </div>
+        <smart-device id="smart-device" device="{{device}}" type="scenes">
+            <iron-icon id="deviceIcon" on-tap="_handleOnOff" slot="device-icon" icon="image:slideshow"></iron-icon>
+        </smart-device>
     </template>
 
     <script>
-        class SmartScene extends Polymer.Element {
+        class SmartScene extends SmartDevice {
             static get is() { return 'smart-scene' }
-
-            static get properties() {
-                return {
-                    scene: {
-                        type: Object,
-                        observer: '_sceneChanged'
-                    }
-                }
-            }
 
             constructor() {
                 super();
-                this._initialized = false;
-            }
-
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.light || this._initialized) {
-                        return;
-                    }
-                    this._initialized = true;
-                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                    this._handleRegister();
-                });
             }
 
             _handleOnOff() {
                 // Hard-coded sample scene
-                if (this.scene.states.online) {
-                    reqdata = {
+                if (this.device.states.online) {
+                    let reqdata = {
                         requestId: "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
                         inputs: [{
                             intent: "action.devices.EXECUTE",
@@ -133,138 +77,20 @@
                             }
                         }]
                     };
-                    if (this.scene.states.on && this.scene.properties.attributes.reversible) {
+                    if (this.device.states.on && this.device.properties.attributes.reversible) {
                         reqdata.inputs[0].payload.commands[0].execution = [{
                             command: "action.devices.commands.ColorAbsolute",
                             params: {"color": {name:"cerulean", spectrumRGB: 31655}}
                         }];
                     }
-                    this.scene.states.on = !this.scene.states.on;
+                    this.device.states.on = !this.device.states.on;
                     this._callSmartHomeProviderCloud('/execute-scene', 'POST', reqdata)
                         .then(this._notifyStateChange());
                 }
             }
 
-            _handleCloud() {
-                // Toggle online state on button press.
-                this.scene.states.online = !this.scene.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
-
-            _handleRegister() {
-                // Register source if undefined
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.scene.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.scene)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
-
-            _handleDelete() {
-                // this.scene.states.online = false;
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.scene)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider Cloud:', error);
-                    });
-                if (this._source) this._source.close();
-
-                const app = document.querySelector('my-app');
-                const scenes = app.scenes;
-                for (var i = 0; i < scenes.length; i++) {
-                    if (scenes[i].id == this.scene.id) {
-                        app.removeDevice('scenes', i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.scene.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.scene.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.scene.states.online) {
-                    // going offline
-                    this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.scene.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 5000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                for (var name in changes) {
-                    const value = changes[name];
-                    this.set('scene.states.' + name, value);
-                }
-                this._notifyStateChange();
-            }
-
-            _notifyStateChange() {
-                this._sceneChanged();
-                if (this.scene.states.online) this._exec();
-            }
-
-            _sceneChanged() {
-                if (!this._initialized) {
-                    this.initialize();
-                }
-
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.scene.properties.name.nicknames[0]} state changed`);
-
-                this.$.cloud.icon = this.scene.states.online ? 'cloud' : 'cloud-off';
-            }
-
-            _exec() {
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.scene).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                }).catch(function (error) {
-                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
-                });
+            _deviceChanged() {
+                super._deviceChanged();
             }
         }
         customElements.define(SmartScene.is, SmartScene);
