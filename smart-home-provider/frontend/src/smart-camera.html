@@ -87,40 +87,51 @@ limitations under the License.
     </template>
 
     <script>
-        Polymer({
-            is: 'smart-camera',
+        class SmartCamera extends Polymer.Element {
+            static get is() { return 'smart-camera' }
 
-            properties: {
-                camera: {
-                    type: Object,
-                    observer: '_cameraChanged'
+            static get properties() {
+                return {
+                    camera: {
+                        type: Object,
+                        observer: '_cameraChanged'
+                    }
                 }
-            },
+            }
 
-            ready: function () {
-                this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+            constructor() {
+                super();
+                this._initialized = false;
+            }
 
-                this.async(() => {
+            initialize() {
+                window.requestAnimationFrame(() => {
+                    if (!this.light || this._initialized) {
+                        return;
+                    }
+
+                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
                     this._handleRegister();
                 });
-            },
+            }
 
-            _handleOnOff: function () {
+            _handleOnOff() {
                 this.camera.states.on = !this.camera.states.on;
                 this._notifyStateChange();
-            },
+            }
 
-            _handleCloud: function () {
+            _handleCloud() {
                 // Toggle online state on button press.
                 this.camera.states.online = !this.camera.states.online;
                 this._handleRegister();
                 this._changeEventSource();
-            },
+            }
 
-            _handleRegister: function() {
+            _handleRegister() {
                 // Register source if undefined
                 if (!this._source) {
                     this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.camera.id);
@@ -130,9 +141,9 @@ limitations under the License.
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
                     });
-            },
+            }
 
-            _handleDelete: function () {
+            _handleDelete() {
                 this.camera.states.online = true;
                 this._callSmartHomeProviderCloud('/remove-device', 'POST', this.camera)
                     .then(this._changeEventSource.bind(this))
@@ -149,9 +160,9 @@ limitations under the License.
                         app.removeDevice('cameras', i);
                     }
                 }
-            },
+            }
 
-            _execNameOrNicknameChange: function (event) {
+            _execNameOrNicknameChange(event) {
                 // occurs after enter/tab key pressed or on tapout from input field
                 if (event.target.id == 'nickname') {
                     this.camera.properties.name.nicknames[0] = event.target.value;
@@ -160,13 +171,13 @@ limitations under the License.
                     this.camera.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
-            },
+            }
 
-            _handleNameOrNicknameChange: function (event) {
+            _handleNameOrNicknameChange(event) {
                 if (event.which == ENTERKEY) this.blur();
-            },
+            }
 
-            _callSmartHomeProviderCloud: function (path, method, opt_body) {
+            _callSmartHomeProviderCloud(path, method, opt_body) {
                 const options = {
                     method: method,
                     headers: {
@@ -176,9 +187,9 @@ limitations under the License.
                 };
                 if (opt_body) options.body = JSON.stringify(opt_body);
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            },
+            }
 
-            _changeEventSource: function () {
+            _changeEventSource() {
                 if (!this.camera.states.online) {
                     if (this._source) {
                         this._source.close();
@@ -203,22 +214,26 @@ limitations under the License.
                     }.bind(this));
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _changeState: function (changes) {
+            _changeState(changes) {
                 for (var name in changes) {
                     const value = changes[name];
                     this.set('camera.states.' + name, value);
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _notifyStateChange: function (nameChanged) {
+            _notifyStateChange(nameChanged) {
                 this._cameraChanged();
                 if (this.camera.states.online) this._exec(nameChanged);
-            },
+            }
 
-            _cameraChanged: function () {
+            _cameraChanged() {
+                if (!this._initialized) {
+                    this.initialize();
+                }
+
                 const app = document.querySelector('my-app');
                 app.showToast(`${this.camera.properties.name.nicknames[0]} state changed`);
 
@@ -228,20 +243,21 @@ limitations under the License.
                 } else {
                     this.$.camera.style.color = '#eee';
                 }
-            },
+            }
 
-            _exec: function(nameChanged) {
+            _exec(nameChanged) {
                 if (nameChanged) {
                     this.camera.nameChanged = true;
                 } else {
                     this.camera.nameChanged = false;
                 }
                 this._callSmartHomeProviderCloud('/exec', 'POST', this.camera).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.camera);
+                    console.log('>>> exec to Smart Home Provider Cloud');
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
             }
-        });
+        }
+        customElements.define(SmartCamera.is, SmartCamera);
     </script>
 </dom-module>
