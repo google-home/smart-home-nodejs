@@ -88,15 +88,16 @@ limitations under the License.
 
             _deviceChanged() {
                 super._deviceChanged();
+                console.log("Washer changed!", this.device);
                 if (this.device.states.updateToggleSettings) {
                     this.device.states.currentToggleSettings =
                         this.device.states.updateToggleSettings;
-                    if (this.device.states.currentToggleSettings.extraRinse) {
+                    if (this.device.states.currentToggleSettings['extra rinse']) {
                         this.$['toggle-extra-rinse'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-extra-rinse'].classList.add('toggle-off');
                     }
-                    if (this.device.states.currentToggleSettings.permanentPress) {
+                    if (this.device.states.currentToggleSettings['permanent press']) {
                         this.$['toggle-permanent-press'].classList.remove('toggle-off');
                     } else {
                         this.$['toggle-permanent-press'].classList.add('toggle-off');
