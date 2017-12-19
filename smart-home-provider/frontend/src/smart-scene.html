@@ -42,7 +42,15 @@ limitations under the License.
             }
 
             _handleOnOff() {
-                // Hard-coded sample scene
+                // Change all of the lights
+                const app = document.querySelector('my-app');
+                const lights = [];
+                for (let i = 0; i < app.lights.length; i++) {
+                    lights.push({
+                        id: app.lights[i].id,
+                        customData: app.lights[i].customData
+                    });
+                }
                 if (this.device.states.online) {
                     let reqdata = {
                         requestId: "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
@@ -50,26 +58,11 @@ limitations under the License.
                             intent: "action.devices.EXECUTE",
                             payload: {
                                 commands: [{
-                                    devices: [{
-                                        id: "0",
-                                        customData: {
-                                            smartHomeProviderId: "FkldJVJCmDNSaoLkoq0txiz8Byf2Hr"
-                                            }
-                                        }, {
-                                        id: "1",
-                                        customData: {
-                                            smartHomeProviderId: "FkldJVJCmDNSaoLkoq0txiz8Byf2Hr"
-                                            }
-                                        },{
-                                        id: "2",
-                                        customData: {
-                                            smartHomeProviderId: "FkldJVJCmDNSaoLkoq0txiz8Byf2Hr"
-                                            }
-                                        }],
+                                    devices: lights,
                                     execution: [{
                                         command: "action.devices.commands.OnOff",
-                                        params: {on: true }
-                                        }, {
+                                        params: { on: true }
+                                    }, {
                                         command: "action.devices.commands.ColorAbsolute",
                                         params: {"color": {name:"magenta", spectrumRGB: 16711935}}
                                     }]

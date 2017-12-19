@@ -177,7 +177,7 @@ limitations under the License.
 
                 const app = document.querySelector('my-app');
                 const devices = app[this.type];
-                for (var i = 0; i < devices.length; i++) {
+                for (let i = 0; i < devices.length; i++) {
                     if (devices[i].id == this.device.id) {
                         app.removeDevice(this.type, i);
                     }
