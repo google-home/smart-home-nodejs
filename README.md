@@ -45,7 +45,7 @@ for your project.
 1. Click 'Create credentials'
 1. Click 'API key'
 1. Copy the API key shown and insert it in
-`smart-home-provider/config-provider.js`
+`smart-home-provider/cloud/config-provider.js`
    Enable Request-Sync API using [these
    instructions](https://developers.google.com/actions/smarthome/create-app#request-sync).
 1. Set up the web portal
