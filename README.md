@@ -34,6 +34,8 @@ See the developer guide and release notes at [https://developers.google.com/acti
 
 ### Steps for testing with Google Assistant
 
+#### Create and setup project
+
 1. Navigate to the [Actions Console](https://console.actions.google.com) and
 click Add/Import Project.
 1. Create a new project or import an existing Google Cloud project.
@@ -75,6 +77,9 @@ for your project.
 1. This is a web portal to your Smart Home devices. Configure the smart lights
 shown as you please. Click the cloud icon shown above at least one of them to
 enable it for cloud control.
+
+#### Use Actions on Google console
+
 1. Return to the Actions Console project. Click 'Use Actions SDK'.
 1. Update the Action Package (action.json) with the URL where your project is hosted (don't forget to include /smarthome).
 1. Use the [gActions CLI](https://developers.google.com/actions/tools/gactions-cli)
@@ -93,6 +98,10 @@ path, e.g. https://xyz123.ngrok.io/oauth
 e.g. https://xyz123.ngrok.io/token
 1. Enter any remaining necessary information you might need for
 authentication your app. Then Save.
+1. Press the **TEST DRAFT** button to begin testing this app.
+
+#### Start testing on device
+
 1. On a device with the Google Assistant logged into the same account used
 to create the project in the Actions Console, enter your Assistant settings.
 1. Click Home Control.
