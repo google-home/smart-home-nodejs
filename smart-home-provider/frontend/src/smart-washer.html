@@ -181,9 +181,11 @@ limitations under the License.
                     }.bind(this));
                     this._source.addEventListener('error', function (error) {
                         if (error.eventPhase == 2) {
-                            return this._changeEventSource();
+                            console.log('>>> event source closed');
+                            setTimeout(this._changeEventSource.bind(this), 5000);
+                            return;
                         } else {
-                            console.log('>>> error in event source:', error);
+                            console.error('>>> error in event source:', error);
                         }
                     }.bind(this));
                 }
