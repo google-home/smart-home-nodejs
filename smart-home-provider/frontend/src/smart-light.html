@@ -13,6 +13,7 @@ limitations under the License.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/iron-icons/image-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
@@ -74,18 +75,6 @@ limitations under the License.
                 <paper-icon-button icon="delete" on-tap="_handleDelete"></paper-icon-button>
             </div>
 
-            <!-- properties -->
-            <!--
-                  <div class="layout horizontal justified">
-                    <paper-dropdown-menu label="Type">
-                      <paper-listbox class="dropdown-content">
-                        <paper-item>Monochrome Light</paper-item>
-                        <paper-item>Color Light</paper-item>
-                      </paper-listbox>
-                    </paper-dropdown-menu>
-                  </div>
-            -->
-
             <!-- light icon -->
             <div align="center">
                 <paper-slider id="brightness" title="Brightness" editable="true"
@@ -103,48 +92,66 @@ limitations under the License.
 
     <script>
         const ENTERKEY = 13;
-        Polymer({
-            is: 'smart-light',
 
-            properties: {
-                light: {
-                    type: Object,
-                    observer: '_lightChanged'
+        class SmartLight extends Polymer.Element {
+            static get is() { return 'smart-light' }
+
+            static get properties() {
+                return {
+                    light: {
+                        type: Object,
+                        observer: '_lightChanged'
+                    }
                 }
-            },
+            }
 
-            ready: function () {
-                this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+            constructor() {
+                super();
+                this._initialized = false;
+            }
 
-                this.async(() => {
+            initialize() {
+                window.requestAnimationFrame(() => {
+                    if (!this.light || this._initialized) {
+                        return;
+                    }
+                    this._initialized = true;
+                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
                     this._handleRegister();
                 });
-            },
+            }
 
-            _handleOnOff: function () {
+            _handleOnOff() {
                 this.light.states.on = !this.light.states.on;
                 this._notifyStateChange();
-            },
+            }
 
-            _handleBrightness: function () {
-                this.async(() => {
+            _handleBrightness() {
+                if (!this.light) {
+                    return;
+                }
+                window.requestAnimationFrame(() => {
+                    console.log(this.light);
+
                     this.light.states.brightness = this.$.brightness.value;
                     this._notifyStateChange();
                 });
-            },
+            }
 
-            _handleCloud: function () {
+            _handleCloud() {
                 // Toggle online state on button press.
                 this.light.states.online = !this.light.states.online;
                 this._handleRegister();
                 this._changeEventSource();
-            },
+            }
 
-            _handleRegister: function() {
+            _handleRegister() {
                 // Register source if undefined
+                console.log(this);
                 if (!this._source) {
                     this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.light.id);
                 }
@@ -153,9 +160,9 @@ limitations under the License.
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
                     });
-            },
+            }
 
-            _handleDelete: function () {
+            _handleDelete() {
                 // this.light.states.online = false;
                 this._callSmartHomeProviderCloud('/remove-device', 'POST', this.light)
                     .catch(function (error) {
@@ -170,9 +177,9 @@ limitations under the License.
                         app.removeDevice('lights', i);
                     }
                 }
-            },
+            }
 
-            _execNameOrNicknameChange: function (event) {
+            _execNameOrNicknameChange(event) {
                 // occurs after enter/tab key pressed or on tapout from input field
                 if (event.target.id == 'nickname') {
                     this.light.properties.name.nicknames[0] = event.target.value;
@@ -181,13 +188,13 @@ limitations under the License.
                     this.light.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
-            },
+            }
 
-            _handleNameOrNicknameChange: function (event) {
+            _handleNameOrNicknameChange(event) {
                 if (event.which == ENTERKEY) this.blur();
-            },
+            }
 
-            _callSmartHomeProviderCloud: function (path, method, opt_body) {
+            _callSmartHomeProviderCloud(path, method, opt_body) {
                 const options = {
                     method: method,
                     headers: {
@@ -197,9 +204,9 @@ limitations under the License.
                 };
                 if (opt_body) options.body = JSON.stringify(opt_body);
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            },
+            }
 
-            _changeEventSource: function () {
+            _changeEventSource() {
                 if (!this.light.states.online) {
                     // going offline
                     this._source.close();
@@ -215,7 +222,7 @@ limitations under the License.
                     this._source.addEventListener('error', function (error) {
                         if (error.eventPhase == 2) {
                             console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 5000);
+                            setTimeout(this._changeEventSource.bind(this), 30000);
                             return;
                         } else {
                             console.error('>>> error in event source:', error);
@@ -223,23 +230,30 @@ limitations under the License.
                     }.bind(this));
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _changeState: function (changes) {
+            _changeState(changes) {
                 for (var name in changes) {
                     const value = changes[name];
                     this.set('light.states.' + name, value);
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _notifyStateChange: function (nameChanged) {
+            _notifyStateChange(nameChanged) {
                 this._lightChanged();
                 if (this.light.states.online) this._exec(nameChanged);
-            },
+            }
 
-            _lightChanged: function () {
+            _lightChanged() {
                 console.log("Light changed!", this.light.states);
+                if (!this._initialized) {
+                    this.initialize();
+                }
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.light.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.light.states.online ? 'cloud' : 'cloud-off';
 //                this.$.light.setAttribute('class', this.light.states.on ? 'on' : 'off');
                 if (this.light.states.on
@@ -257,21 +271,19 @@ limitations under the License.
                     this.$.light.style.color = '#eee';
                 }
                 this.$.brightness.disabled = !this.light.states.on;
-//                Polymer.updateStyles();
-            },
+            }
 
-            _exec: function(nameChanged) {
+            _exec(nameChanged) {
                 if (nameChanged) {
                     this.light.nameChanged = true;
                 } else {
                     this.light.nameChanged = false;
                 }
                 this._callSmartHomeProviderCloud('/exec', 'POST', this.light).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.light);
-                }).catch(function (error) {
-                    console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
+                    console.log('>>> exec to Smart Home Provider Cloud');
                 });
             }
-        });
+        }
+        customElements.define(SmartLight.is, SmartLight);
     </script>
 </dom-module>

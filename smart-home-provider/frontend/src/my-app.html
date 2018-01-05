@@ -17,6 +17,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/places-icons.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -29,6 +30,7 @@ limitations under the License.
 <link rel="import" href="smart-vacuum.html">
 <link rel="import" href="smart-washer.html">
 <link rel="import" href="smart-lock.html">
+<link rel="import" href="smart-refrigerator.html">
 
 <dom-module id="my-app">
     <template>
@@ -117,7 +119,6 @@ limitations under the License.
             <app-toolbar>
                 <paper-icon-button id="account" icon="account-box" on-tap="_showAccount"></paper-icon-button>
                 <div main-title>Smart Home Provider</div>
-                <div>[[USERNAME]]</div>
                 <paper-icon-button id="add" icon="add"></paper-icon-button>
             </app-toolbar>
         </app-header>
@@ -161,6 +162,10 @@ limitations under the License.
                 <button dialog-confirm autofocus class="square" id="lockSelector" on-tap="_addLock">
                     <iron-icon icon="icons:lock"></iron-icon>
                     <p>Lock</p>
+                </button>
+                <button dialog-confirm autofocus class="square" id="refrigeratorSelector" on-tap="_addRefrigerator">
+                    <iron-icon icon="places:kitchen"></iron-icon>
+                    <p>Refrigerator</p>
                 </button>
             </div>
         </paper-dialog>
@@ -226,6 +231,14 @@ limitations under the License.
                 </div>
             </template>
         </iron-list>
+
+        <iron-list id="refrigerator-list" items="[[refrigerators]]" as="item" grid>
+            <template>
+                <div class="item">
+                    <smart-refrigerator refrigerator=[[item]]></smart-refrigerator>
+                </div>
+            </template>
+        </iron-list>
     </template>
 
     <script>
@@ -267,6 +280,9 @@ limitations under the License.
                 },
                 locks: {
                     type: Array
+                },
+                refrigerators: {
+                    type: Array
                 }
             },
 
@@ -279,6 +295,7 @@ limitations under the License.
                 this.vacuums = [];
                 this.washers = [];
                 this.locks = [];
+                this.refrigerators = [];
 
                 window.requestAnimationFrame(() => {
                     this.$.add.addEventListener('click', e => this.$.modal.open());
@@ -316,6 +333,11 @@ limitations under the License.
             removeDevice: function(type, index) {
                 this.splice(type, index, 1);
                 this.hide = --this.deviceCount > 0;
+            },
+
+            showToast: function(toastmsg) {
+                this.$.toast.text = toastmsg;
+                this.$.toast.open();
             },
 
             _showAccount: function () {
@@ -380,6 +402,9 @@ limitations under the License.
                                 break;
                             case 'action.devices.types.LOCK':
                                 app._addLock(null, devices[id]);
+                                break;
+                            case 'action.devices.types.REFRIGERATOR':
+                                app._addRefrigerator(null, devices[id]);
                                 break;
                             default:
                                 break;
@@ -672,6 +697,9 @@ limitations under the License.
                             online: true,
                             isRunning: false,
                             isPaused: false,
+                            currentModeSettings: {
+                                speed: "slow"
+                            },
                             currentToggleSettings: {
                                 quiet: false
                             }
@@ -825,6 +853,62 @@ limitations under the License.
 
                     window.requestAnimationFrame(() => {
                         this.$['lock-list'].fire('iron-resize');
+                    });
+                }
+            },
+
+            _addRefrigerator: function (event, refrigerator) {
+                this.hideNoDeviceMessage();
+                this.deviceCount++;
+                let nicknames = ['kitchen refrigerator', 'mini-fridge', 'garage freezer'];
+                if (refrigerator && refrigerator.hasOwnProperty("id")) {
+                    this.push('refrigerators', refrigerator);
+                } else {
+                    var refrigeratorId = getNextDeviceId();
+                    this.push('refrigerators', {
+                        id: String(refrigeratorId),
+                        properties : {
+                            type: 'action.devices.types.REFRIGERATOR',
+                            traits: [
+                                'action.devices.traits.OnOff',
+                                'action.devices.traits.Toggles'
+                            ],
+                            attributes: {
+                                availableToggles: [{
+                                    name: "quiet",
+                                    name_values: [{
+                                        name_synonym: [ "quiet", "silent"],
+                                        lang: "en"}]
+                                }]
+                            },
+                            name: {
+                                defaultNames: ['Smart Fridge'],
+                                name: 'Smart Refrigerator ' + refrigeratorId,
+                                nicknames: [ this._getNickname(nicknames, this.refrigerators.length, refrigeratorId) ]
+                            },
+                            willReportState: false,
+                            roomHint: '',
+                            deviceInfo: {
+                                manufacturer: 'Sirius Cybernetics Corporation',
+                                model: '2331B',
+                                swVersion: '11.4',
+                                hwVersion: '11.2'
+                            },
+                            customData: {
+                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
+                            }
+                        },
+                        states: {
+                            on: false,
+                            online: true,
+                            currentToggleSettings: {
+                                quiet: false
+                            }
+                        }
+                    });
+
+                    window.requestAnimationFrame(() => {
+                        this.$['refrigerator-list'].fire('iron-resize');
                     });
                 }
             }

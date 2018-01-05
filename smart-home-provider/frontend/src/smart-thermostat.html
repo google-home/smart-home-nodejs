@@ -94,51 +94,62 @@
     </template>
 
     <script>
-        Polymer({
-            is: 'smart-thermostat',
+        class SmartThermostat extends Polymer.Element {
+            static get is() { return 'smart-thermostat' }
 
-            properties: {
-                thermostat: {
-                    type: Object,
-                    observer: '_thermostatChanged'
+            static get properties() {
+                return {
+                    thermostat: {
+                        type: Object,
+                        observer: '_thermostatChanged'
+                    }
                 }
-            },
+            }
 
-            ready: function () {
-                this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+            constructor() {
+                super();
+                this._initialized = false;
+            }
 
-                this.async(() => {
+            initialize() {
+                window.requestAnimationFrame(() => {
+                    if (!this.light || this._initialized) {
+                        return;
+                    }
+                    this._initialized = true;
+                    this.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
+                    this.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
+
                     this._handleRegister();
                 });
-            },
+            }
 
-            _handleSetpoint: function () {
+            _handleSetpoint() {
                 this.async(() => {
                     this.thermostat.states.thermostatTemperatureSetpoint =
                         this.$.setpoint.value;
                     this._notifyStateChange();
                 });
-            },
+            }
 
-            _handleAmbient: function () {
+            _handleAmbient() {
                 this.async(() => {
                     this.thermostat.states.thermostatTemperatureAmbient =
                         parseFloat(this.$.ambient.value);
                     this._notifyStateChange();
                 });
-            },
+            }
 
-            _handleCloud: function () {
+            _handleCloud() {
                 // Toggle online state on button press.
                 this.thermostat.states.online = !this.thermostat.states.online;
                 this._handleRegister();
                 this._changeEventSource();
-            },
+            }
 
-            _handleRegister: function() {
+            _handleRegister() {
                 // Register source if undefined
                 if (!this._source) {
                     this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.thermostat.id);
@@ -148,9 +159,9 @@
                     .catch(function (error) {
                         console.log('>>> failed to register device with Smart Home Provider cloud:', error);
                     });
-            },
+            }
 
-            _handleDelete: function () {
+            _handleDelete() {
                 this._callSmartHomeProviderCloud('/remove-device', 'POST', this.thermostat)
                     .then(this._changeEventSource.bind(this))
                     .catch(function (error) {
@@ -165,9 +176,9 @@
                         app.removeDevice('thermostats', i);
                     }
                 }
-            },
+            }
 
-            _execNameOrNicknameChange: function (event) {
+            _execNameOrNicknameChange(event) {
                 if (event.target.id == 'nickname') {
                     this.thermostat.properties.name.nicknames[0] = event.target.value;
                 }
@@ -175,14 +186,13 @@
                     this.thermostat.properties.name.name = event.target.value;
                 }
                 this._notifyStateChange(true);
-            },
+            }
 
-            _handleNameOrNicknameChange: function (event) {
+            _handleNameOrNicknameChange(event) {
                 if (event.which == ENTERKEY) this.blur();
-            },
+            }
 
-
-            _callSmartHomeProviderCloud: function (path, method, opt_body) {
+            _callSmartHomeProviderCloud(path, method, opt_body) {
                 const options = {
                     method: method,
                     headers: {
@@ -193,9 +203,9 @@
 
                 if (opt_body) options.body = JSON.stringify(opt_body);
                 return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            },
+            }
 
-            _changeEventSource: function () {
+            _changeEventSource() {
                 if (!this.thermostat.states.online) {
                     // going offline
                     this._source.close();
@@ -219,23 +229,30 @@
                     }.bind(this));
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _changeState: function (changes) {
+            _changeState(changes) {
                 changes.thermostatTemperatureSetpoint = parseFloat(changes.thermostatTemperatureSetpoint).toFixed(1);
                 for (var name in changes) {
                     const value = changes[name];
                     this.set('thermostat.states.' + name, value);
                 }
                 this._notifyStateChange();
-            },
+            }
 
-            _notifyStateChange: function (isNameChange) {
+            _notifyStateChange(isNameChange) {
                 this._thermostatChanged();
                 if (this.thermostat.states.online) this._exec(isNameChange);
-            },
+            }
 
-            _thermostatChanged: function () {
+            _thermostatChanged() {
+                if (!this._initialized) {
+                    this.initialize();
+                }
+
+                const app = document.querySelector('my-app');
+                app.showToast(`${this.thermostat.properties.name.nicknames[0]} state changed`);
+
                 this.$.cloud.icon = this.thermostat.states.online ? 'cloud' : 'cloud-off';
                 if (this.thermostat.states.thermostatMode
                     && this.thermostat.states.thermostatTemperatureSetPoint
@@ -245,16 +262,17 @@
                 } else {
                     console.log('failed to update thermostat');
                 }
-            },
+            }
 
-            _exec: function(isNameChange) {
+            _exec(isNameChange) {
                 this.thermostat.nameChanged = isNameChange ? true : false;
                 this._callSmartHomeProviderCloud('/exec', 'POST', this.thermostat).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud', this.thermostat);
+                    console.log('>>> exec to Smart Home Provider Cloud');
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
             }
-        });
+        }
+        customElements.define(SmartThermostat.is, SmartThermostat);
     </script>
 </dom-module>
