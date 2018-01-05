@@ -219,14 +219,6 @@
                 }).catch(function (error) {
                     console.log('>>> failed to exec to Smart Home Provider Cloud:', error);
                 });
-            },
-
-            _pushUp: function (type) {
-                this._callSmartHomeProviderCloud('/pushUp', 'POST', {type: type, state: this.thermostat}).then(function () {
-                    console.log('>>> pushed state to Smart Home Provider Cloud', this.thermostat);
-                }).catch(function (error) {
-                    console.log('>>> failed to push state to Smart Home Provider Cloud:', error);
-                });
             }
         });
     </script>
