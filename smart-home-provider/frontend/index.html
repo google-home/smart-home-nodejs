@@ -14,10 +14,10 @@ limitations under the License.
 
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
-    <meta name="viewport"
-          content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
     <title>Smart Home Provider</title>
     <meta name="description" content="Smart Home virtual devices">
@@ -36,24 +36,18 @@ limitations under the License.
 
     <!-- Add to homescreen for Safari on iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Smart Home Gizmos">
 
     <!-- Homescreen icons -->
     <link rel="apple-touch-icon" href="images/manifest/icon-48x48.png">
-    <link rel="apple-touch-icon" sizes="72x72"
-          href="images/manifest/icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="96x96"
-          href="images/manifest/icon-96x96.png">
-    <link rel="apple-touch-icon" sizes="144x144"
-          href="images/manifest/icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="192x192"
-          href="images/manifest/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/manifest/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="images/manifest/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="images/manifest/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/manifest/icon-192x192.png">
 
     <!-- Tile icon for Windows 8 (144x144 + tile color) -->
-    <meta name="msapplication-TileImage"
-          content="images/manifest/icon-144x144.png">
+    <meta name="msapplication-TileImage" content="images/manifest/icon-144x144.png">
     <meta name="msapplication-TileColor" content="#3f51b5">
     <meta name="msapplication-tap-highlight" content="no">
 
@@ -79,15 +73,15 @@ limitations under the License.
                 // can use the same code path for native and polyfill'd imports.
                 if (!window.HTMLImports) {
                     document.dispatchEvent(
-                            new CustomEvent('WebComponentsReady', {bubbles: true})
+                        new CustomEvent('WebComponentsReady', { bubbles: true })
                     );
                 }
             };
 
             var webComponentsSupported = (
-                    'registerElement' in document
-                    && 'import' in document.createElement('link')
-                    && 'content' in document.createElement('template')
+                'registerElement' in document
+                && 'import' in document.createElement('link')
+                && 'content' in document.createElement('template')
             );
 
             if (!webComponentsSupported) {
@@ -121,7 +115,9 @@ limitations under the License.
         }
     </style>
 </head>
+
 <body>
-<my-app></my-app>
+    <my-app></my-app>
 </body>
+
 </html>
