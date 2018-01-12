@@ -29,7 +29,6 @@ limitations under the License.
 <link rel="import" href="smart-camera.html">
 <link rel="import" href="smart-vacuum.html">
 <link rel="import" href="smart-washer.html">
-<link rel="import" href="smart-lock.html">
 <link rel="import" href="smart-refrigerator.html">
 
 <dom-module id="my-app">
@@ -163,10 +162,6 @@ limitations under the License.
                     <iron-icon icon="icons:save"></iron-icon>
                     <p>Washer</p>
                 </button>
-                <button dialog-confirm autofocus class="square" id="lockSelector" on-tap="_addLock">
-                    <iron-icon icon="icons:lock"></iron-icon>
-                    <p>Lock</p>
-                </button>
                 <button dialog-confirm autofocus class="square" id="refrigeratorSelector" on-tap="_addRefrigerator">
                     <iron-icon icon="places:kitchen"></iron-icon>
                     <p>Refrigerator</p>
@@ -228,14 +223,6 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="lock-list" items="[[locks]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-lock device=[[item]]></smart-lock>
-                </div>
-            </template>
-        </iron-list>
-
         <iron-list id="refrigerator-list" items="[[refrigerators]]" as="item" grid>
             <template>
                 <div class="item">
@@ -282,9 +269,6 @@ limitations under the License.
                 washers: {
                     type: Array
                 },
-                locks: {
-                    type: Array
-                },
                 refrigerators: {
                     type: Array
                 }
@@ -298,7 +282,6 @@ limitations under the License.
                 this.cameras = [];
                 this.vacuums = [];
                 this.washers = [];
-                this.locks = [];
                 this.refrigerators = [];
 
                 window.requestAnimationFrame(() => {
@@ -403,9 +386,6 @@ limitations under the License.
                                 devices[id].states.isRunning = false;
                                 devices[id].states.isPaused = false;
                                 app._addWasher(null, devices[id]);
-                                break;
-                            case 'action.devices.types.LOCK':
-                                app._addLock(null, devices[id]);
                                 break;
                             case 'action.devices.types.REFRIGERATOR':
                                 app._addRefrigerator(null, devices[id]);
@@ -868,50 +848,6 @@ limitations under the License.
 
                     window.requestAnimationFrame(() => {
                         this.$['washer-list'].fire('iron-resize');
-                    });
-                }
-            },
-
-            _addLock: function (event, lock) {
-                this.hideNoDeviceMessage();
-                this.deviceCount++;
-                let nicknames = ['front door', 'bay window'];
-                if (lock && lock.hasOwnProperty("id")) {
-                    this.push('locks', lock);
-                } else {
-                    var lockId = getNextDeviceId();
-                    this.push('locks', {
-                        id: String(lockId),
-                        properties : {
-                            type: 'action.devices.types.LOCK',
-                            traits: [
-                                'action.devices.traits.LockUnlock'
-                            ],
-                            name: {
-                                defaultNames: ['Smart Lock'],
-                                name: 'Smart Lock ' + lockId,
-                                nicknames: [ this._getNickname(nicknames, this.locks.length, lockId) ]
-                            },
-                            willReportState: false,
-                            roomHint: '',
-                            deviceInfo: {
-                                manufacturer: 'Sirius Cybernetics Corporation',
-                                model: '492134',
-                                swVersion: '11.4',
-                                hwVersion: '3.2'
-                            },
-                            customData: {
-                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                            }
-                        },
-                        states: {
-                            isLocked: false,
-                            online: true
-                        }
-                    });
-
-                    window.requestAnimationFrame(() => {
-                        this.$['lock-list'].fire('iron-resize');
                     });
                 }
             },
