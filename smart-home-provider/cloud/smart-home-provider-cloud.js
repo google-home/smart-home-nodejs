@@ -166,10 +166,14 @@ app.post('/smart-home-api/reset-devices', function (request, response) {
   }
 
   let device = request.body;
-  datastore.resetDevices(uid);
+  // Only complete the reset if this is enabled.
+  // If the developer disables this, the request will succeed without doing anything.
+  if (config.enableReset) {
+    datastore.resetDevices(uid);
 
-  // Resync for the user
-  app.requestSync(authToken, uid);
+    // Resync for the user
+    app.requestSync(authToken, uid);
+  }
 
   // otherwise, all good!
   response.status(200)
