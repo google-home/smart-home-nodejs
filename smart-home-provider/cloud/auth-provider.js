@@ -201,7 +201,8 @@ Auth.registerAuth = function (app) {
     let user = SmartHomeModel.getUser(req.body.username, req.body.password);
     if (!user) {
       console.log('not a user', user);
-      return login(req, res);
+      return res.redirect(util.format('%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
+      '/frontend', req.body.client_id, req.body.redirect_uri, req.body.state));
     }
 
     console.log('logging in ', user);
