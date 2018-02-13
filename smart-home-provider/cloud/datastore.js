@@ -285,6 +285,9 @@ Data.getProperties = function (uid, deviceIds = undefined) {
   let properties = {};
 
   if (!deviceIds) {
+    
+    if(!Data.hasOwnProperty(uid)) return properties;
+    
     Object.keys(Data[uid]).forEach(function (deviceId) {
       if (Data[uid].hasOwnProperty(deviceId)) {
         properties[deviceId] = Data[uid][deviceId].properties;
