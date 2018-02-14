@@ -91,14 +91,6 @@ limitations under the License.
                 this.$.brightness.disabled = !this.device.states.on;
             }
 
-            _exec(nameChanged) {
-                if (nameChanged) {
-                    this.light.nameChanged = true;
-                } else {
-                    this.$.deviceIcon.style.color = '#eee';
-                }
-                this.$.brightness.disabled = !this.device.states.on;
-            }
         }
         customElements.define(SmartLight.is, SmartLight);
     </script>
