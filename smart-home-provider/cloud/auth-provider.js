@@ -202,7 +202,7 @@ Auth.registerAuth = function (app) {
     if (!user) {
       console.log('not a user', user);
       return res.redirect(util.format('%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
-      '/frontend', req.body.client_id, req.body.redirect_uri, req.body.state));
+      '/frontend', req.body.client_id, encodeURIComponent(req.body.redirect_uri), req.body.state));
     }
 
     console.log('logging in ', user);
@@ -221,7 +221,7 @@ Auth.registerAuth = function (app) {
     } else {
       console.log('authCode failed');
       return res.redirect(util.format('%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
-        path, req.body.client_id, req.body.redirect_uri, req.body.state));
+        path, req.body.client_id, encodeURIComponent(req.body.redirect_uri), req.body.state));
     }
   });
 
