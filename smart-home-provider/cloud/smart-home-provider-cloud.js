@@ -372,6 +372,12 @@ app.get('/smart-home-api/device-connection/:deviceId', function (request, respon
 // frontend UI
 app.set('jsonp callback name', 'cid');
 app.get('/getauthcode', function (req, resp) {
+  
+  /* forbid caching to force reload of getauthcode */
+  resp.set('Cache-Control', 'no-store, must-revalidate');
+  /* set correct mime type else browser will refuse to execute the script*/
+  resp.set('Content-Type', 'text/javascript');
+
   if (!req.session.user) {
     resp.status(200).send('' +
       '(function(){' +
