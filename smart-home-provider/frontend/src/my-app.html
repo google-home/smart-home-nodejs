@@ -234,6 +234,7 @@ limitations under the License.
 
     <script>
         var nextDeviceId = 0;
+        var devices={};
 
         function getNextDeviceId() {
             return nextDeviceId++;
@@ -295,7 +296,9 @@ limitations under the License.
                                     'Authorization': 'Bearer ' + AUTH_TOKEN
                                 }
                             };
-                            return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/reset-devices', options)
+                            fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/reset-devices', options);
+                            this._refresh();
+                            return;
                         });
                 });
             },
@@ -345,25 +348,24 @@ limitations under the License.
                     .then(function(response) {
                         return response.json();
                     }).then(function(json) {
-                        const uid = json.uid;
-                        delete json.uid;
                         for (const key in json) {
                             devices[key] = json[key];
                         }
                         console.log(devices);
-                        return app._handleRefresh(app, uid);
+                        const app = document.querySelector('my-app');
+                        return app._handleRefresh(app);
                     });
             },
 
-            _handleRefresh: function (app, uid) {
+            _handleRefresh: function (app) {
                 if (Object.keys(devices).length == 0) {
                     console.log("no devices");
                 } else {
                     for (const id of Object.keys(devices)) {
                         devices[id].id = id;
                         delete devices[id].properties.id;
-                        devices[id].states.on = false;
-                        devices[id].states.online = false;
+                        //devices[id].states.on = false;
+                        //devices[id].states.online = false;
                         switch(devices[id].properties.type) {
                             case 'action.devices.types.LIGHT':
                                 app._addLight(null, devices[id]);
