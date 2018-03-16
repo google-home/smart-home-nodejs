@@ -152,7 +152,7 @@ limitations under the License.
             _handleCloud() {
                 this.device.states.online = !this.device.states.online;
                 this._handleRegister();
-                this._changeEventSource();
+                // already called in function above //this._changeEventSource();
             }
 
             _handleRegister() {
@@ -182,6 +182,9 @@ limitations under the License.
                         app.removeDevice(this.type, i);
                     }
                 }
+                //  page has to be refreshed after a device has been removed. If not when you add a new device it won't be sync with the server !!
+                location.reload();
+
             }
 
             _execNameOrNicknameChange(event) {
