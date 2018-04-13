@@ -1,0 +1,13 @@
+{
+    "parserOptions": {
+      "ecmaVersion": 7,
+      "sourceType": "script"
+    },
+    "extends": ["google", "plugin:polymer/polymer-2"],
+    "env": {
+      "node": true
+    },
+    "plugins": [
+      "polymer"
+    ]
+  }

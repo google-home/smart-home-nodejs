@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js isLocal",
+    "lint": "eslint --fix \"frontend\\src\\*.html\" \"cloud\\*.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Google Inc.",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=6.2.2"
@@ -21,5 +22,10 @@
     "morgan": "^1.7.0",
     "ngrok": "^2.2.5",
     "node-fetch": "^1.6.3"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "eslint-plugin-polymer": "^0.2.1"
   }
 }
