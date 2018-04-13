@@ -103,7 +103,47 @@ limitations under the License.
         _deviceChanged() {
           super._deviceChanged();
         }
+
+        /**
+         * Generates a new smart scene
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+        static generate(id, count) {
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.SCENE',
+              traits: [
+                'action.devices.traits.Scene',
+              ],
+              name: {
+                defaultNames: [],
+                name: `Smart Scene ${id}`,
+                nicknames: [`Smart Scene ${id}`],
+              },
+              willReportState: false,
+              attributes: {
+                sceneReversible: true,
+              },
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g1339',
+                swVersion: '1.0.31',
+                hwVersion: '1.1',
+              },
+              customData: {
+                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+              },
+            },
+            states: {
+              online: true,
+              on: false
+            }
+          };
+        }
       }
-        customElements.define(SmartScene.is, SmartScene);
+      customElements.define(SmartScene.is, SmartScene);
     </script>
 </dom-module>

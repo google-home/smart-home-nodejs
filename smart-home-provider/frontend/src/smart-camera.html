@@ -71,6 +71,47 @@ limitations under the License.
             this.$.camera.style.color = '#eee';
           }
         }
+
+        /**
+         * Generates a new smart camera
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+        static generate(id, count) {
+          const nicknames = ['backyard camera', 'security camera'];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.CAMERA',
+              traits: [
+                'action.devices.traits.CameraStream',
+              ],
+              name: {
+                defaultNames: [`Smart Camera ${id}`],
+                name: `Smart Camera ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)]
+              },
+              willReportState: false,
+              attributes: {
+                'cameraStreamSupportedProtocols': ['mp4', 'hls'],
+              },
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g1340',
+                swVersion: '1.0.31',
+                hwVersion: '1.1',
+              },
+              customData: {
+                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+              },
+            },
+            states: {
+              online: true,
+              on: false
+            },
+          };
+        }
       }
       customElements.define(SmartCamera.is, SmartCamera);
     </script>

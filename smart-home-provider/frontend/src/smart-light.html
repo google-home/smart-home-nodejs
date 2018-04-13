@@ -108,6 +108,102 @@ limitations under the License.
           }
           this.$.brightness.disabled = !this.device.states.on;
         }
+
+        /**
+         * Generates a new smart rgb light
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+        static generateRgb(id, count) {
+          const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.LIGHT',
+              traits: [
+                'action.devices.traits.OnOff',
+                'action.devices.traits.Brightness',
+                'action.devices.traits.ColorSpectrum',
+              ],
+              name: {
+                defaultNames: ['Smart Light'],
+                name: `Smart Light ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)],
+              },
+              willReportState: false,
+              roomHint: '',
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g1337',
+                swVersion: '1.0.11',
+                hwVersion: '1.1',
+              },
+              customData: {
+                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+              },
+            },
+            states: {
+              on: false,
+              online: true,
+              brightness: 80,
+              color: {
+                name: 'cerulean',
+                spectrumRGB: 31655,
+              },
+            },
+          };
+        }
+
+        /**
+         * Generates a new smart monochrome light
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+        static generateMonochrome(id, count) {
+          const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.LIGHT',
+              traits: [
+                'action.devices.traits.OnOff',
+                'action.devices.traits.Brightness',
+                'action.devices.traits.ColorTemperature',
+              ],
+              attributes: {
+                'temperatureMinK': 2000,
+                'temperatureMaxK': 6500,
+              },
+              name: {
+                defaultNames: ['Smart Light'],
+                name: `Smart Light ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)],
+              },
+              willReportState: false,
+              roomHint: '',
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'h1337',
+                swVersion: '1.0.9',
+                hwVersion: '1.0',
+              },
+              customData: {
+                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+              },
+            },
+            states: {
+              on: false,
+              online: true,
+              brightness: 80,
+              color: {
+                name: 'soft white',
+                temperature: 2700,
+              },
+            },
+          };
+        }
       }
       customElements.define(SmartLight.is, SmartLight);
     </script>

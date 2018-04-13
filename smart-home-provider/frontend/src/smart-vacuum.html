@@ -70,6 +70,9 @@ limitations under the License.
          */
         _deviceChanged() {
           super._deviceChanged();
+          if (!this.device.states) {
+            return;
+          }
           if (this.device.states.updateToggleSettings) {
             this.device.states.currentToggleSettings =
               this.device.states.updateToggleSettings;
@@ -84,6 +87,88 @@ limitations under the License.
           } else {
             this.$.vacuum.style.color = '#eee';
           }
+        }
+
+        /**
+         * Generates a new smart vacuum
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+         static generate(id, count) {
+          const nicknames = ['kitchen vacuum', 'robo vacuum'];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.VACUUM',
+              traits: [
+                'action.devices.traits.OnOff',
+                'action.devices.traits.StartStop',
+                'action.devices.traits.Modes',
+                'action.devices.traits.Toggles',
+                'action.devices.traits.Dock',
+              ],
+              name: {
+                defaultNames: ['Smart Vacuum'],
+                name: `Smart Vacuum ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)],
+              },
+              willReportState: false,
+              attributes: {
+                availableToggles: [{
+                  name: 'quiet',
+                  name_values: [{
+                    name_synonym: ['quiet', 'silent'],
+                    lang: 'ENGLISH',
+                  }, {
+                    name_synonym: ['ruhig', 'still'],
+                    lang: 'GERMAN',
+                  }],
+                }],
+                availableModes: [{
+                  name: 'speed',
+                  name_values: [{
+                    name_synonym: ['speed', 'velocity'],
+                    lang: 'ENGLISH',
+                  }],
+                  settings: [{
+                    setting_name: 'slow',
+                    setting_values: [{
+                      setting_synonym: ['slow', 'sluggish'],
+                    }],
+                  }, {
+                    setting_name: 'fast',
+                    setting_values: [{
+                      setting_synonym: ['fast', 'quick'],
+                    }],
+                  }],
+                }],
+                pausable: false,
+              },
+              roomHint: '',
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g1400',
+                swVersion: '1.0.11',
+                hwVersion: '1.0',
+              },
+              customData: {
+                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+              },
+            },
+            states: {
+              on: false,
+              online: true,
+              isRunning: false,
+              isPaused: false,
+              currentModeSettings: {
+                speed: 'slow',
+              },
+              currentToggleSettings: {
+                quiet: false,
+              },
+            },
+          };
         }
       }
       customElements.define(SmartVacuum.is, SmartVacuum);

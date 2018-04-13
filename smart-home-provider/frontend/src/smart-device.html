@@ -354,6 +354,23 @@ limitations under the License.
               console.log('>>> exec to Smart Home Provider Cloud');
             });
         }
+
+        /**
+         * Generates a unique nickname. It first tries to pick from a defined
+         * array of names, but will go to "smart device #" after the array
+         * items have all been used.
+         * @param {array} nicknames An string array of possible nicknames
+         * @param {number} id The device id
+         * @param {number} count The current number of devices of this type
+         * @return {string} User-friendly for a device.
+         */
+        static getNickname(nicknames, id, count) {
+          if (nicknames && count < nicknames.length) {
+            return nicknames[count];
+          } else {
+            return `smart device ${id}`;
+          }
+        }
       }
       customElements.define(SmartDevice.is, SmartDevice);
     </script>
