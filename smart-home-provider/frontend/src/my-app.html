@@ -176,7 +176,7 @@ limitations under the License.
             </p>
         </div>
 
-        <iron-list id="light-list" items="[[lights]]" as="item" grid>
+        <iron-list id="lights-list" items="[[lights]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-light device=[[item]]></smart-light>
@@ -184,7 +184,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="thermostat-list" items="[[thermostats]]" as="item" grid>
+        <iron-list id="thermostats-list" items="[[thermostats]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-thermostat device=[[item]]></smart-thermostat>
@@ -192,7 +192,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="scene-list" items="[[scenes]]" as="item" grid>
+        <iron-list id="scenes-list" items="[[scenes]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-scene device=[[item]]></smart-scene>
@@ -200,7 +200,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="camera-list" items="[[cameras]]" as="item" grid>
+        <iron-list id="cameras-list" items="[[cameras]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-camera device=[[item]]></smart-camera>
@@ -208,7 +208,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="vacuum-list" items="[[vacuums]]" as="item" grid>
+        <iron-list id="vacuums-list" items="[[vacuums]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-vacuum device=[[item]]></smart-vacuum>
@@ -216,7 +216,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="washer-list" items="[[washers]]" as="item" grid>
+        <iron-list id="washers-list" items="[[washers]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-washer device=[[item]]></smart-washer>
@@ -224,7 +224,7 @@ limitations under the License.
             </template>
         </iron-list>
 
-        <iron-list id="refrigerator-list" items="[[refrigerators]]" as="item" grid>
+        <iron-list id="refrigerators-list" items="[[refrigerators]]" as="item" grid>
             <template>
                 <div class="item">
                     <smart-refrigerator device=[[item]]></smart-refrigerator>
@@ -497,7 +497,7 @@ limitations under the License.
          * Updates the DOM to show new devices of a given device type.
          * @param {string} deviceType The device type.
          */
-        _showDevice(deviceType) {
+        _showDeviceType(deviceType) {
           window.requestAnimationFrame(() => {
             this.$[`${deviceType}-list`].fire('iron-resize');
           });
@@ -526,7 +526,7 @@ limitations under the License.
                 SmartLight.generateRgb(lightId, this.lights.length));
             })
             .finally(() => {
-              this._showDevice('light');
+              this._showDeviceType('lights');
             });
         }
 
@@ -544,7 +544,7 @@ limitations under the License.
                 SmartLight.generateMonochrome(lightId, this.lights.length));
             })
             .finally(() => {
-              this._showDevice('light');
+              this._showDeviceType('lights');
             });
         }
 
@@ -564,7 +564,7 @@ limitations under the License.
                   this.thermostats.length));
           })
           .finally(() => {
-            this._showDevice('thermostat');
+            this._showDeviceType('thermostats');
           });
         }
 
@@ -582,7 +582,7 @@ limitations under the License.
                 SmartScene.generate(sceneId, this.scenes.length));
             })
             .finally(() => {
-              this._showDevice('scene');
+              this._showDeviceType('scenes');
             });
         }
 
@@ -599,7 +599,7 @@ limitations under the License.
               this._addDevice('cameras',
                 SmartCamera.generate(cameraId, this.cameras.length));
             }).finally(() => {
-              this._showDevice('camera');
+              this._showDeviceType('cameras');
             });
         }
 
@@ -617,7 +617,7 @@ limitations under the License.
                 SmartVacuum.generate(vacuumId, this.vacuums.length));
             })
             .finally(() => {
-              this._showDevice('vacuum');
+              this._showDeviceType('vacuums');
             });
         }
 
@@ -635,7 +635,7 @@ limitations under the License.
                 SmartWasher.generate(washerId, this.washers.length));
             })
             .finally(() => {
-              this._showDevice('washer');
+              this._showDeviceType('washers');
             });
         }
 
@@ -654,7 +654,7 @@ limitations under the License.
                   this.refrigerators.length));
             })
             .finally(() => {
-              this._showDevice('refrigerator');
+              this._showDeviceType('refrigerators');
             });
         }
       }
