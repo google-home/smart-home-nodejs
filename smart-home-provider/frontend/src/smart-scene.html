@@ -34,58 +34,76 @@ limitations under the License.
     </template>
 
     <script>
-        class SmartScene extends SmartDevice {
-            static get is() { return 'smart-scene' }
-
-            constructor() {
-                super();
-            }
-
-            _handleOnOff() {
-                // Change all of the lights
-                const app = document.querySelector('my-app');
-                const lights = [];
-                for (let i = 0; i < app.lights.length; i++) {
-                    lights.push({
-                        id: app.lights[i].id,
-                        customData: app.lights[i].customData
-                    });
-                }
-                if (this.device.states.online) {
-                    let reqdata = {
-                        requestId: "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
-                        inputs: [{
-                            intent: "action.devices.EXECUTE",
-                            payload: {
-                                commands: [{
-                                    devices: lights,
-                                    execution: [{
-                                        command: "action.devices.commands.OnOff",
-                                        params: { on: true }
-                                    }, {
-                                        command: "action.devices.commands.ColorAbsolute",
-                                        params: {"color": {name:"magenta", spectrumRGB: 16711935}}
-                                    }]
-                                }]
-                            }
-                        }]
-                    };
-                    if (this.device.states.on && this.device.properties.attributes.reversible) {
-                        reqdata.inputs[0].payload.commands[0].execution = [{
-                            command: "action.devices.commands.ColorAbsolute",
-                            params: {"color": {name:"cerulean", spectrumRGB: 31655}}
-                        }];
-                    }
-                    this.device.states.on = !this.device.states.on;
-                    this._callSmartHomeProviderCloud('/execute-scene', 'POST', reqdata)
-                        .then(this._notifyStateChange());
-                }
-            }
-
-            _deviceChanged() {
-                super._deviceChanged();
-            }
+      /**
+       * Class for scenes.
+       */
+      class SmartScene extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-scene';
         }
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          // Change all of the lights
+          const app = document.querySelector('my-app');
+          const lights = [];
+          for (let i = 0; i < app.lights.length; i++) {
+            lights.push({
+              id: app.lights[i].id,
+              customData: app.lights[i].customData,
+            });
+          }
+          if (this.device.states.online) {
+            let reqdata = {
+              requestId: 'ff36a3cc-ec34-11e6-b1a0-64510650abcf',
+              inputs: [{
+                intent: 'action.devices.EXECUTE',
+                payload: {
+                  commands: [{
+                    devices: lights,
+                    execution: [{
+                      command: 'action.devices.commands.OnOff',
+                      params: {on: true},
+                    }, {
+                      command: 'action.devices.commands.ColorAbsolute',
+                      params: {'color': {name: 'magenta', spectrumRGB: 16711935}},
+                    }],
+                  }],
+                },
+              }],
+            };
+            if (this.device.states.on
+                && this.device.properties.attributes.reversible) {
+              reqdata.inputs[0].payload.commands[0].execution = [{
+                command: 'action.devices.commands.ColorAbsolute',
+                params: {'color': {name: 'cerulean', spectrumRGB: 31655}},
+              }];
+            }
+            this.device.states.on = !this.device.states.on;
+            this._callSmartHomeProviderCloud('/execute-scene', 'POST', reqdata)
+              .then(this._notifyStateChange());
+          }
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+        }
+      }
         customElements.define(SmartScene.is, SmartScene);
     </script>
 </dom-module>

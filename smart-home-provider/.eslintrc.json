@@ -9,5 +9,11 @@
     },
     "plugins": [
       "polymer"
-    ]
+    ],
+    "rules": {
+      "no-console": "off",
+      "no-invalid-this": "off",
+      "no-undef": "off",
+      "guard-for-in": "warn"
+    }
   }

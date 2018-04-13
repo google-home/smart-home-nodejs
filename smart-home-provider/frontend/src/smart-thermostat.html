@@ -72,39 +72,61 @@ limitations under the License.
     </template>
 
     <script>
-        class SmartThermostat extends SmartDevice {
-            static get is() { return 'smart-thermostat' }
-
-            constructor() {
-                super();
-            }
-
-            _handleSetpoint() {
-                if (this.device) {
-                    this.device.states.thermostatTemperatureSetpoint = this.$.setpoint.value;
-                    this._notifyStateChange();
-                }
-            }
-
-            _handleAmbient() {
-                if (this.device) {
-                    this.device.states.thermostatTemperatureAmbient = parseFloat(this.$.ambient.value);
-                    this._notifyStateChange();
-                }
-            }
-
-            _deviceChanged() {
-                super._deviceChanged();
-                if (this.device.states.thermostatMode
-                    && this.device.states.thermostatTemperatureSetpoint
-                    && this.device.states.thermostatTemperatureAmbient
-                    && this.device.states.thermostatHumidityAmbient) {
-                    console.log('updated thermostat');
-                } else {
-                    console.log('failed to update thermostat');
-                }
-            }
+      /**
+       * Class for smart thermostats.
+       */
+      class SmartThermostat extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-thermostat';
         }
-        customElements.define(SmartThermostat.is, SmartThermostat);
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the setpoint.
+         */
+        _handleSetpoint() {
+          if (this.device) {
+            this.device.states.thermostatTemperatureSetpoint =
+              this.$.setpoint.value;
+            this._notifyStateChange();
+          }
+        }
+
+        /**
+         * Handles a change in the ambient temperature.
+         */
+        _handleAmbient() {
+          if (this.device) {
+            this.device.states.thermostatTemperatureAmbient =
+              parseFloat(this.$.ambient.value);
+            this._notifyStateChange();
+          }
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+          if (this.device.states.thermostatMode
+              && this.device.states.thermostatTemperatureSetpoint
+              && this.device.states.thermostatTemperatureAmbient
+              && this.device.states.thermostatHumidityAmbient) {
+            console.log('updated thermostat');
+          } else {
+            console.log('failed to update thermostat');
+          }
+        }
+      }
+      customElements.define(SmartThermostat.is, SmartThermostat);
     </script>
 </dom-module>

@@ -234,748 +234,798 @@ limitations under the License.
     </template>
 
     <script>
-        var nextDeviceId = 0;
+      const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = '/smart-home-api';
+      let nextDeviceId = 0;
 
-        function getNextDeviceId() {
-            return nextDeviceId++;
-        };
+      /**
+       * @return {number} Properties of this class
+       */
+      const getNextDeviceId = () => {
+        return nextDeviceId++;
+      };
 
-        class MyApp extends Polymer.Element {
-            static get is() { return 'my-app' }
-
-            static get properties() {
-                return {
-                    hide: {
-                        type: Boolean,
-                        value: false
-                    },
-                    deviceCount: {
-                        type: Number,
-                        value: 0
-                    },
-                    lights: {
-                        type: Array,
-                        value: []
-                    },
-                    thermostats: {
-                        type: Array,
-                        value: []
-                    },
-                    scenes: {
-                        type: Array,
-                        value: []
-                    },
-                    cameras: {
-                        type: Array,
-                        value: []
-                    },
-                    vacuums: {
-                        type: Array,
-                        value: []
-                    },
-                    washers: {
-                        type: Array,
-                        value: []
-                    },
-                    locks: {
-                        type: Array,
-                        value: []
-                    },
-                    refrigerators: {
-                        type: Array,
-                        value: []
-                    }
-                }
-            }
-
-            connectedCallback() {
-                super.connectedCallback();
-                // Reset all user devices
-                window.requestAnimationFrame(() => {
-                    this.$.add.addEventListener('click', e => this.$.modal.open());
-                    this._auth()
-                        .then(() => {
-                            const options = {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': 'Bearer ' + AUTH_TOKEN
-                                }
-                            };
-                            return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/reset-devices', options)
-                        });
-                });
-            }
-
-            showProgress(message) {
-                this.$['progress-dialog-content'].innerHTML = message || 'no message';
-                this.$['progress-dialog'].show();
-            }
-
-            hideProgress() {
-                this.$['progress-dialog'].close();
-            }
-
-            showNoDeviceMessage() {
-                this.hide = false;
-            }
-
-            hideNoDeviceMessage() {
-                this.hide = true;
-            }
-
-            removeDevice(type, index) {
-                this.splice(type, index, 1);
-                this.hide = --this.deviceCount > 0;
-            }
-
-            showToast(toastmsg) {
-                this.$.toast.text = toastmsg;
-                this.$.toast.open();
-            }
-
-            _showAccount() {
-                this.$.toast.text = `Welcome ${window.USERNAME}`;
-                this.$.toast.open();
-            }
-
-            _refresh() {
-                const options = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
-                    .then(function(response) {
-                        return response.json();
-                    }).then(function(json) {
-                        const uid = json.uid;
-                        delete json.uid;
-                        for (const key in json) {
-                            devices[key] = json[key];
-                        }
-                        console.log(devices);
-                        return app._handleRefresh(app, uid);
-                    });
-            }
-
-            _handleRefresh(app, uid) {
-                if (Object.keys(devices).length == 0) {
-                    console.log("no devices");
-                } else {
-                    for (const id of Object.keys(devices)) {
-                        devices[id].id = id;
-                        delete devices[id].properties.id;
-                        devices[id].states.on = false;
-                        devices[id].states.online = false;
-                        switch(devices[id].properties.type) {
-                            case 'action.devices.types.LIGHT':
-                                app._addLight(null, devices[id]);
-                                break;
-                            case 'action.devices.types.THERMOSTAT':
-                                app._addThermostat(null, devices[id]);
-                                break;
-                            case 'action.devices.types.SCENE':
-                                app._addScene(null, devices[id]);
-                                break;
-                            case 'action.devices.types.CAMERA':
-                                app._addCamera(null, devices[id]);
-                                break;
-                            case 'action.devices.types.VACUUM':
-                                devices[id].states.isRunning = false;
-                                devices[id].states.isPaused = false;
-                                app._addVacuum(null, devices[id]);
-                                break;
-                            case 'action.devices.types.WASHER':
-                                devices[id].states.isRunning = false;
-                                devices[id].states.isPaused = false;
-                                app._addWasher(null, devices[id]);
-                                break;
-                            case 'action.devices.types.REFRIGERATOR':
-                                app._addRefrigerator(null, devices[id]);
-                                break;
-                            default:
-                                break;
-                        }
-                        nextDeviceId = parseInt(id)+1;
-                    }
-                }
-                return app;
-            }
-
-            _auth() {
-                const options = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/auth', options)
-                    .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
-            }
-
-            _getNickname(nicknames, typeSize, id) {
-                if (nicknames && typeSize < nicknames.length) {
-                    return nicknames[typeSize];
-                } else {
-                    return `smart device ${id}`;
-                }
-            }
-
-            _createDevice(device) {
-                this.hideNoDeviceMessage();
-                this.deviceCount++;
-                // If the device variable exists, resolve to use it
-                if (device && device.hasOwnProperty('id')) {
-                    return Promise.resolve(device);
-                }
-                // Otherwise reject the variable and create a new one
-                return Promise.reject(getNextDeviceId());
-            }
-
-            _showDevice(deviceType) {
-                window.requestAnimationFrame(() => {
-                    this.$[`${deviceType}-list`].fire('iron-resize');
-                });
-            }
-
-            _addDevice(type, device) {
-                this.push(type, device);
-            }
-
-            _addLight(event, light) {
-                this._createDevice(light)
-                    .then(device => {
-                        this._addDevice('lights', device);
-                    })
-                    .catch((lightId) => {
-                        const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
-                        const light = {
-                            id: String(lightId),
-                            properties: {
-                                type: 'action.devices.types.LIGHT',
-                                traits: [
-                                    'action.devices.traits.OnOff',
-                                    'action.devices.traits.Brightness',
-                                    'action.devices.traits.ColorSpectrum'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Light'],
-                                    name: 'Smart Light ' + lightId,
-                                    nicknames: [this._getNickname(nicknames, this.lights.length, lightId)]
-                                },
-                                willReportState: false,
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1337',
-                                    swVersion: '1.0.11',
-                                    hwVersion: '1.1'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                }
-                            },
-                            willReportState: false,
-                            roomHint: '',
-                            deviceInfo: {
-                                manufacturer: 'Smart Home Provider',
-                                model: 'g1337',
-                                swVersion: '1.0.11',
-                                hwVersion: '1.1'
-                            },
-                            customData: {
-                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                            },
-                            states: {
-                                on: false,
-                                online: true,
-                                brightness: 80,
-                                color: {
-                                    name: 'cerulean',
-                                    spectrumRGB: 31655
-                                }
-                            }
-                        };
-                        this._addDevice('lights', light);
-                    })
-                this._showDevice('light');
-            }
-
-            _addMonochromeLight(event, light) {
-                this._createDevice(light)
-                    .then(device => {
-                        this._addDevice('lights', device);
-                    })
-                    .catch((lightId) => {
-                        const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
-                        const light = {
-                            id: String(lightId),
-                            properties: {
-                                type: 'action.devices.types.LIGHT',
-                                traits: [
-                                    'action.devices.traits.OnOff',
-                                    'action.devices.traits.Brightness',
-                                    'action.devices.traits.ColorTemperature'
-                                ],
-                                attributes: {
-                                    'temperatureMinK': 2000,
-                                    'temperatureMaxK': 6500
-                                },
-                                name: {
-                                    defaultNames: ['Smart Light'],
-                                    name: 'Smart Light ' + lightId,
-                                    nicknames: [this._getNickname(nicknames, this.lights.length, lightId)]
-                                },
-                                willReportState: false,
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'h1337',
-                                    swVersion: '1.0.9',
-                                    hwVersion: '1.0'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                }
-                            },
-                            name: {
-                                defaultNames: ['Smart Light'],
-                                name: 'Smart Light ' + lightId,
-                                nicknames: [ this._getNickname(nicknames, this.lights.length, lightId) ]
-                            },
-                            willReportState: false,
-                            roomHint: '',
-                            deviceInfo: {
-                                manufacturer: 'Smart Home Provider',
-                                model: 'h1337',
-                                swVersion: '1.0.9',
-                                hwVersion: '1.0'
-                            },
-                            customData: {
-                                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                            },
-                            states: {
-                                on: false,
-                                online: true,
-                                brightness: 80,
-                                color: {
-                                    name: 'soft white',
-                                    temperature: 2700
-                                }
-                            }
-                        };
-                        this._addDevice('lights', light);
-                    })
-                this._showDevice('light');
-            }
-
-            _addThermostat(event, thermostat) {
-                this._createDevice(thermostat)
-                    .then(device => {
-                        this._addDevice('thermostats', device);
-                    })
-                    .catch((thermostatId) => {
-                        const nicknames = ['wall thermostat', 'upstairs thermostat']
-                        const thermostat = {
-                            id: String(thermostatId),
-                            properties: {
-                                type: 'action.devices.types.THERMOSTAT',
-                                traits: [
-                                    'action.devices.traits.TemperatureSetting'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Thermostat'],
-                                    name: 'Smart Thermostat ' + thermostatId,
-                                    nicknames: [this._getNickname(nicknames, this.thermostats.length, thermostatId)]
-                                },
-                                willReportState: false,
-                                roomHint: 'hallway',
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1338',
-                                    swVersion: '1.0.31',
-                                    hwVersion: '1.1'
-                                },
-                                attributes: {
-                                    availableThermostatModes: 'off,heat,cool,on',
-                                    thermostatTemperatureUnit: 'C'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
-                                }
-                            },
-                            customData: {
-                                smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze'
-                            }
-                        };
-                        this._addDevice('thermostats', thermostat);
-                    })
-                this._showDevice('thermostat');
-            }
-
-            _addScene(event, scene) {
-                this._createDevice(scene)
-                    .then(device => {
-                        this._addDevice('scenes', device);
-                    })
-                    .catch((sceneId) => {
-                        const scene = {
-                            id: String(sceneId),
-                            properties: {
-                                type: 'action.devices.types.SCENE',
-                                traits: [
-                                    'action.devices.traits.Scene'
-                                ],
-                                name: {
-                                    defaultNames: [],
-                                    name: 'Smart Scene ' + sceneId,
-                                    nicknames: [this._getNickname(undefined, this.scenes.length, sceneId)]
-                                },
-                                willReportState: false,
-                                attributes: {
-                                    sceneReversible: true
-                                },
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1339',
-                                    swVersion: '1.0.31',
-                                    hwVersion: '1.1'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
-                                }
-                            },
-                            willReportState: false,
-                            attributes: {
-                                sceneReversible: true
-                            },
-                             deviceInfo: {
-                                manufacturer: 'Smart Home Provider',
-                                model: 'g1339',
-                                swVersion: '1.0.31',
-                                hwVersion: '1.1'
-                            },
-                            customData: {
-                                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
-                            }
-                        };
-                        this._addDevice('scenes', scene);
-                    })
-                this._showDevice('scene');
-            }
-
-            _addCamera(event, camera) {
-                this._createDevice(camera)
-                    .then(device => {
-                        this._addDevice('cameras', device);
-                    })
-                    .catch((cameraId) => {
-                        const nicknames = ['backyard camera', 'security camera'];
-                        const camera = {
-                            id: String(cameraId),
-                            properties: {
-                                type: 'action.devices.types.CAMERA',
-                                traits: [
-                                    'action.devices.traits.CameraStream'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Camera ' + cameraId],
-                                    name: 'Smart Camera ' + cameraId,
-                                    nicknames: [this._getNickname(nicknames, this.cameras.length, cameraId)]
-                                },
-                                willReportState: false,
-                                attributes: {
-                                    'cameraStreamSupportedProtocols': ["mp4", "hls"]
-                                },
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1340',
-                                    swVersion: '1.0.31',
-                                    hwVersion: '1.1'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
-                                }
-                            },
-                             deviceInfo: {
-                                manufacturer: 'Smart Home Provider',
-                                model: 'g1340',
-                                swVersion: '1.0.31',
-                                hwVersion: '1.1'
-                            },
-                            customData: {
-                                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J'
-                            }
-                        };
-                        this._addDevice('cameras', camera);
-                    })
-                this._showDevice('camera');
-            }
-
-            _addVacuum(event, vacuum) {
-                this._createDevice(vacuum)
-                    .then(device => {
-                        this._addDevice('vacuums', device);
-                    })
-                    .catch((vacuumId) => {
-                        const nicknames = ['kitchen vacuum', 'robo vacuum'];
-                        const vacuum = {
-                            id: String(vacuumId),
-                            properties: {
-                                type: 'action.devices.types.VACUUM',
-                                traits: [
-                                    'action.devices.traits.OnOff',
-                                    'action.devices.traits.StartStop',
-                                    'action.devices.traits.Modes',
-                                    'action.devices.traits.Toggles',
-                                    'action.devices.traits.Dock'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Vacuum'],
-                                    name: 'Smart Vacuum ' + vacuumId,
-                                    nicknames: [this._getNickname(nicknames, this.vacuums.length, vacuumId)]
-                                },
-                                willReportState: false,
-                                attributes: {
-                                availableToggles: [{
-                                        name: "quiet",
-                                        name_values: [{
-                                            name_synonym: ["quiet", "silent"],
-                                            lang: "ENGLISH"
-                                        }, {
-                                            name_synonym: ["ruhig", "still"],
-                                            lang: "GERMAN"
-                                        }]
-                                    }],
-                                    availableModes: [{
-                                        name: "speed",
-                                        name_values: [{
-                                            name_synonym: ["speed", "velocity"],
-                                            lang: "ENGLISH"
-                                        }],
-                                        settings: [{
-                                            setting_name: "slow",
-                                            setting_values: [{
-                                                setting_synonym: ["slow", "sluggish"]
-                                            }]
-                                        }, {
-                                            setting_name: "fast",
-                                            setting_values: [{
-                                                setting_synonym: ["fast", "quick"]
-                                            }]
-                                        }]
-                                    }],
-                                    pausable: false
-                                },
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1400',
-                                    swVersion: '1.0.11',
-                                    hwVersion: '1.0'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                },
-                                states: {
-                                    on: false,
-                                    online: true,
-                                    isRunning: false,
-                                    isPaused: false,
-                                    currentModeSettings: {
-                                        speed: "slow"
-                                    },
-                                    currentToggleSettings: {
-                                        quiet: false
-                                    }
-                                }
-                            }
-                        };
-                        this._addDevice('vacuums', vacuum);
-                    })
-                this._showDevice('vacuum');
-            }
-
-            _addWasher(event, washer) {
-                this._createDevice(washer)
-                    .then(device => {
-                        this._addDevice('washers', device);
-                    })
-                    .catch((washerId) => {
-                        const nicknames = ['washing machine', 'acme washer']
-                        const washer = {
-                            id: String(washerId),
-                            properties: {
-                                type: 'action.devices.types.WASHER',
-                                traits: [
-                                    'action.devices.traits.OnOff',
-                                    'action.devices.traits.StartStop',
-                                    'action.devices.traits.Modes',
-                                    'action.devices.traits.Toggles',
-                                    'action.devices.traits.RunCycle'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Washer'],
-                                    name: 'Smart Washer ' + washerId,
-                                    nicknames: [this._getNickname(nicknames, this.washers.length, washerId)]
-                                },
-                                willReportState: false,
-                                attributes: {
-                                    availableModes: [
-                                        {
-                                            name: "load",
-                                            name_values: [{
-                                                name_synonym: ["load", "size", "load size"],
-                                                lang: "ENGLISH"
-                                            }],
-                                            settings: [{
-                                                setting_name: "small",
-                                                setting_values: [{
-                                                    setting_synonym: ["small", "half"],
-                                                    lang: "ENGLISH"
-                                                }]
-                                            }, {
-                                                setting_name: "large",
-                                                setting_values: [{
-                                                    setting_synonym: ["large", "full"],
-                                                    lang: "ENGLISH"
-                                                }]
-                                            }],
-                                            ordered: true
-                                        }
-                                    ],
-                                    availableToggles: [
-                                        {
-                                        name: "extra rinse",
-                                        name_values: [{
-                                            name_synonym: ["extra", "rinse"],
-                                            lang: "ENGLISH" }]
-                                        }, {
-                                        name: "permanent press",
-                                        name_values: [{
-                                            name_synonym: ["permanent", "press"],
-                                            lang: "ENGLISH" }]
-                                        },
-                                    ],
-                                    pausable: true
-                                },
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Smart Home Provider',
-                                    model: 'g1401',
-                                    swVersion: '1.0.11',
-                                    hwVersion: '1.0'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                }
-                            }
-                        };
-                        this._addDevice('washers', washer);
-                    })
-                this._showDevice('washer');
-            }
-
-            _addLock(event, lock) {
-                this._createDevice(lock)
-                    .then(device => {
-                        this._addDevice('locks', device);
-                    })
-                    .catch((lockId) => {
-                        const nicknames = ['front door', 'bay window'];
-                        const lock = {
-                            id: String(lockId),
-                            properties: {
-                                type: 'action.devices.types.LOCK',
-                                traits: [
-                                    'action.devices.traits.LockUnlock'
-                                ],
-                                name: {
-                                    defaultNames: ['Smart Lock'],
-                                    name: 'Smart Lock ' + lockId,
-                                    nicknames: [this._getNickname(nicknames, this.locks.length, lockId)]
-                                },
-                                willReportState: false,
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Sirius Cybernetics Corporation',
-                                    model: '492134',
-                                    swVersion: '11.4',
-                                    hwVersion: '3.2'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                }
-                            },
-                            currentToggleSettings: {
-                                extraRinse: false,
-                                permanentPress: false
-                            }
-                        };
-                        this._addDevice('locks', lock);
-                    })
-                this._showDevice('lock');
-            }
-
-            _addRefrigerator(event, refrigerator) {
-                this._createDevice(refrigerator)
-                    .then(device => {
-                        this._addDevice('refrigerators', device);
-                    })
-                    .catch((refrigeratorId) => {
-                        const nicknames = ['kitchen refrigerator', 'mini-fridge', 'garage freezer'];
-                        const refrigerator = {
-                            id: String(refrigeratorId),
-                            properties: {
-                                type: 'action.devices.types.REFRIGERATOR',
-                                traits: [
-                                    'action.devices.traits.OnOff',
-                                    'action.devices.traits.Toggles'
-                                ],
-                                attributes: {
-                                    availableToggles: [{
-                                        name: "quiet",
-                                        name_values: [{
-                                            name_synonym: ["quiet", "silent"],
-                                            lang: "en"
-                                        }]
-                                    }]
-                                },
-                                name: {
-                                    defaultNames: ['Smart Fridge'],
-                                    name: 'Smart Refrigerator ' + refrigeratorId,
-                                    nicknames: [this._getNickname(nicknames, this.refrigerators.length, refrigeratorId)]
-                                },
-                                willReportState: false,
-                                roomHint: '',
-                                deviceInfo: {
-                                    manufacturer: 'Sirius Cybernetics Corporation',
-                                    model: '2331B',
-                                    swVersion: '11.4',
-                                    hwVersion: '11.2'
-                                },
-                                customData: {
-                                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr'
-                                }
-                            },
-                            states: {
-                                on: false,
-                                online: true,
-                                currentToggleSettings: {
-                                    quiet: false
-                                }
-                            }
-                        };
-                    });
-                    this._showDevice('refrigerator');
-                }
+      /**
+       * Container class which manages smart devices.
+       */
+      class MyApp extends Polymer.Element {
+        /**
+         * @return {string} Name of the HTML tag
+         */
+        static get is() {
+          return 'my-app';
         }
 
-        customElements.define(MyApp.is, MyApp);
+        /**
+         * @return {object} Properties of this class
+         */
+        static get properties() {
+          return {
+            hide: {
+              type: Boolean,
+              value: false,
+            },
+            deviceCount: {
+              type: Number,
+              value: 0,
+            },
+            lights: {
+              type: Array,
+              value: [],
+            },
+            thermostats: {
+              type: Array,
+              value: [],
+            },
+            scenes: {
+              type: Array,
+              value: [],
+            },
+            cameras: {
+              type: Array,
+              value: [],
+            },
+            vacuums: {
+              type: Array,
+              value: [],
+            },
+            washers: {
+              type: Array,
+              value: [],
+            },
+            locks: {
+              type: Array,
+              value: [],
+            },
+            refrigerators: {
+              type: Array,
+              value: [],
+            },
+          };
+        }
+
+        /**
+         * Callback that runs when the HTML element is created.
+         */
+        connectedCallback() {
+          super.connectedCallback();
+          // Reset all user devices
+          window.requestAnimationFrame(() => {
+            this.$.add.addEventListener('click', (e) => this.$.modal.open());
+            this._auth()
+              .then(() => {
+                const options = {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + AUTH_TOKEN,
+                  },
+                };
+                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT +
+                  '/reset-devices', options);
+              });
+          });
+        }
+
+        /**
+         * Shows message in a progress dialog box.
+         * @param {string} message Message to display.
+         */
+        showProgress(message) {
+          this.$['progress-dialog-content'].innerHTML = message || 'no message';
+          this.$['progress-dialog'].show();
+        }
+
+        /**
+         * Closes progress dialog box.
+         */
+        hideProgress() {
+          this.$['progress-dialog'].close();
+        }
+
+        /**
+         * Shows a message that there are no devices.
+         */
+        showNoDeviceMessage() {
+          this.hide = false;
+        }
+
+        /**
+         * Hides a message that there are no devices.
+         */
+        hideNoDeviceMessage() {
+          this.hide = true;
+        }
+
+        /**
+         * Removes a device.
+         * @param {string} type The type of device to remove.
+         * @param {number} index The index of the device of this type.
+         */
+        removeDevice(type, index) {
+          this.splice(type, index, 1);
+          this.hide = --this.deviceCount > 0;
+        }
+
+        /**
+         * Displays a toast message.
+         * @param {string} toastmsg The message to be displayed.
+         */
+        showToast(toastmsg) {
+          this.$.toast.text = toastmsg;
+          this.$.toast.open();
+        }
+
+        /**
+         * Displays a toast message with the user's name.
+         */
+        _showAccount() {
+          this.$.toast.text = `Welcome ${window.USERNAME}`;
+          this.$.toast.open();
+        }
+
+        /**
+         * Makes a server call to get the current status.
+         * @return {Promise} A promise that runs when the HTTP call is done.
+         */
+        _refresh() {
+          const options = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + AUTH_TOKEN,
+            },
+          };
+
+          return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
+            .then(function(response) {
+              return response.json();
+            }).then(function(json) {
+              delete json.uid;
+              for (const key in json) {
+                this.devices[key] = json[key];
+              }
+              console.log(this.devices);
+              this._handleRefresh();
+            });
+        }
+
+        /**
+         * Handles response from server that gets current status.
+         */
+        _handleRefresh() {
+          if (Object.keys(this.devices).length == 0) {
+            console.log('no devices');
+          } else {
+            for (const id of Object.keys(this.devices)) {
+              this.devices[id].id = id;
+              delete this.devices[id].properties.id;
+              this.devices[id].states.on = false;
+              this.devices[id].states.online = false;
+              switch (this.devices[id].properties.type) {
+                case 'action.devices.types.LIGHT':
+                  this.app._addLight(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.THERMOSTAT':
+                  this.app._addThermostat(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.SCENE':
+                  this.app._addScene(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.CAMERA':
+                  this.app._addCamera(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.VACUUM':
+                  this.devices[id].states.isRunning = false;
+                  this.devices[id].states.isPaused = false;
+                  this.app._addVacuum(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.WASHER':
+                  this.devices[id].states.isRunning = false;
+                  this.devices[id].states.isPaused = false;
+                  this.app._addWasher(null, this.devices[id]);
+                  break;
+                case 'action.devices.types.REFRIGERATOR':
+                  this.app._addRefrigerator(null, this.devices[id]);
+                  break;
+                default:
+                  console.warn(`Unable to handle unknown device type` +
+                    `${this.devices[id].properties.type}`);
+                  break;
+              }
+              nextDeviceId = parseInt(id) + 1;
+            }
+          }
+        }
+
+        /**
+         * Gets auth status from server.
+         * @return {Promise} Promise that returns when HTTP call returns.
+         */
+        _auth() {
+          const options = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + AUTH_TOKEN,
+            },
+          };
+          return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/auth', options)
+            .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
+        }
+
+        /**
+         * Generates a unique nickname. It first tries to pick from a defined
+         * array of names, but will go to "smart device #" after the array
+         * items have all been used.
+         * @param {array} nicknames An string array of possible nicknames
+         * @param {number} typeSize The current number of devices of this type
+         * @param {number} id The device id
+         * @return {string} User-friendly for a device.
+         */
+        _getNickname(nicknames, typeSize, id) {
+          if (nicknames && typeSize < nicknames.length) {
+            return nicknames[typeSize];
+          } else {
+            return `smart device ${id}`;
+          }
+        }
+
+        /**
+         * Creates a new device
+         * @param {object} device The device that is being created. It can be
+         *   undefined.
+         * @return {Promise} A promise. If the device parameter exists and has
+         *   an id, it resolves with the device object. If the promise is
+         *   rejected, the device has not been defined and must be created.
+         *   The rejection includes the device id to use.
+         */
+        _createDevice(device) {
+          this.hideNoDeviceMessage();
+          this.deviceCount++;
+          // If the device variable exists, resolve to use it
+          if (device && device.hasOwnProperty('id')) {
+            return Promise.resolve(device);
+          }
+          // Otherwise reject the variable and create a new one
+          return Promise.reject(getNextDeviceId());
+        }
+
+        /**
+         * Updates the DOM to show new devices of a given device type.
+         * @param {string} deviceType The device type.
+         */
+        _showDevice(deviceType) {
+          window.requestAnimationFrame(() => {
+            this.$[`${deviceType}-list`].fire('iron-resize');
+          });
+        }
+
+        /**
+         * Adds a new device to a particular device type array.
+         * @param {string} type The type of device.
+         * @param {object} device The device object.
+         */
+        _addDevice(type, device) {
+          this.push(type, device);
+        }
+
+        /**
+         * Adds a new smart light that supports RGB colors.
+         * @param {event} event
+         * @param {object} light The device object
+         */
+        _addLight(event, light) {
+          this._createDevice(light)
+            .then((device) => {
+              this._addDevice('lights', device);
+            })
+            .catch((lightId) => {
+              const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
+              const light = {
+                id: String(lightId),
+                properties: {
+                  type: 'action.devices.types.LIGHT',
+                  traits: [
+                    'action.devices.traits.OnOff',
+                    'action.devices.traits.Brightness',
+                    'action.devices.traits.ColorSpectrum',
+                  ],
+                  name: {
+                    defaultNames: ['Smart Light'],
+                    name: 'Smart Light ' + lightId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.lights.length, lightId),
+                    ],
+                  },
+                  willReportState: false,
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1337',
+                    swVersion: '1.0.11',
+                    hwVersion: '1.1',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+                  },
+                },
+                states: {
+                  on: false,
+                  online: true,
+                  brightness: 80,
+                  color: {
+                    name: 'cerulean',
+                    spectrumRGB: 31655,
+                  },
+                },
+              };
+              this._addDevice('lights', light);
+            });
+            this._showDevice('light');
+        }
+
+        /**
+         * Adds a new smart light that supports monochrome.
+         * @param {event} event
+         * @param {object} light The device object
+         */
+        _addMonochromeLight(event, light) {
+          this._createDevice(light)
+            .then((device) => {
+              this._addDevice('lights', device);
+            })
+            .catch((lightId) => {
+              const nicknames = ['table lamp', 'reading lamp', 'doorway', 'stairway'];
+              const light = {
+                id: String(lightId),
+                properties: {
+                  type: 'action.devices.types.LIGHT',
+                  traits: [
+                    'action.devices.traits.OnOff',
+                    'action.devices.traits.Brightness',
+                    'action.devices.traits.ColorTemperature',
+                  ],
+                  attributes: {
+                    'temperatureMinK': 2000,
+                    'temperatureMaxK': 6500,
+                  },
+                  name: {
+                    defaultNames: ['Smart Light'],
+                    name: 'Smart Light ' + lightId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.lights.length, lightId),
+                    ],
+                  },
+                  willReportState: false,
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'h1337',
+                    swVersion: '1.0.9',
+                    hwVersion: '1.0',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+                  },
+                },
+                states: {
+                  on: false,
+                  online: true,
+                  brightness: 80,
+                  color: {
+                    name: 'soft white',
+                    temperature: 2700,
+                  },
+                },
+              };
+              this._addDevice('lights', light);
+            });
+            this._showDevice('light');
+        }
+
+        /**
+         * Adds a new smart thermostat.
+         * @param {event} event
+         * @param {object} thermostat The device object
+         */
+        _addThermostat(event, thermostat) {
+          this._createDevice(thermostat)
+            .then((device) => {
+              this._addDevice('thermostats', device);
+            })
+            .catch((thermostatId) => {
+              const nicknames = ['wall thermostat', 'upstairs thermostat'];
+              const thermostat = {
+                id: String(thermostatId),
+                properties: {
+                  type: 'action.devices.types.THERMOSTAT',
+                  traits: [
+                    'action.devices.traits.TemperatureSetting',
+                  ],
+                  name: {
+                    defaultNames: ['Smart Thermostat'],
+                    name: 'Smart Thermostat ' + thermostatId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.thermostats.length,
+                        thermostatId),
+                    ],
+                  },
+                  willReportState: false,
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1338',
+                    swVersion: '1.0.31',
+                    hwVersion: '1.1',
+                  },
+                  attributes: {
+                    availableThermostatModes: 'off,heat,cool,on',
+                    thermostatTemperatureUnit: 'C',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'SGs84HiURHSb6ggrGjiv9jJ3t7U4ze',
+                  },
+                },
+              };
+              this._addDevice('thermostats', thermostat);
+          });
+          this._showDevice('thermostat');
+        }
+
+        /**
+         * Creates a new scene to control all lights at once.
+         * @param {event} event
+         * @param {object} scene The device object
+         */
+        _addScene(event, scene) {
+          this._createDevice(scene)
+            .then((device) => {
+              this._addDevice('scenes', device);
+            })
+            .catch((sceneId) => {
+              const scene = {
+                id: String(sceneId),
+                properties: {
+                  type: 'action.devices.types.SCENE',
+                  traits: [
+                    'action.devices.traits.Scene',
+                  ],
+                  name: {
+                    defaultNames: [],
+                    name: 'Smart Scene ' + sceneId,
+                    nicknames: [
+                      this._getNickname(undefined, this.scenes.length, sceneId),
+                    ],
+                  },
+                  willReportState: false,
+                  attributes: {
+                    sceneReversible: true,
+                  },
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1339',
+                    swVersion: '1.0.31',
+                    hwVersion: '1.1',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+                  },
+                },
+              };
+              this._addDevice('scenes', scene);
+            });
+            this._showDevice('scene');
+        }
+
+        /**
+         * Adds a new smart camera
+         * @param {event} event
+         * @param {object} camera The device object
+         */
+        _addCamera(event, camera) {
+          this._createDevice(camera)
+            .then((device) => {
+              this._addDevice('cameras', device);
+            })
+            .catch((cameraId) => {
+              const nicknames = ['backyard camera', 'security camera'];
+              const camera = {
+                id: String(cameraId),
+                properties: {
+                  type: 'action.devices.types.CAMERA',
+                  traits: [
+                    'action.devices.traits.CameraStream',
+                  ],
+                  name: {
+                    defaultNames: ['Smart Camera ' + cameraId],
+                    name: 'Smart Camera ' + cameraId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.cameras.length,
+                        cameraId),
+                    ],
+                  },
+                  willReportState: false,
+                  attributes: {
+                    'cameraStreamSupportedProtocols': ['mp4', 'hls'],
+                  },
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1340',
+                    swVersion: '1.0.31',
+                    hwVersion: '1.1',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+                  },
+                },
+              };
+              this._addDevice('cameras', camera);
+            });
+            this._showDevice('camera');
+        }
+
+        /**
+         * Adds a new smart vacuum.
+         * @param {event} event
+         * @param {object} vacuum The device object
+         */
+        _addVacuum(event, vacuum) {
+          this._createDevice(vacuum)
+            .then((device) => {
+              this._addDevice('vacuums', device);
+            })
+            .catch((vacuumId) => {
+              const nicknames = ['kitchen vacuum', 'robo vacuum'];
+              const vacuum = {
+                id: String(vacuumId),
+                properties: {
+                  type: 'action.devices.types.VACUUM',
+                  traits: [
+                    'action.devices.traits.OnOff',
+                    'action.devices.traits.StartStop',
+                    'action.devices.traits.Modes',
+                    'action.devices.traits.Toggles',
+                    'action.devices.traits.Dock',
+                  ],
+                  name: {
+                    defaultNames: ['Smart Vacuum'],
+                    name: 'Smart Vacuum ' + vacuumId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.vacuums.length,
+                        vacuumId),
+                    ],
+                  },
+                  willReportState: false,
+                  attributes: {
+                    availableToggles: [{
+                      name: 'quiet',
+                      name_values: [{
+                        name_synonym: ['quiet', 'silent'],
+                        lang: 'ENGLISH',
+                      }, {
+                        name_synonym: ['ruhig', 'still'],
+                        lang: 'GERMAN',
+                      }],
+                    }],
+                    availableModes: [{
+                      name: 'speed',
+                      name_values: [{
+                        name_synonym: ['speed', 'velocity'],
+                        lang: 'ENGLISH',
+                      }],
+                      settings: [{
+                        setting_name: 'slow',
+                        setting_values: [{
+                          setting_synonym: ['slow', 'sluggish'],
+                        }],
+                      }, {
+                        setting_name: 'fast',
+                        setting_values: [{
+                          setting_synonym: ['fast', 'quick'],
+                        }],
+                      }],
+                    }],
+                    pausable: false,
+                  },
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1400',
+                    swVersion: '1.0.11',
+                    hwVersion: '1.0',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+                  },
+                  states: {
+                    on: false,
+                    online: true,
+                    isRunning: false,
+                    isPaused: false,
+                    currentModeSettings: {
+                      speed: 'slow',
+                    },
+                    currentToggleSettings: {
+                      quiet: false,
+                    },
+                  },
+                },
+              };
+              this._addDevice('vacuums', vacuum);
+            });
+            this._showDevice('vacuum');
+        }
+
+        /**
+         * Adds a new smart washer
+         * @param {event} event
+         * @param {object} washer The device object
+         */
+        _addWasher(event, washer) {
+          this._createDevice(washer)
+            .then((device) => {
+              this._addDevice('washers', device);
+            })
+            .catch((washerId) => {
+              const nicknames = ['washing machine', 'acme washer'];
+              const washer = {
+                id: String(washerId),
+                properties: {
+                  type: 'action.devices.types.WASHER',
+                  traits: [
+                    'action.devices.traits.OnOff',
+                    'action.devices.traits.StartStop',
+                    'action.devices.traits.Modes',
+                    'action.devices.traits.Toggles',
+                    'action.devices.traits.RunCycle',
+                  ],
+                  name: {
+                    defaultNames: ['Smart Washer'],
+                    name: 'Smart Washer ' + washerId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.washers.length,
+                        washerId),
+                    ],
+                  },
+                  willReportState: false,
+                  attributes: {
+                    availableModes: [{
+                      name: 'load',
+                      name_values: [{
+                        name_synonym: ['load', 'size', 'load size'],
+                        lang: 'ENGLISH',
+                      }],
+                      settings: [{
+                        setting_name: 'small',
+                        setting_values: [{
+                          setting_synonym: ['small', 'half'],
+                            lang: 'ENGLISH',
+                          }],
+                        }, {
+                          setting_name: 'large',
+                          setting_values: [{
+                            setting_synonym: ['large', 'full'],
+                            lang: 'ENGLISH',
+                          }],
+                        }],
+                        ordered: true,
+                    }],
+                    availableToggles: [{
+                      name: 'extra rinse',
+                      name_values: [{
+                        name_synonym: ['extra', 'rinse'],
+                        lang: 'ENGLISH',
+                      }],
+                    }, {
+                      name: 'permanent press',
+                      name_values: [{
+                        name_synonym: ['permanent', 'press'],
+                        lang: 'ENGLISH',
+                      }],
+                    }],
+                    pausable: true,
+                  },
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Smart Home Provider',
+                    model: 'g1401',
+                    swVersion: '1.0.11',
+                    hwVersion: '1.0',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+                  },
+                },
+              };
+              this._addDevice('washers', washer);
+            });
+            this._showDevice('washer');
+        }
+
+        /**
+         * Adds a new smart fridge
+         * @param {event} event
+         * @param {object} refrigerator The device object
+         */
+        _addRefrigerator(event, refrigerator) {
+          this._createDevice(refrigerator)
+            .then((device) => {
+              this._addDevice('refrigerators', device);
+            })
+            .catch((refrigeratorId) => {
+              const nicknames = ['kitchen refrigerator', 'mini-fridge',
+                'garage freezer'];
+              const refrigerator = {
+                id: String(refrigeratorId),
+                properties: {
+                  type: 'action.devices.types.REFRIGERATOR',
+                  traits: [
+                    'action.devices.traits.OnOff',
+                    'action.devices.traits.Toggles',
+                  ],
+                  attributes: {
+                    availableToggles: [{
+                      name: 'quiet',
+                      name_values: [{
+                        name_synonym: ['quiet', 'silent'],
+                        lang: 'en',
+                      }],
+                    }],
+                  },
+                  name: {
+                    defaultNames: ['Smart Fridge'],
+                    name: 'Smart Refrigerator ' + refrigeratorId,
+                    nicknames: [
+                      this._getNickname(nicknames, this.refrigerators.length,
+                        refrigeratorId),
+                    ],
+                  },
+                  willReportState: false,
+                  roomHint: '',
+                  deviceInfo: {
+                    manufacturer: 'Sirius Cybernetics Corporation',
+                    model: '2331B',
+                    swVersion: '11.4',
+                    hwVersion: '11.2',
+                  },
+                  customData: {
+                    smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+                  },
+                },
+                states: {
+                  on: false,
+                  online: true,
+                  currentToggleSettings: {
+                    quiet: false,
+                  },
+                },
+              };
+              this._addDevice('refrigerators', refrigerator);
+            });
+            this._showDevice('refrigerator');
+        }
+      }
+
+      customElements.define(MyApp.is, MyApp);
     </script>
 </dom-module>

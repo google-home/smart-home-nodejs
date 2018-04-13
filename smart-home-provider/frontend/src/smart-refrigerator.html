@@ -38,38 +38,55 @@ limitations under the License.
     </template>
 
     <script>
-        class SmartRefrigerator extends SmartDevice {
-           static get is() { return 'smart-refrigerator' }
-
-           constructor() {
-               super();
-           }
-
-            _handleOnOff() {
-                this.device.states.on = !this.device.states.on;
-                this._notifyStateChange();
-            }
-
-            _deviceChanged() {
-                super._deviceChanged();
-
-                if (this.device.states.updateToggleSettings) {
-                    this.device.states.currentToggleSettings =
-                        this.device.states.updateToggleSettings;
-                    if (this.device.states.currentToggleSettings.quiet) {
-                        this.$['toggle-quiet'].classList.remove('toggle-off');
-                    } else {
-                        this.$['toggle-quiet'].classList.add('toggle-off');
-                    }
-                }
-
-                if (this.device.states.on) {
-                    this.$.refrigerator.style.color = '#333';
-                } else {
-                    this.$.refrigerator.style.color = '#ccc';
-                }
-            }
+      /**
+       * Class for smart refrigerators.
+       */
+      class SmartRefrigerator extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-refrigerator';
         }
-        customElements.define(SmartRefrigerator.is, SmartRefrigerator);
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          this.device.states.on = !this.device.states.on;
+          this._notifyStateChange();
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+
+          if (this.device.states.updateToggleSettings) {
+            this.device.states.currentToggleSettings =
+              this.device.states.updateToggleSettings;
+            if (this.device.states.currentToggleSettings.quiet) {
+              this.$['toggle-quiet'].classList.remove('toggle-off');
+            } else {
+              this.$['toggle-quiet'].classList.add('toggle-off');
+            }
+          }
+
+          if (this.device.states.on) {
+            this.$.refrigerator.style.color = '#333';
+          } else {
+            this.$.refrigerator.style.color = '#ccc';
+          }
+        }
+      }
+      customElements.define(SmartRefrigerator.is, SmartRefrigerator);
     </script>
 </dom-module>

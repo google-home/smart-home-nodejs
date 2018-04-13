@@ -39,83 +39,107 @@ limitations under the License.
     </template>
 
     <script>
-        class SmartWasher extends SmartDevice {
-            static get is() { return 'smart-washer' }
-
-            constructor() {
-                super();
-            }
-
-            _handleOnOff() {
-                this.device.states.on = !this.device.states.on;
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                if (!this.device.states.online) {
-                    console.log("device offline, nothing changed");
-                } else {
-                    for (var name in changes) {
-                        if (name == "start") {
-                            this.device.states.isRunning = changes[name];
-                            // starting off device -> turn it on and start it
-                            if (this.device.states.isRunning) {
-                                this.device.states.on = true;
-                            }
-                            // if a device has been started/stopped, it can't be paused
-                            this.device.states.isPaused = false;
-                        } else if (name == "pause") {
-                            // else if still running and pausable, set isPaused to whatever is in changes
-                            if (this.device.properties.attributes.pausable) {
-                                if (this.device.states.isRunning || this.device.states.isPaused) {
-                                    this.device.states.isPaused = changes[name];
-                                    this.device.states.isRunning = !changes[name];
-                                }
-                            } else this.device.states.isRunning = false;
-                        } else {
-                            const value = changes[name];
-                            this.set('device.states.' + name, value);
-                        }
-                    }
-                }
-                if (!this.device.states.on) {
-                    // device off, stop everything
-                    this.device.states.isRunning = false;
-                    this.device.states.isPaused = false;
-                }
-                this._notifyStateChange();
-            }
-
-            _deviceChanged() {
-                super._deviceChanged();
-                console.log("Washer changed!", this.device);
-                if (this.device.states.updateToggleSettings) {
-                    this.device.states.currentToggleSettings =
-                        this.device.states.updateToggleSettings;
-                    if (this.device.states.currentToggleSettings['extra rinse']) {
-                        this.$['toggle-extra-rinse'].classList.remove('toggle-off');
-                    } else {
-                        this.$['toggle-extra-rinse'].classList.add('toggle-off');
-                    }
-                    if (this.device.states.currentToggleSettings['permanent press']) {
-                        this.$['toggle-permanent-press'].classList.remove('toggle-off');
-                    } else {
-                        this.$['toggle-permanent-press'].classList.add('toggle-off');
-                    }
-                }
-
-                if (this.device.states.isPaused) {
-                    this.$.washer.style.color = '#ff7733';
-                } else if (this.device.states.isRunning) {
-                    this.$.washer.style.color = '#3399ff';
-                } else if (this.device.states.on) {
-                    this.$.washer.style.color = '#9bea00';
-                }
-                if (!this.device.states.on) {
-                    this.$.washer.style.color = '#eee';
-                }
-            }
+      /**
+       * Class for smart washers.
+       */
+      class SmartWasher extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-washer';
         }
-        customElements.define(SmartWasher.is, SmartWasher);
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          this.device.states.on = !this.device.states.on;
+          this._notifyStateChange();
+        }
+
+        /**
+         * Handles one or many change in the state.
+         * @param {array} changes An array of changed states
+         */
+        _changeState(changes) {
+          if (!this.device.states.online) {
+            console.log('device offline, nothing changed');
+          } else {
+            for (let name in changes) {
+              if (name == 'start') {
+                this.device.states.isRunning = changes[name];
+                // starting off device -> turn it on and start it
+                if (this.device.states.isRunning) {
+                  this.device.states.on = true;
+                }
+                // if a device has been started/stopped, it can't be paused
+                this.device.states.isPaused = false;
+              } else if (name == 'pause') {
+                // else if still running and pausable,
+                // set isPaused to whatever is in changes
+                if (this.device.properties.attributes.pausable) {
+                  if (this.device.states.isRunning || this.device.states.isPaused) {
+                    this.device.states.isPaused = changes[name];
+                    this.device.states.isRunning = !changes[name];
+                  }
+                } else {
+                  this.device.states.isRunning = false;
+                }
+              } else {
+                const value = changes[name];
+                this.set('device.states.' + name, value);
+              }
+            }
+          }
+          if (!this.device.states.on) {
+            // device off, stop everything
+            this.device.states.isRunning = false;
+            this.device.states.isPaused = false;
+          }
+          this._notifyStateChange();
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+          console.log('Washer changed!', this.device);
+          if (this.device.states.updateToggleSettings) {
+            this.device.states.currentToggleSettings =
+              this.device.states.updateToggleSettings;
+            if (this.device.states.currentToggleSettings['extra rinse']) {
+              this.$['toggle-extra-rinse'].classList.remove('toggle-off');
+            } else {
+              this.$['toggle-extra-rinse'].classList.add('toggle-off');
+            }
+            if (this.device.states.currentToggleSettings['permanent press']) {
+              this.$['toggle-permanent-press'].classList.remove('toggle-off');
+            } else {
+              this.$['toggle-permanent-press'].classList.add('toggle-off');
+            }
+          }
+
+          if (this.device.states.isPaused) {
+            this.$.washer.style.color = '#ff7733';
+          } else if (this.device.states.isRunning) {
+            this.$.washer.style.color = '#3399ff';
+          } else if (this.device.states.on) {
+            this.$.washer.style.color = '#9bea00';
+          }
+          if (!this.device.states.on) {
+            this.$.washer.style.color = '#eee';
+          }
+        }
+      }
+      customElements.define(SmartWasher.is, SmartWasher);
     </script>
 </dom-module>

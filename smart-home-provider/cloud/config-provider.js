@@ -11,31 +11,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var Config = {};
+/* eslint require-jsdoc: "off" */
+/* eslint valid-jsdoc: "off" */
 
-Config.devPortSmartHome = "3000";
-Config.smartHomeProviderGoogleClientId = "ZxjqWpsYj3"; // client id that Google will use
-Config.smartHomeProvideGoogleClientSecret = "hIMH3uWlMVrqa7FAbKLBoNUMCyLCtv"; // client secret that Google will use
-Config.smartHomeProviderApiKey = "<API_KEY>"; // client API Key generated on the console
+let Config = {};
+
+Config.devPortSmartHome = '3000';
+// Client id that Google will use
+Config.smartHomeProviderGoogleClientId = 'ZxjqWpsYj3';
+// Client secret that Google will use
+Config.smartHomeProvideGoogleClientSecret = 'hIMH3uWlMVrqa7FAbKLBoNUMCyLCtv';
+// Client API Key generated on the console
+Config.smartHomeProviderApiKey = '<API_KEY>';
+// Running server locally using ngrok
 Config.isLocal = false;
-Config.enableReset = true; // If true, all devices will be cleared when the frontend page refreshes
+// If true, all devices will be cleared when the frontend page refreshes
+Config.enableReset = true;
 
 function init() {
-  process.argv.forEach(function (value, i, arr) {
-    if (value.includes("smart-home="))
-      Config.smartHomeProviderCloudEndpoint = value.split("=")[1];
-    else if (value.includes("isLocal"))
+  process.argv.forEach(function(value, i, arr) {
+    if (value.includes('smart-home=')) {
+      Config.smartHomeProviderCloudEndpoint = value.split('=')[1];
+    } else if (value.includes('isLocal')) {
       Config.isLocal = true;
+    }
   });
-  if (!Config.smartHomeProviderCloudEndpoint)
-    Config.smartHomeProviderCloudEndpoint = "http://localhost:3000";
-  console.log("config: ", Config);
+  if (!Config.smartHomeProviderCloudEndpoint) {
+    Config.smartHomeProviderCloudEndpoint = 'http://localhost:3000';
+  }
+  console.log('config: ', Config);
 }
 init();
 
 exports.devPortSmartHome = Config.devPortSmartHome;
-exports.smartHomeProviderGoogleClientId = Config.smartHomeProviderGoogleClientId;
-exports.smartHomeProvideGoogleClientSecret = Config.smartHomeProvideGoogleClientSecret;
+exports.smartHomeProviderGoogleClientId =
+    Config.smartHomeProviderGoogleClientId;
+exports.smartHomeProvideGoogleClientSecret =
+    Config.smartHomeProvideGoogleClientSecret;
 exports.smartHomeProviderCloudEndpoint = Config.smartHomeProviderCloudEndpoint;
 exports.smartHomeProviderApiKey = Config.smartHomeProviderApiKey;
 exports.isLocal = Config.isLocal;

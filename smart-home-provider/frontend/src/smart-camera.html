@@ -34,27 +34,44 @@ limitations under the License.
     </template>
 
     <script>
-        class SmartCamera extends SmartDevice {
-            static get is() { return 'smart-camera' }
-
-            constructor() {
-                super();
-            }
-
-            _handleOnOff() {
-                this.device.states.on = !this.device.states.on;
-                this._notifyStateChange();
-            }
-
-            _deviceChanged() {
-                super._deviceChanged();
-                if (this.device.states.on) {
-                    this.$.camera.style.color = '#9bea00';
-                } else {
-                    this.$.camera.style.color = '#eee';
-                }
-            }
+      /**
+       * Class for smart cameras.
+       */
+      class SmartCamera extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-camera';
         }
-        customElements.define(SmartCamera.is, SmartCamera);
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          this.device.states.on = !this.device.states.on;
+          this._notifyStateChange();
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+          if (this.device.states.on) {
+            this.$.camera.style.color = '#9bea00';
+          } else {
+            this.$.camera.style.color = '#eee';
+          }
+        }
+      }
+      customElements.define(SmartCamera.is, SmartCamera);
     </script>
 </dom-module>

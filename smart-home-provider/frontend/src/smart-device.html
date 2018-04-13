@@ -90,194 +90,271 @@ limitations under the License.
     </template>
 
     <script>
-        const ENTERKEY = 13;
+      const ENTERKEY = 13;
 
-        class SmartDevice extends Polymer.Element {
-            static get is() { return 'smart-device' }
+      /**
+       * Super class for all smart device classes.
+       */
+      class SmartDevice extends Polymer.Element {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-device';
+        }
 
-            static get properties() {
-                return {
-                    device: {
-                        type: Object,
-                        observer: '_deviceChanged'
-                    },
-                    type: {
-                        type: String
-                    }
-                }
+        /**
+         * @return {object} Common properties for all smart devices.
+         */
+        static get properties() {
+          return {
+            device: {
+              type: Object,
+              observer: '_deviceChanged',
+            },
+            type: {
+              type: String,
+            },
+          };
+        }
+
+        /**
+         * Constructor for devices.
+         */
+        constructor() {
+          super();
+          this._initialized = false;
+        }
+
+        /**
+         * Initializes all common components of the smart device.
+         */
+        initialize() {
+          window.requestAnimationFrame(() => {
+            if (!this.device || this._initialized) {
+              return;
             }
 
-            constructor() {
-                super();
-                this._initialized = false;
+            console.log(this.device);
+            console.log(this.$);
+
+            if (this.$['smart-device'] && !this._smartDevice) {
+              // Obtain the containing 'smart-device' of a child element
+              // This value is used to change common element components
+              this._smartDevice = this.$['smart-device'];
             }
 
-            initialize() {
-                window.requestAnimationFrame(() => {
-                    if (!this.device || this._initialized) {
-                        return;
-                    }
+            this._initialized = true;
+            console.log(this);
+            console.log(this.$);
 
-                    console.log(this.device);
-                    console.log(this.$);
+            if (this._smartDevice) {
+              // Functions to run on child elements.
+              this._smartDevice.$.nickname.addEventListener('keydown',
+                this._handleNameOrNicknameChange.bind(this));
+              this._smartDevice.$.nickname.addEventListener('blur',
+                this._execNameOrNicknameChange.bind(this));
+              this._smartDevice.$.name.addEventListener('keydown',
+                this._handleNameOrNicknameChange.bind(this));
+              this._smartDevice.$.name.addEventListener('blur',
+                this._execNameOrNicknameChange.bind(this));
 
-                    if (this.$['smart-device'] && !this._smartDevice) {
-                        // Obtain the containing 'smart-device' of a child element
-                        // This value is used to change common element components
-                        this._smartDevice = this.$['smart-device'];
-                    }
+              // Set the initial properties of common fields
+              this._smartDevice.$['device-id'].innerHTML = this.device.id;
+              this._smartDevice.$.nickname.value =
+                this.device.properties.name.nicknames[0];
+              this._smartDevice.$.name.value =
+                this.device.properties.name.name;
+              this._smartDevice.$.defaultName.innerHTML =
+                this.device.properties.name.defaultNames[0];
 
-                    this._initialized = true;
-                    console.log(this);
-                    console.log(this.$);
-
-                    if (this._smartDevice) {
-                        // Functions to run on child elements.
-                        this._smartDevice.$.nickname.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                        this._smartDevice.$.nickname.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-                        this._smartDevice.$.name.addEventListener('keydown', this._handleNameOrNicknameChange.bind(this));
-                        this._smartDevice.$.name.addEventListener('blur', this._execNameOrNicknameChange.bind(this));
-
-                        // Set the initial properties of common fields
-                        this._smartDevice.$['device-id'].innerHTML = this.device.id;
-                        this._smartDevice.$.nickname.value = this.device.properties.name.nicknames[0];
-                        this._smartDevice.$.name.value = this.device.properties.name.name;
-                        this._smartDevice.$.defaultName.innerHTML = this.device.properties.name.defaultNames[0];
-
-                        this._handleRegister();
-                    }
-                });
+              this._handleRegister();
             }
+          });
+        }
 
-            _handleCloud() {
-                this.device.states.online = !this.device.states.online;
-                this._handleRegister();
-                this._changeEventSource();
-            }
+        /**
+         * Handles a change in the online/offline state.
+         */
+        _handleCloud() {
+          this.device.states.online = !this.device.states.online;
+          this._handleRegister();
+          this._changeEventSource();
+        }
 
-            _handleRegister() {
-                // Register source if undefined
-                console.log(this);
-                if (!this._source) {
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.device.id);
-                }
-                this._callSmartHomeProviderCloud('/register-device', 'POST', this.device)
-                    .then(this._changeEventSource.bind(this))
-                    .catch(function (error) {
-                        console.log('>>> failed to register device with Smart Home Provider cloud:', error);
-                    });
-            }
+        /**
+         * Handles registration in the server.
+         */
+        _handleRegister() {
+          // Register source if undefined
+          console.log(this);
+          if (!this._source) {
+            this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT
+              + '/device-connection/' + this.device.id);
+          }
+          this._callSmartHomeProviderCloud('/register-device', 'POST',
+              this.device)
+            .then(this._changeEventSource.bind(this))
+            .catch(function(error) {
+              console.log('>>> failed to register device with Smart Home ' +
+                'Provider cloud:', error);
+            });
+        }
 
-            _handleDelete() {
-                this._callSmartHomeProviderCloud('/remove-device', 'POST', this.device)
-                    .catch(function (error) {
-                        console.log('>>> failed to remove device with Smart Home Provider cloud:', error);
-                    });
-                if (this._source) this._source.close();
+        /**
+         * Handles deletiong from the server.
+         */
+        _handleDelete() {
+          this._callSmartHomeProviderCloud('/remove-device', 'POST',
+              this.device)
+            .catch(function(error) {
+              console.log('>>> failed to remove device with Smart Home ' +
+                'Provider cloud:', error);
+            });
+            if (this._source) this._source.close();
 
-                const app = document.querySelector('my-app');
-                const devices = app[this.type];
-                for (let i = 0; i < devices.length; i++) {
-                    if (devices[i].id == this.device.id) {
-                        app.removeDevice(this.type, i);
-                    }
-                }
-            }
-
-            _execNameOrNicknameChange(event) {
-                // occurs after enter/tab key pressed or on tapout from input field
-                if (event.target.id == 'nickname') {
-                    this.device.properties.name.nicknames[0] = event.target.value;
-                }
-                else if (event.target.id == 'name') {
-                    this.device.properties.name.name = event.target.value;
-                }
-                this._notifyStateChange(true);
-            }
-
-            _handleNameOrNicknameChange(event) {
-                if (event.which == ENTERKEY) this.blur();
-            }
-
-            _callSmartHomeProviderCloud(path, method, opt_body) {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + AUTH_TOKEN
-                    }
-                };
-                if (opt_body) options.body = JSON.stringify(opt_body);
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
-            }
-
-            _changeEventSource() {
-                if (!this.device.states.online) {
-                    // going offline
-                    this._source.close();
-                } else {
-                    // going online
-                    this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/device-connection/' + this.device.id);
-                    this._source.addEventListener('change', function (e) {
-                        this._changeState(JSON.parse(e.data));
-                    }.bind(this));
-                    this._source.addEventListener('pullUp', function (e) {
-                        this._exec();
-                    }.bind(this));
-                    this._source.addEventListener('error', function (error) {
-                        if (error.eventPhase == 2) {
-                            console.log('>>> event source closed');
-                            setTimeout(this._changeEventSource.bind(this), 30000);
-                            return;
-                        } else {
-                            console.error('>>> error in event source:', error);
-                        }
-                    }.bind(this));
-                }
-                this._notifyStateChange();
-            }
-
-            _changeState(changes) {
-                for (var name in changes) {
-                    const value = changes[name];
-                    this.set('device.states.' + name, value);
-                }
-                this._notifyStateChange();
-            }
-
-            _notifyStateChange(nameChanged) {
-                this._deviceChanged();
-                if (this.device.states.online) this._exec(nameChanged);
-            }
-
-            _deviceChanged() {
-                console.log("Device changed!", this.device.states);
-                if (!this._initialized) {
-                    this.initialize();
-                    return;
-                }
-                console.log('Go through with device setup');
-                const app = document.querySelector('my-app');
-                app.showToast(`${this.device.properties.name.nicknames[0]} state changed`);
-
-                if (this._smartDevice) {
-                    this._smartDevice.$.cloud.icon = this.device.states.online ? 'cloud' : 'cloud-off';
-                } else {
-                    this.$.cloud.icon = this.device.states.online ? 'cloud' : 'cloud-off';
-                }
-            }
-
-            _exec(nameChanged) {
-                if (nameChanged) {
-                    this.device.nameChanged = true;
-                } else {
-                    this.device.nameChanged = false;
-                }
-                this._callSmartHomeProviderCloud('/exec', 'POST', this.device).then(function () {
-                    console.log('>>> exec to Smart Home Provider Cloud');
-                });
+            const app = document.querySelector('my-app');
+            const devices = app[this.type];
+            for (let i = 0; i < devices.length; i++) {
+              if (devices[i].id == this.device.id) {
+                app.removeDevice(this.type, i);
+              }
             }
         }
-        customElements.define(SmartDevice.is, SmartDevice);
+
+        /**
+         * Event that occurs after enter/tab key pressed or on tapout from
+         * input field
+         * @param {event} event DOM event.
+         */
+        _execNameOrNicknameChange(event) {
+          if (event.target.id == 'nickname') {
+            this.device.properties.name.nicknames[0] = event.target.value;
+          } else if (event.target.id == 'name') {
+            this.device.properties.name.name = event.target.value;
+          }
+          this._notifyStateChange(true);
+        }
+
+        /**
+         * Event that occurs when the user presses the enter key in the
+         * input field
+         * @param {event} event DOM event.
+         */
+        _handleNameOrNicknameChange(event) {
+          if (event.which == ENTERKEY) this.blur();
+        }
+
+        /**
+         * Makes an API call to the server with some body
+         * @param {path} path Path to call on the server
+         * @param {string} method HTTP method to use (ie. POST or GET)
+         * @param {object} optBody Optional body to send to server
+         * @return {Promise} A promise with the server response
+         */
+        _callSmartHomeProviderCloud(path, method, optBody) {
+          const options = {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + AUTH_TOKEN,
+            },
+          };
+          if (optBody) options.body = JSON.stringify(optBody);
+          return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + path, options);
+        }
+
+        /**
+         * Function that runs when the event source changes
+         */
+        _changeEventSource() {
+          if (!this.device.states.online) {
+            // going offline
+            this._source.close();
+          } else {
+            // going online
+            this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT
+              + '/device-connection/' + this.device.id);
+            this._source.addEventListener('change', function(e) {
+              this._changeState(JSON.parse(e.data));
+            }.bind(this));
+            this._source.addEventListener('pullUp', function(e) {
+              this._exec();
+            }.bind(this));
+            this._source.addEventListener('error', function(error) {
+              if (error.eventPhase == 2) {
+                console.log('>>> event source closed');
+                setTimeout(this._changeEventSource.bind(this), 30000);
+                return;
+              } else {
+                console.error('>>> error in event source:', error);
+              }
+            }.bind(this));
+          }
+          this._notifyStateChange();
+        }
+
+        /**
+         * Function that runs when the device state changes
+         * @param {array} changes An array of changes
+         */
+        _changeState(changes) {
+          for (let name in changes) {
+            const value = changes[name];
+            this.set('device.states.' + name, value);
+          }
+          this._notifyStateChange();
+        }
+
+        /**
+         * Function that runs to notify that the device state has changed
+         * @param {boolean} nameChanged Whether the device name has changed
+         */
+        _notifyStateChange(nameChanged) {
+          this._deviceChanged();
+          if (this.device.states.online) this._exec(nameChanged);
+        }
+
+        /**
+         * Function that is called when the device changes. This function
+         * can be overriden by child classes to provide custom changes.
+         */
+        _deviceChanged() {
+          console.log('Device changed!', this.device.states);
+          if (!this._initialized) {
+            this.initialize();
+            return;
+          }
+          console.log('Go through with device setup');
+          const app = document.querySelector('my-app');
+          app.showToast(`${this.device.properties.name.nicknames[0]}` +
+            `state changed`);
+
+          if (this._smartDevice) {
+            this._smartDevice.$.cloud.icon = this.device.states.online
+              ? 'cloud' : 'cloud-off';
+          } else {
+            this.$.cloud.icon = this.device.states.online
+              ? 'cloud' : 'cloud-off';
+          }
+        }
+
+        /**
+         * Executes changes to the server
+         * @param {boolean} nameChanged Whether the name was changed
+         */
+        _exec(nameChanged) {
+          if (nameChanged) {
+            this.device.nameChanged = true;
+          } else {
+            this.device.nameChanged = false;
+          }
+          this._callSmartHomeProviderCloud('/exec', 'POST', this.device)
+            .then(() => {
+              console.log('>>> exec to Smart Home Provider Cloud');
+            });
+        }
+      }
+      customElements.define(SmartDevice.is, SmartDevice);
     </script>
 </dom-module>
