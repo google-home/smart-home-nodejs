@@ -34,6 +34,7 @@ limitations under the License.
 <link rel="import" href="smart-washer.html">
 <link rel="import" href="smart-refrigerator.html">
 <link rel="import" href="smart-fan.html">
+<link rel="import" href="smart-kettle.html">
 
 <dom-module id="my-app">
   <template>
@@ -184,6 +185,11 @@ limitations under the License.
           <iron-icon icon="hardware:toys"></iron-icon>
           <p>Fan</p>
         </button>
+        <button dialog-confirm autofocus class="square" id="kettleSelector"
+          on-tap="_addKettle">
+          <iron-icon icon="maps:local-cafe"></iron-icon>
+          <p>Kettle</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -259,6 +265,14 @@ limitations under the License.
         </div>
       </template>
     </iron-list>
+
+    <iron-list id="kettles-list" items="[[kettles]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-kettle device=[[item]]></smart-kettle>
+        </div>
+      </template>
+    </iron-list>
   </template>
 
   <script>
@@ -328,6 +342,10 @@ limitations under the License.
             value: [],
           },
           fans: {
+            type: Array,
+            value: [],
+          },
+          kettles: {
             type: Array,
             value: [],
           },
@@ -480,6 +498,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.FAN':
                 this.app._addFan(this.devices[id]);
+                break;
+              case 'action.devices.types.KETTLE':
+                this.app._addKettle(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -708,6 +729,25 @@ limitations under the License.
           })
           .finally(() => {
             this._showDeviceType('fans');
+          });
+      }
+
+      /**
+       * Adds a new smart kettle
+       * @param {object} kettle The device object
+       */
+      _addKettle(kettle) {
+        this._createDevice(kettle)
+          .then((device) => {
+            this._addDevice('kettles', device);
+          })
+          .catch((kettleId) => {
+            this._addDevice('kettles',
+              SmartKettle.generate(kettleId,
+                this.kettles.length));
+          })
+          .finally(() => {
+            this._showDeviceType('kettles');
           });
       }
     }

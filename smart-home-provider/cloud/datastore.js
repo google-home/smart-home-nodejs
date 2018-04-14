@@ -429,7 +429,7 @@ Data.execDevice = function(uid, device) {
     Data[uid][device.id] = {
       states: {},
       properties: {},
-      executionStates: {},
+      executionStates: [],
     };
   }
   if (device.hasOwnProperty('properties')) {

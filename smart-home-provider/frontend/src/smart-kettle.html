@@ -1,0 +1,182 @@
+<!--
+@license
+Copyright 2018, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-kettle">
+    <template>
+        <style include="iron-flex iron-flex-alignment shared-styles">
+            iron-icon {
+                width: 80px;
+                height: 80px;
+            }
+
+            #thermostat {
+                margin-right: 36px;
+            }
+        </style>
+        <smart-device id='smart-device' device="{{device}}" type="kettles">
+            <div slot="device-controls" class="layout horizontal center-justified">
+                <strong>Setpoint</strong>
+                <!-- Set potential setpoints to 60F (15C) - 83F (28C) -->
+                <paper-slider id="setpoint" title="Set Point" editable="true"
+                    value="[[device.states.temperatureSetpointCelsius]]"
+                    on-value-change="_handleSetpoint"
+                    min="30" max="100"></paper-slider>
+            </div>
+            <iron-icon id="kettle" icon="maps:local-cafe" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
+            <div slot="device-states" class="layout horizontal center-justified">
+                <paper-input
+                    id="ambient"
+                    label="Ambient Temperature"
+                    value="[[device.states.temperatureAmbientCelsius]]"
+                    on-input="_handleAmbient"
+                    auto-validate pattern="[0-9]+[.]?[0-9]*">
+                    <div suffix>ºC</div>
+                </paper-input>
+            </div>
+        </smart-device>
+    </template>
+
+    <script>
+      /**
+       * Class for smart kettles.
+       */
+      class SmartKettle extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-kettle';
+        }
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          this.device.states.on = !this.device.states.on;
+          this._notifyStateChange();
+        }
+
+        /**
+         * Handles a change in the ambient temperature.
+         */
+        _handleAmbient() {
+          if (this.device) {
+            this.device.states.temperatureAmbientCelsius =
+              parseFloat(this.$.ambient.value);
+            this._notifyStateChange();
+          }
+        }
+
+        /**
+         * Handles a change in the setpoint.
+         */
+        _handleSetpoint() {
+          if (this.device) {
+            this.device.states.temperatureSetpointCelsius =
+              this.$.setpoint.value;
+            this._notifyStateChange();
+          }
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+          if (this.device.states.on) {
+            this.$.kettle.style.color = '#9bea00';
+          } else {
+            this.$.kettle.style.color = '#eee';
+          }
+        }
+
+        /**
+         * Generates a new smart kettle
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+        static generate(id, count) {
+          const nicknames = [
+            'little teapot',
+            'coffee maker',
+            'ramen cooker',
+            'solder station',
+            'my coffee cup'
+          ];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.KETTLE',
+              traits: [
+                'action.devices.traits.OnOff',
+                'action.devices.traits.TemperatureControl',
+              ],
+              name: {
+                defaultNames: [`Smart Kettle ${id}`],
+                name: `Smart Kettle ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)],
+              },
+              willReportState: false,
+              attributes: {
+                temperatureRange: {
+                  minThresholdCelsius: 30,
+                  maxThresholdCelsius: 100
+                },
+                temperatureStepCelsius: 1,
+                temperatureUnitForUX: 'C' /* or 'F' */
+              },
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g1340',
+                swVersion: '1.0.31',
+                hwVersion: '1.1',
+              },
+              customData: {
+                smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+              },
+            },
+            states: {
+              online: true,
+              on: false,
+              temperatureSetpointCelsius: 35,
+              temperatureAmbientCelsius: 35
+            },
+          };
+        }
+      }
+      customElements.define(SmartKettle.is, SmartKettle);
+    </script>
+</dom-module>
