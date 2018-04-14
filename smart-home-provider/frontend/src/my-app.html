@@ -549,16 +549,6 @@ limitations under the License.
       }
 
       /**
-       * Updates the DOM to show new devices of a given device type.
-       * @param {string} deviceType The device type.
-       */
-      _showDeviceType(deviceType) {
-        window.requestAnimationFrame(() => {
-          this.$[`${deviceType}-list`].fire('iron-resize');
-        });
-      }
-
-      /**
        * Adds a new device to a particular device type array.
        * @param {string} type The type of device.
        * @param {object} device The device object.
@@ -579,9 +569,6 @@ limitations under the License.
           .catch((lightId) => {
             this._addDevice('lights',
               SmartLight.generateRgb(lightId, this.lights.length));
-          })
-          .finally(() => {
-            this._showDeviceType('lights');
           });
       }
 
@@ -597,9 +584,6 @@ limitations under the License.
           .catch((lightId) => {
             this._addDevice('lights',
               SmartLight.generateMonochrome(lightId, this.lights.length));
-          })
-          .finally(() => {
-            this._showDeviceType('lights');
           });
       }
 
@@ -617,9 +601,6 @@ limitations under the License.
             this._addDevice('thermostats',
               SmartThermostat.generate(thermostatId,
                 this.thermostats.length));
-          })
-          .finally(() => {
-            this._showDeviceType('thermostats');
           });
       }
 
@@ -635,9 +616,6 @@ limitations under the License.
           .catch((sceneId) => {
             this._addDevice('scenes',
               SmartScene.generate(sceneId, this.scenes.length));
-          })
-          .finally(() => {
-            this._showDeviceType('scenes');
           });
       }
 
@@ -653,8 +631,6 @@ limitations under the License.
           .catch((cameraId) => {
             this._addDevice('cameras',
               SmartCamera.generate(cameraId, this.cameras.length));
-          }).finally(() => {
-            this._showDeviceType('cameras');
           });
       }
 
@@ -670,9 +646,6 @@ limitations under the License.
           .catch((vacuumId) => {
             this._addDevice('vacuums',
               SmartVacuum.generate(vacuumId, this.vacuums.length));
-          })
-          .finally(() => {
-            this._showDeviceType('vacuums');
           });
       }
 
@@ -688,9 +661,6 @@ limitations under the License.
           .catch((washerId) => {
             this._addDevice('washers',
               SmartWasher.generate(washerId, this.washers.length));
-          })
-          .finally(() => {
-            this._showDeviceType('washers');
           });
       }
 
@@ -707,9 +677,6 @@ limitations under the License.
             this._addDevice('refrigerators',
               SmartRefrigerator.generate(refrigeratorId,
                 this.refrigerators.length));
-          })
-          .finally(() => {
-            this._showDeviceType('refrigerators');
           });
       }
 
@@ -726,9 +693,6 @@ limitations under the License.
             this._addDevice('fans',
               SmartFan.generate(fanId,
                 this.fans.length));
-          })
-          .finally(() => {
-            this._showDeviceType('fans');
           });
       }
 
@@ -745,9 +709,6 @@ limitations under the License.
             this._addDevice('kettles',
               SmartKettle.generate(kettleId,
                 this.kettles.length));
-          })
-          .finally(() => {
-            this._showDeviceType('kettles');
           });
       }
     }
