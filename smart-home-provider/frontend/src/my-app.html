@@ -18,6 +18,8 @@ limitations under the License.
 <link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
 <link rel="import" href="../bower_components/iron-icons/places-icons.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
@@ -31,634 +33,685 @@ limitations under the License.
 <link rel="import" href="smart-vacuum.html">
 <link rel="import" href="smart-washer.html">
 <link rel="import" href="smart-refrigerator.html">
+<link rel="import" href="smart-fan.html">
 
 <dom-module id="my-app">
-    <template>
-        <style>
-            :host {
-                --app-primary-color: #4285f4;
-                --app-secondary-color: black;
-                display: block;
-            }
+  <template>
+    <style>
+      :host {
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+        display: block;
+      }
 
-            app-header {
-                color: #fff;
-                background-color: var(--app-primary-color);
-            }
+      app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
 
-            app-header paper-icon-button {
-                --paper-icon-button-ink-color: white;
-            }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
 
-            #modal {
-                width: 42%;
-                display: -webkit-flex; /* Safari */
-                -webkit-justify-content: space-around; /* Safari 6.1+ */
-                display: flex;
-                justify-content: space-around;
-                overflow-y: scroll;
-                padding: 24px 0px;
-            }
+      #modal {
+        width: 42%;
+        display: -webkit-flex;
+        /* Safari */
+        -webkit-justify-content: space-around;
+        /* Safari 6.1+ */
+        display: flex;
+        justify-content: space-around;
+        overflow-y: scroll;
+        padding: 24px 0px;
+      }
 
-            .square {
-                height: 180px;
-                width: 180px;
-                margin: auto;
-                background: none;
-                border: none;
-                outline: none;
-            }
+      .square {
+        height: 180px;
+        width: 180px;
+        margin: auto;
+        background: none;
+        border: none;
+        outline: none;
+      }
 
-            .square:hover {
-                background-color: rgb(238,238,238);
-            }
+      .square:hover {
+        background-color: rgb(238, 238, 238);
+      }
 
-            iron-icon {
-                height:55%;
-                width: 55%;
-                color: #757575;
-            }
+      iron-icon {
+        height: 55%;
+        width: 55%;
+        color: #757575;
+      }
 
-            #close {
-                height: 30px;
-                width: 30px;
-                margin-top: 0px;
-                float: right;
-            }
+      #close {
+        height: 30px;
+        width: 30px;
+        margin-top: 0px;
+        float: right;
+      }
 
-            #close > iron-icon {
-                height: 100%;
-                width: 100%;
-                cursor: pointer;
-                cursor: hand;
-            }
+      #close>iron-icon {
+        height: 100%;
+        width: 100%;
+        cursor: pointer;
+        cursor: hand;
+      }
 
-            p {
-                color: #757575;
-                font-family: 'Roboto', 'Noto', sans-serif;
-                font-size: 15px;
-            }
+      p {
+        color: #757575;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        font-size: 15px;
+      }
 
-            #no-devices-msg {
-                width: 60%;
-                margin: 20% auto;
-            }
+      #no-devices-msg {
+        width: 60%;
+        margin: 20% auto;
+      }
 
-            #no-devices-msg > p {
-                text-align: center;
-            }
+      #no-devices-msg>p {
+        text-align: center;
+      }
 
-            #check {
-                display: none;
-            }
+      #check {
+        display: none;
+      }
+    </style>
 
-        </style>
+    <!-- Main content -->
+    <app-header condenses reveals effects="waterfall">
+      <app-toolbar>
+        <paper-icon-button id="account" icon="account-box" on-tap="_showAccount"></paper-icon-button>
+        <div main-title>Smart Home Provider</div>
+        <paper-icon-button id="add" icon="add"></paper-icon-button>
+      </app-toolbar>
+    </app-header>
 
-        <!-- Main content -->
-        <app-header condenses reveals effects="waterfall">
-            <app-toolbar>
-                <paper-icon-button id="account" icon="account-box" on-tap="_showAccount"></paper-icon-button>
-                <div main-title>Smart Home Provider</div>
-                <paper-icon-button id="add" icon="add"></paper-icon-button>
-            </app-toolbar>
-        </app-header>
+    <paper-toast id="toast" text="Not signed in"></paper-toast>
 
-        <paper-toast id="toast" text="Not signed in"></paper-toast>
+    <paper-dialog id="progress-dialog">
+      <p id="progress-dialog-content"></p>
+    </paper-dialog>
 
-        <paper-dialog id="progress-dialog">
-            <p id="progress-dialog-content"></p>
-        </paper-dialog>
+    <paper-dialog id="modal" modal>
+      <div id="close">
+        <iron-icon icon="icons:close" dialog-confirm autofocus></iron-icon>
+      </div>
+      <div class="layout horizontal center-justified">
+        <h1>Add a new device</h1>
+        <button dialog-confirm autofocus class="square" id="lightSelector"
+          on-tap="_addLight">
+          <iron-icon icon="image:wb-incandescent"></iron-icon>
+          <p>RGB Light</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="lightSelector"
+          on-tap="_addMonochromeLight">
+          <iron-icon icon="image:wb-iridescent"></iron-icon>
+          <p>Monochrome Light</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="thermostatSelector"
+          on-tap="_addThermostat">
+          <iron-icon icon="image:brightness-7"></iron-icon>
+          <p>Thermostat</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="sceneSelector"
+          on-tap="_addScene">
+          <iron-icon icon="image:slideshow"></iron-icon>
+          <p>Scene</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="cameraSelector"
+          on-tap="_addCamera">
+          <iron-icon icon="image:camera-alt"></iron-icon>
+          <p>Camera</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="vacuumSelector"
+          on-tap="_addVacuum">
+          <iron-icon icon="hardware:router"></iron-icon>
+          <p>Vacuum</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="washerSelector"
+          on-tap="_addWasher">
+          <iron-icon icon="icons:save"></iron-icon>
+          <p>Washer</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="refrigeratorSelector"
+          on-tap="_addRefrigerator">
+          <iron-icon icon="places:kitchen"></iron-icon>
+          <p>Refrigerator</p>
+        </button>
+        <button dialog-confirm autofocus class="square" id="fanSelector"
+          on-tap="_addFan">
+          <iron-icon icon="hardware:toys"></iron-icon>
+          <p>Fan</p>
+        </button>
+      </div>
+    </paper-dialog>
 
-        <paper-dialog id="modal" modal>
-            <div id="close">
-                <iron-icon icon="icons:close" dialog-confirm autofocus></iron-icon>
-            </div>
-            <div class="layout horizontal center-justified">
-                <h1>Add a new device</h1>
-                <button dialog-confirm autofocus class="square" id="lightSelector" on-tap="_addLight">
-                    <iron-icon icon="image:wb-incandescent"></iron-icon>
-                    <p>RGB Light</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="lightSelector" on-tap="_addMonochromeLight">
-                    <iron-icon icon="image:wb-iridescent"></iron-icon>
-                    <p>Monochrome Light</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="thermostatSelector" on-tap="_addThermostat">
-                    <iron-icon icon="image:brightness-7"></iron-icon>
-                    <p>Thermostat</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="sceneSelector" on-tap="_addScene">
-                    <iron-icon icon="image:slideshow"></iron-icon>
-                    <p>Scene</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="cameraSelector" on-tap="_addCamera">
-                    <iron-icon icon="image:camera-alt"></iron-icon>
-                    <p>Camera</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="vacuumSelector" on-tap="_addVacuum">
-                    <iron-icon icon="hardware:router"></iron-icon>
-                    <p>Vacuum</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="washerSelector" on-tap="_addWasher">
-                    <iron-icon icon="icons:save"></iron-icon>
-                    <p>Washer</p>
-                </button>
-                <button dialog-confirm autofocus class="square" id="refrigeratorSelector" on-tap="_addRefrigerator">
-                    <iron-icon icon="places:kitchen"></iron-icon>
-                    <p>Refrigerator</p>
-                </button>
-            </div>
-        </paper-dialog>
+    <div id="no-devices-msg" hidden="[[hide]]">
+      <p class="layout horizontal center-justified">
+        You currently don't have any devices set up. To set up a device,
+        click the "+" button and take it online.
+      </p>
+    </div>
 
-        <div id="no-devices-msg" hidden="[[hide]]">
-            <p class="layout horizontal center-justified">
-                You currently don't have any devices set up. To set up a device, click the "+" button and take it online.
-            </p>
+    <iron-list id="lights-list" items="[[lights]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-light device=[[item]]></smart-light>
         </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="lights-list" items="[[lights]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-light device=[[item]]></smart-light>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="thermostats-list" items="[[thermostats]]" as="item"
+      grid>
+      <template>
+        <div class="item">
+          <smart-thermostat device=[[item]]></smart-thermostat>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="thermostats-list" items="[[thermostats]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-thermostat device=[[item]]></smart-thermostat>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="scenes-list" items="[[scenes]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-scene device=[[item]]></smart-scene>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="scenes-list" items="[[scenes]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-scene device=[[item]]></smart-scene>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="cameras-list" items="[[cameras]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-camera device=[[item]]></smart-camera>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="cameras-list" items="[[cameras]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-camera device=[[item]]></smart-camera>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="vacuums-list" items="[[vacuums]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-vacuum device=[[item]]></smart-vacuum>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="vacuums-list" items="[[vacuums]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-vacuum device=[[item]]></smart-vacuum>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="washers-list" items="[[washers]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-washer device=[[item]]></smart-washer>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="washers-list" items="[[washers]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-washer device=[[item]]></smart-washer>
-                </div>
-            </template>
-        </iron-list>
+    <iron-list id="refrigerators-list" items="[[refrigerators]]"
+      as="item" grid>
+      <template>
+        <div class="item">
+          <smart-refrigerator device=[[item]]></smart-refrigerator>
+        </div>
+      </template>
+    </iron-list>
 
-        <iron-list id="refrigerators-list" items="[[refrigerators]]" as="item" grid>
-            <template>
-                <div class="item">
-                    <smart-refrigerator device=[[item]]></smart-refrigerator>
-                </div>
-            </template>
-        </iron-list>
-    </template>
+    <iron-list id="fans-list" items="[[fans]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-fan device=[[item]]></smart-fan>
+        </div>
+      </template>
+    </iron-list>
+  </template>
 
-    <script>
-      const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = '/smart-home-api';
-      let nextDeviceId = 0;
+  <script>
+    const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = '/smart-home-api';
+    let nextDeviceId = 0;
+    /*
+     * @return { number } Properties of this class
+     */
+    const getNextDeviceId = () => {
+      return nextDeviceId++;
+    };
+
+    /**
+     * Container class which manages smart devices.
+     */
+    class MyApp extends Polymer.Element {
+      /**
+       * @return {string} Name of the HTML tag
+       */
+      static get is() {
+        return 'my-app';
+      }
 
       /**
-       * @return {number} Properties of this class
+       * @return {object} Properties of this class
        */
-      const getNextDeviceId = () => {
-        return nextDeviceId++;
-      };
+      static get properties() {
+        return {
+          hide: {
+            type: Boolean,
+            value: false,
+          },
+          deviceCount: {
+            type: Number,
+            value: 0,
+          },
+          lights: {
+            type: Array,
+            value: [],
+          },
+          thermostats: {
+            type: Array,
+            value: [],
+          },
+          scenes: {
+            type: Array,
+            value: [],
+          },
+          cameras: {
+            type: Array,
+            value: [],
+          },
+          vacuums: {
+            type: Array,
+            value: [],
+          },
+          washers: {
+            type: Array,
+            value: [],
+          },
+          locks: {
+            type: Array,
+            value: [],
+          },
+          refrigerators: {
+            type: Array,
+            value: [],
+          },
+          fans: {
+            type: Array,
+            value: [],
+          },
+        };
+      }
 
       /**
-       * Container class which manages smart devices.
+       * Callback that runs when the HTML element is created.
        */
-      class MyApp extends Polymer.Element {
-        /**
-         * @return {string} Name of the HTML tag
-         */
-        static get is() {
-          return 'my-app';
-        }
-
-        /**
-         * @return {object} Properties of this class
-         */
-        static get properties() {
-          return {
-            hide: {
-              type: Boolean,
-              value: false,
-            },
-            deviceCount: {
-              type: Number,
-              value: 0,
-            },
-            lights: {
-              type: Array,
-              value: [],
-            },
-            thermostats: {
-              type: Array,
-              value: [],
-            },
-            scenes: {
-              type: Array,
-              value: [],
-            },
-            cameras: {
-              type: Array,
-              value: [],
-            },
-            vacuums: {
-              type: Array,
-              value: [],
-            },
-            washers: {
-              type: Array,
-              value: [],
-            },
-            locks: {
-              type: Array,
-              value: [],
-            },
-            refrigerators: {
-              type: Array,
-              value: [],
-            },
-          };
-        }
-
-        /**
-         * Callback that runs when the HTML element is created.
-         */
-        connectedCallback() {
-          super.connectedCallback();
-          // Reset all user devices
-          window.requestAnimationFrame(() => {
-            this.$.add.addEventListener('click', (e) => this.$.modal.open());
-            this._auth()
-              .then(() => {
-                const options = {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + AUTH_TOKEN,
-                  },
-                };
-                return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT +
-                  '/reset-devices', options);
-              });
-          });
-        }
-
-        /**
-         * Shows message in a progress dialog box.
-         * @param {string} message Message to display.
-         */
-        showProgress(message) {
-          this.$['progress-dialog-content'].innerHTML = message || 'no message';
-          this.$['progress-dialog'].show();
-        }
-
-        /**
-         * Closes progress dialog box.
-         */
-        hideProgress() {
-          this.$['progress-dialog'].close();
-        }
-
-        /**
-         * Shows a message that there are no devices.
-         */
-        showNoDeviceMessage() {
-          this.hide = false;
-        }
-
-        /**
-         * Hides a message that there are no devices.
-         */
-        hideNoDeviceMessage() {
-          this.hide = true;
-        }
-
-        /**
-         * Removes a device.
-         * @param {string} type The type of device to remove.
-         * @param {number} index The index of the device of this type.
-         */
-        removeDevice(type, index) {
-          this.splice(type, index, 1);
-          this.hide = --this.deviceCount > 0;
-        }
-
-        /**
-         * Displays a toast message.
-         * @param {string} toastmsg The message to be displayed.
-         */
-        showToast(toastmsg) {
-          this.$.toast.text = toastmsg;
-          this.$.toast.open();
-        }
-
-        /**
-         * Displays a toast message with the user's name.
-         */
-        _showAccount() {
-          this.$.toast.text = `Welcome ${window.USERNAME}`;
-          this.$.toast.open();
-        }
-
-        /**
-         * Makes a server call to get the current status.
-         * @return {Promise} A promise that runs when the HTTP call is done.
-         */
-        _refresh() {
-          const options = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + AUTH_TOKEN,
-            },
-          };
-
-          return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
-            .then(function(response) {
-              return response.json();
-            }).then(function(json) {
-              delete json.uid;
-              for (const key in json) {
-                this.devices[key] = json[key];
-              }
-              console.log(this.devices);
-              this._handleRefresh();
+      connectedCallback() {
+        super.connectedCallback();
+        // Reset all user devices
+        window.requestAnimationFrame(() => {
+          this.$.add.addEventListener('click', (e) => this.$.modal.open());
+          this._auth()
+            .then(() => {
+              const options = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + AUTH_TOKEN,
+                },
+              };
+              return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT +
+                '/reset-devices', options);
             });
-        }
+        });
+      }
 
-        /**
-         * Handles response from server that gets current status.
-         */
-        _handleRefresh() {
-          if (Object.keys(this.devices).length == 0) {
-            console.log('no devices');
-          } else {
-            for (const id of Object.keys(this.devices)) {
-              this.devices[id].id = id;
-              delete this.devices[id].properties.id;
-              this.devices[id].states.on = false;
-              this.devices[id].states.online = false;
-              switch (this.devices[id].properties.type) {
-                case 'action.devices.types.LIGHT':
-                  this.app._addLight(this.devices[id]);
-                  break;
-                case 'action.devices.types.THERMOSTAT':
-                  this.app._addThermostat(this.devices[id]);
-                  break;
-                case 'action.devices.types.SCENE':
-                  this.app._addScene(this.devices[id]);
-                  break;
-                case 'action.devices.types.CAMERA':
-                  this.app._addCamera(this.devices[id]);
-                  break;
-                case 'action.devices.types.VACUUM':
-                  this.devices[id].states.isRunning = false;
-                  this.devices[id].states.isPaused = false;
-                  this.app._addVacuum(this.devices[id]);
-                  break;
-                case 'action.devices.types.WASHER':
-                  this.devices[id].states.isRunning = false;
-                  this.devices[id].states.isPaused = false;
-                  this.app._addWasher(this.devices[id]);
-                  break;
-                case 'action.devices.types.REFRIGERATOR':
-                  this.app._addRefrigerator(this.devices[id]);
-                  break;
-                default:
-                  console.warn(`Unable to handle unknown device type` +
-                    `${this.devices[id].properties.type}`);
-                  break;
-              }
-              nextDeviceId = parseInt(id) + 1;
+      /**
+       * Shows message in a progress dialog box.
+       * @param {string} message Message to display.
+       */
+      showProgress(message) {
+        this.$['progress-dialog-content'].innerHTML = message || 'no message';
+        this.$['progress-dialog'].show();
+      }
+
+      /**
+       * Closes progress dialog box.
+       */
+      hideProgress() {
+        this.$['progress-dialog'].close();
+      }
+
+      /**
+       * Shows a message that there are no devices.
+       */
+      showNoDeviceMessage() {
+        this.hide = false;
+      }
+
+      /**
+       * Hides a message that there are no devices.
+       */
+      hideNoDeviceMessage() {
+        this.hide = true;
+      }
+
+      /**
+       * Removes a device.
+       * @param {string} type The type of device to remove.
+       * @param {number} index The index of the device of this type.
+       */
+      removeDevice(type, index) {
+        this.splice(type, index, 1);
+        this.hide = --this.deviceCount > 0;
+      }
+
+      /**
+       * Displays a toast message.
+       * @param {string} toastmsg The message to be displayed.
+       */
+      showToast(toastmsg) {
+        this.$.toast.text = toastmsg;
+        this.$.toast.open();
+      }
+
+      /**
+       * Displays a toast message with the user's name.
+       */
+      _showAccount() {
+        this.$.toast.text = `Welcome ${window.USERNAME}`;
+        this.$.toast.open();
+      }
+
+      /**
+       * Makes a server call to get the current status.
+       * @return {Promise} A promise that runs when the HTTP call is done.
+       */
+      _refresh() {
+        const options = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + AUTH_TOKEN,
+          },
+        };
+
+        return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
+          .then(function(response) {
+            return response.json();
+          }).then(function(json) {
+            delete json.uid;
+            for (const key in json) {
+              this.devices[key] = json[key];
             }
-          }
-        }
-
-        /**
-         * Gets auth status from server.
-         * @return {Promise} Promise that returns when HTTP call returns.
-         */
-        _auth() {
-          const options = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + AUTH_TOKEN,
-            },
-          };
-          return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/auth', options)
-            .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
-        }
-
-        /**
-         * Creates a new device
-         * @param {object} device The device that is being created. It can be
-         *   undefined.
-         * @return {Promise} A promise. If the device parameter exists and has
-         *   an id, it resolves with the device object. If the promise is
-         *   rejected, the device has not been defined and must be created.
-         *   The rejection includes the device id to use.
-         */
-        _createDevice(device) {
-          this.hideNoDeviceMessage();
-          this.deviceCount++;
-          // If the device variable exists, resolve to use it
-          if (device && device.hasOwnProperty('id')) {
-            return Promise.resolve(device);
-          }
-          // Otherwise reject the variable and create a new one
-          return Promise.reject(getNextDeviceId());
-        }
-
-        /**
-         * Updates the DOM to show new devices of a given device type.
-         * @param {string} deviceType The device type.
-         */
-        _showDeviceType(deviceType) {
-          window.requestAnimationFrame(() => {
-            this.$[`${deviceType}-list`].fire('iron-resize');
+            console.log(this.devices);
+            this._handleRefresh();
           });
-        }
+      }
 
-        /**
-         * Adds a new device to a particular device type array.
-         * @param {string} type The type of device.
-         * @param {object} device The device object.
-         */
-        _addDevice(type, device) {
-          this.push(type, device);
+      /**
+       * Handles response from server that gets current status.
+       */
+      _handleRefresh() {
+        if (Object.keys(this.devices).length == 0) {
+          console.log('no devices');
+        } else {
+          for (const id of Object.keys(this.devices)) {
+            this.devices[id].id = id;
+            delete this.devices[id].properties.id;
+            this.devices[id].states.on = false;
+            this.devices[id].states.online = false;
+            switch (this.devices[id].properties.type) {
+              case 'action.devices.types.LIGHT':
+                this.app._addLight(this.devices[id]);
+                break;
+              case 'action.devices.types.THERMOSTAT':
+                this.app._addThermostat(this.devices[id]);
+                break;
+              case 'action.devices.types.SCENE':
+                this.app._addScene(this.devices[id]);
+                break;
+              case 'action.devices.types.CAMERA':
+                this.app._addCamera(this.devices[id]);
+                break;
+              case 'action.devices.types.VACUUM':
+                this.devices[id].states.isRunning = false;
+                this.devices[id].states.isPaused = false;
+                this.app._addVacuum(this.devices[id]);
+                break;
+              case 'action.devices.types.WASHER':
+                this.devices[id].states.isRunning = false;
+                this.devices[id].states.isPaused = false;
+                this.app._addWasher(this.devices[id]);
+                break;
+              case 'action.devices.types.REFRIGERATOR':
+                this.app._addRefrigerator(this.devices[id]);
+                break;
+              case 'action.devices.types.FAN':
+                this.app._addFan(this.devices[id]);
+                break;
+              default:
+                console.warn(`Unable to handle unknown device type` +
+                  `${this.devices[id].properties.type}`);
+                break;
+            }
+            nextDeviceId = parseInt(id) + 1;
+          }
         }
+      }
 
-        /**
-         * Adds a new smart light that supports RGB colors.
-         * @param {object} light The device object
-         */
-        _addLight(light) {
-          this._createDevice(light)
-            .then((device) => {
-              this._addDevice('lights', device);
-            })
-            .catch((lightId) => {
-              this._addDevice('lights',
-                SmartLight.generateRgb(lightId, this.lights.length));
-            })
-            .finally(() => {
-              this._showDeviceType('lights');
-            });
+      /**
+       * Gets auth status from server.
+       * @return {Promise} Promise that returns when HTTP call returns.
+       */
+      _auth() {
+        const options = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + AUTH_TOKEN,
+          },
+        };
+        return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/auth', options)
+          .then(fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options));
+      }
+
+      /**
+       * Creates a new device
+       * @param {object} device The device that is being created. It can be
+       *   undefined.
+       * @return {Promise} A promise. If the device parameter exists and has
+       *   an id, it resolves with the device object. If the promise is
+       *   rejected, the device has not been defined and must be created.
+       *   The rejection includes the device id to use.
+       */
+      _createDevice(device) {
+        this.hideNoDeviceMessage();
+        this.deviceCount++;
+        // If the device variable exists, resolve to use it
+        if (device && device.hasOwnProperty('id')) {
+          return Promise.resolve(device);
         }
+        // Otherwise reject the variable and create a new one
+        return Promise.reject(getNextDeviceId());
+      }
 
-        /**
-         * Adds a new smart light that supports monochrome.
-         * @param {object} light The device object
-         */
-        _addMonochromeLight(light) {
-          this._createDevice(light)
-            .then((device) => {
-              this._addDevice('lights', device);
-            })
-            .catch((lightId) => {
-              this._addDevice('lights',
-                SmartLight.generateMonochrome(lightId, this.lights.length));
-            })
-            .finally(() => {
-              this._showDeviceType('lights');
-            });
-        }
+      /**
+       * Updates the DOM to show new devices of a given device type.
+       * @param {string} deviceType The device type.
+       */
+      _showDeviceType(deviceType) {
+        window.requestAnimationFrame(() => {
+          this.$[`${deviceType}-list`].fire('iron-resize');
+        });
+      }
 
-        /**
-         * Adds a new smart thermostat.
-         * @param {event} event
-         * @param {object} thermostat The device object
-         */
-        _addThermostat(event, thermostat) {
-          this._createDevice(thermostat)
-            .then((device) => {
-              this._addDevice('thermostats', device);
-            })
-            .catch((thermostatId) => {
-              this._addDevice('thermostats',
-                SmartThermostat.generate(thermostatId,
-                  this.thermostats.length));
+      /**
+       * Adds a new device to a particular device type array.
+       * @param {string} type The type of device.
+       * @param {object} device The device object.
+       */
+      _addDevice(type, device) {
+        this.push(type, device);
+      }
+
+      /**
+       * Adds a new smart light that supports RGB colors.
+       * @param {object} light The device object
+       */
+      _addLight(light) {
+        this._createDevice(light)
+          .then((device) => {
+            this._addDevice('lights', device);
+          })
+          .catch((lightId) => {
+            this._addDevice('lights',
+              SmartLight.generateRgb(lightId, this.lights.length));
+          })
+          .finally(() => {
+            this._showDeviceType('lights');
+          });
+      }
+
+      /**
+       * Adds a new smart light that supports monochrome.
+       * @param {object} light The device object
+       */
+      _addMonochromeLight(light) {
+        this._createDevice(light)
+          .then((device) => {
+            this._addDevice('lights', device);
+          })
+          .catch((lightId) => {
+            this._addDevice('lights',
+              SmartLight.generateMonochrome(lightId, this.lights.length));
+          })
+          .finally(() => {
+            this._showDeviceType('lights');
+          });
+      }
+
+      /**
+       * Adds a new smart thermostat.
+       * @param {event} event
+       * @param {object} thermostat The device object
+       */
+      _addThermostat(event, thermostat) {
+        this._createDevice(thermostat)
+          .then((device) => {
+            this._addDevice('thermostats', device);
+          })
+          .catch((thermostatId) => {
+            this._addDevice('thermostats',
+              SmartThermostat.generate(thermostatId,
+                this.thermostats.length));
           })
           .finally(() => {
             this._showDeviceType('thermostats');
           });
-        }
-
-        /**
-         * Creates a new scene to control all lights at once.
-         * @param {object} scene The device object
-         */
-        _addScene(scene) {
-          this._createDevice(scene)
-            .then((device) => {
-              this._addDevice('scenes', device);
-            })
-            .catch((sceneId) => {
-              this._addDevice('scenes',
-                SmartScene.generate(sceneId, this.scenes.length));
-            })
-            .finally(() => {
-              this._showDeviceType('scenes');
-            });
-        }
-
-        /**
-         * Adds a new smart camera
-         * @param {object} camera The device object
-         */
-        _addCamera(camera) {
-          this._createDevice(camera)
-            .then((device) => {
-              this._addDevice('cameras', device);
-            })
-            .catch((cameraId) => {
-              this._addDevice('cameras',
-                SmartCamera.generate(cameraId, this.cameras.length));
-            }).finally(() => {
-              this._showDeviceType('cameras');
-            });
-        }
-
-        /**
-         * Adds a new smart vacuum.
-         * @param {object} vacuum The device object
-         */
-        _addVacuum(vacuum) {
-          this._createDevice(vacuum)
-            .then((device) => {
-              this._addDevice('vacuums', device);
-            })
-            .catch((vacuumId) => {
-              this._addDevice('vacuums',
-                SmartVacuum.generate(vacuumId, this.vacuums.length));
-            })
-            .finally(() => {
-              this._showDeviceType('vacuums');
-            });
-        }
-
-        /**
-         * Adds a new smart washer
-         * @param {object} washer The device object
-         */
-        _addWasher(washer) {
-          this._createDevice(washer)
-            .then((device) => {
-              this._addDevice('washers', device);
-            })
-            .catch((washerId) => {
-              this._addDevice('washers',
-                SmartWasher.generate(washerId, this.washers.length));
-            })
-            .finally(() => {
-              this._showDeviceType('washers');
-            });
-        }
-
-        /**
-         * Adds a new smart fridge
-         * @param {object} refrigerator The device object
-         */
-        _addRefrigerator(refrigerator) {
-          this._createDevice(refrigerator)
-            .then((device) => {
-              this._addDevice('refrigerators', device);
-            })
-            .catch((refrigeratorId) => {
-              this._addDevice('refrigerators',
-                SmartRefrigerator.generate(refrigeratorId,
-                  this.refrigerators.length));
-            })
-            .finally(() => {
-              this._showDeviceType('refrigerators');
-            });
-        }
       }
 
-      customElements.define(MyApp.is, MyApp);
-    </script>
+      /**
+       * Creates a new scene to control all lights at once.
+       * @param {object} scene The device object
+       */
+      _addScene(scene) {
+        this._createDevice(scene)
+          .then((device) => {
+            this._addDevice('scenes', device);
+          })
+          .catch((sceneId) => {
+            this._addDevice('scenes',
+              SmartScene.generate(sceneId, this.scenes.length));
+          })
+          .finally(() => {
+            this._showDeviceType('scenes');
+          });
+      }
+
+      /**
+       * Adds a new smart camera
+       * @param {object} camera The device object
+       */
+      _addCamera(camera) {
+        this._createDevice(camera)
+          .then((device) => {
+            this._addDevice('cameras', device);
+          })
+          .catch((cameraId) => {
+            this._addDevice('cameras',
+              SmartCamera.generate(cameraId, this.cameras.length));
+          }).finally(() => {
+            this._showDeviceType('cameras');
+          });
+      }
+
+      /**
+       * Adds a new smart vacuum.
+       * @param {object} vacuum The device object
+       */
+      _addVacuum(vacuum) {
+        this._createDevice(vacuum)
+          .then((device) => {
+            this._addDevice('vacuums', device);
+          })
+          .catch((vacuumId) => {
+            this._addDevice('vacuums',
+              SmartVacuum.generate(vacuumId, this.vacuums.length));
+          })
+          .finally(() => {
+            this._showDeviceType('vacuums');
+          });
+      }
+
+      /**
+       * Adds a new smart washer
+       * @param {object} washer The device object
+       */
+      _addWasher(washer) {
+        this._createDevice(washer)
+          .then((device) => {
+            this._addDevice('washers', device);
+          })
+          .catch((washerId) => {
+            this._addDevice('washers',
+              SmartWasher.generate(washerId, this.washers.length));
+          })
+          .finally(() => {
+            this._showDeviceType('washers');
+          });
+      }
+
+      /**
+       * Adds a new smart fridge
+       * @param {object} refrigerator The device object
+       */
+      _addRefrigerator(refrigerator) {
+        this._createDevice(refrigerator)
+          .then((device) => {
+            this._addDevice('refrigerators', device);
+          })
+          .catch((refrigeratorId) => {
+            this._addDevice('refrigerators',
+              SmartRefrigerator.generate(refrigeratorId,
+                this.refrigerators.length));
+          })
+          .finally(() => {
+            this._showDeviceType('refrigerators');
+          });
+      }
+
+      /**
+       * Adds a new smart fan
+       * @param {object} fan The device object
+       */
+      _addFan(fan) {
+        this._createDevice(fan)
+          .then((device) => {
+            this._addDevice('fans', device);
+          })
+          .catch((fanId) => {
+            this._addDevice('fans',
+              SmartFan.generate(fanId,
+                this.fans.length));
+          })
+          .finally(() => {
+            this._showDeviceType('fans');
+          });
+      }
+    }
+
+    customElements.define(MyApp.is, MyApp);
+  </script>
 </dom-module>
