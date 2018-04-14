@@ -11,8 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const fetch = require('node-fetch');
-const config = require('./cloud/config-provider');
+/* eslint require-jsdoc: "off" */
+/* eslint valid-jsdoc: "off" */
+
 const datastore = require('./cloud/datastore');
 const authProvider = require('./cloud/auth-provider');
 
@@ -35,7 +36,7 @@ function registerAgent(app) {
    *   }
    * }
    */
-  app.post('/smarthome', function (request, response) {
+  app.post('/smarthome', function(request, response) {
     console.log('post /smarthome', request.headers);
     let reqdata = request.body;
     console.log('post /smarthome', reqdata);
@@ -46,8 +47,8 @@ function registerAgent(app) {
     if (!reqdata.inputs) {
       response.status(401).set({
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }).json({error: "missing inputs"});
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }).json({error: 'missing inputs'});
     }
     for (let i = 0; i < reqdata.inputs.length; i++) {
       let input = reqdata.inputs[i];
@@ -55,12 +56,12 @@ function registerAgent(app) {
       if (!intent) {
         response.status(401).set({
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-        }).json({error: "missing inputs"});
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }).json({error: 'missing inputs'});
         continue;
       }
       switch (intent) {
-        case "action.devices.SYNC":
+        case 'action.devices.SYNC':
           console.log('post /smarthome SYNC');
           /**
            * request:
@@ -74,10 +75,10 @@ function registerAgent(app) {
           sync({
             uid: uid,
             auth: authToken,
-            requestId: reqdata.requestId
+            requestId: reqdata.requestId,
           }, response);
           break;
-        case "action.devices.QUERY":
+        case 'action.devices.QUERY':
           console.log('post /smarthome QUERY');
           /**
            * request:
@@ -109,11 +110,11 @@ function registerAgent(app) {
             uid: uid,
             auth: authToken,
             requestId: reqdata.requestId,
-            devices: reqdata.inputs[0].payload.devices
+            devices: reqdata.inputs[0].payload.devices,
           }, response);
 
           break;
-        case "action.devices.EXECUTE":
+        case 'action.devices.EXECUTE':
           console.log('post /smarthome EXECUTE');
           /**
            * request:
@@ -153,15 +154,15 @@ function registerAgent(app) {
             uid: uid,
             auth: authToken,
             requestId: reqdata.requestId,
-            commands: reqdata.inputs[0].payload.commands
+            commands: reqdata.inputs[0].payload.commands,
           }, response);
 
           break;
         default:
           response.status(401).set({
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-          }).json({error: "missing intent"});
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }).json({error: 'missing intent'});
           break;
       }
     }
@@ -169,10 +170,10 @@ function registerAgent(app) {
   /**
    * Enables prelight (OPTIONS) requests made cross-domain.
    */
-  app.options('/smarthome', function (request, response) {
+  app.options('/smarthome', function(request, response) {
     response.status(200).set({
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }).send('null');
   });
 
@@ -260,14 +261,14 @@ function registerAgent(app) {
     if (!devices) {
       response.status(500).set({
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }).json({error: "failed"});
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }).json({error: 'failed'});
       return;
     }
     let deviceList = [];
-    Object.keys(devices).forEach(function (key) {
+    Object.keys(devices).forEach(function(key) {
       if (devices.hasOwnProperty(key) && devices[key]) {
-        console.log("Getting device information for id '" + key + "'");
+        console.log('Getting device information for id \'' + key + '\'');
         let device = devices[key];
         device.id = key;
         deviceList.push(device);
@@ -277,8 +278,8 @@ function registerAgent(app) {
       requestId: data.requestId,
       payload: {
         agentUserId: data.uid,
-        devices: deviceList
-      }
+        devices: deviceList,
+      },
     };
     console.log('sync response', JSON.stringify(deviceProps));
     response.status(200).json(deviceProps);
@@ -335,15 +336,15 @@ function registerAgent(app) {
     if (!devices) {
       response.status(500).set({
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }).json({error: "failed"});
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }).json({error: 'failed'});
       return;
     }
     let deviceStates = {
       requestId: data.requestId,
       payload: {
-        devices: devices
-      }
+        devices: devices,
+      },
     };
     console.log('query response', JSON.stringify(deviceStates));
     response.status(200).json(deviceStates);
@@ -363,8 +364,9 @@ function registerAgent(app) {
   function getDeviceIds(devices) {
     let deviceIds = [];
     for (let i = 0; i < devices.length; i++) {
-      if (devices[i] && devices[i].id)
+      if (devices[i] && devices[i].id) {
         deviceIds.push(devices[i].id);
+      }
     }
     return deviceIds;
   }
@@ -443,20 +445,22 @@ function registerAgent(app) {
         let devices = curCommand.devices;
         for (let k = 0; k < devices.length; k++) {
           let executionResponse = execDevice(data.uid, curExec, devices[k]);
-          console.log("Device exec response", JSON.stringify(executionResponse));
+          console.log('Device exec response',
+              JSON.stringify(executionResponse));
           const execState = {};
           if (executionResponse.executionStates) {
             executionResponse.executionStates.map((key) => {
               execState[key] = executionResponse.states[key];
             });
           } else {
-            console.warn("No execution states were found for this device");
+            console.warn('No execution states were found for this device');
           }
           respCommands.push({
             ids: [devices[k].id],
             status: executionResponse.status,
-            errorCode: executionResponse.errorCode ? executionResponse.errorCode : undefined,
-            states: execState
+            errorCode: executionResponse.errorCode
+                ? executionResponse.errorCode : undefined,
+            states: execState,
           });
         }
       }
@@ -464,8 +468,8 @@ function registerAgent(app) {
     let resBody = {
       requestId: data.requestId,
       payload: {
-        commands: respCommands
-      }
+        commands: respCommands,
+      },
     };
     console.log('exec response', JSON.stringify(resBody));
     response.status(200).json(resBody);
@@ -505,28 +509,29 @@ function registerAgent(app) {
   function execDevice(uid, command, device) {
     let curDevice = {
       id: device.id,
-      states: {}
+      states: {},
     };
-    Object.keys(command.params).forEach(function (key) {
+    Object.keys(command.params).forEach(function(key) {
       if (command.params.hasOwnProperty(key)) {
         curDevice.states[key] = command.params[key];
       }
     });
     let payLoadDevice = {
       ids: [curDevice.id],
-      status: "SUCCESS",
-      states: {}
+      status: 'SUCCESS',
+      states: {},
     };
     let execDevice = app.smartHomeExec(uid, curDevice);
-    console.info("execDevice", JSON.stringify(execDevice[device.id]));
-    // Check whether the device exists or whether it exists and it is disconnected.
+    console.info('execDevice', JSON.stringify(execDevice[device.id]));
+    // Check whether the device exists or whether
+    // it exists and it is disconnected.
     if (!execDevice || !execDevice[device.id].states.online) {
-      console.warn("The device you want to control is offline");
-      return {status: "ERROR", errorCode: "deviceOffline"};
+      console.warn('The device you want to control is offline');
+      return {status: 'ERROR', errorCode: 'deviceOffline'};
     }
     let deviceCommand = {
       type: 'change',
-      state: {}
+      state: {},
     };
     // TODO - add error and debug to response
 
@@ -537,17 +542,17 @@ function registerAgent(app) {
 
     payLoadDevice.states = execDevice.states;
 
-    Object.keys(command.params).forEach(function (key) {
+    Object.keys(command.params).forEach(function(key) {
       if (command.params.hasOwnProperty(key)) {
         if (payLoadDevice.states[key] != command.params[key]) {
-          return {status: "ERROR", errorCode: "notSupported"};
+          return {status: 'ERROR', errorCode: 'notSupported'};
         }
       }
     });
     return {
-      status: "SUCCESS",
+      status: 'SUCCESS',
       states: execDevice.states,
-      executionStates: execDevice.executionStates
+      executionStates: execDevice.executionStates,
     };
   }
 }
