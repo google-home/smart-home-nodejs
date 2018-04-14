@@ -20,6 +20,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
 <link rel="import" href="../bower_components/iron-icons/places-icons.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
@@ -35,6 +36,7 @@ limitations under the License.
 <link rel="import" href="smart-refrigerator.html">
 <link rel="import" href="smart-fan.html">
 <link rel="import" href="smart-kettle.html">
+<link rel="import" href="smart-outlet.html">
 
 <dom-module id="my-app">
   <template>
@@ -190,6 +192,11 @@ limitations under the License.
           <iron-icon icon="maps:local-cafe"></iron-icon>
           <p>Kettle</p>
         </button>
+        <button dialog-confirm autofocus class="square" id="outletSelector"
+          on-tap="_addOutlet">
+          <iron-icon icon="notification:power"></iron-icon>
+          <p>Outlet</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -273,6 +280,14 @@ limitations under the License.
         </div>
       </template>
     </iron-list>
+
+    <iron-list id="outlets-list" items="[[outlets]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-outlet device=[[item]]></smart-outlet>
+        </div>
+      </template>
+    </iron-list>
   </template>
 
   <script>
@@ -349,6 +364,10 @@ limitations under the License.
             type: Array,
             value: [],
           },
+          outlets: {
+            type: Array,
+            value: [],
+          }
         };
       }
 
@@ -446,9 +465,9 @@ limitations under the License.
         };
 
         return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
-          .then(function(response) {
+          .then(function (response) {
             return response.json();
-          }).then(function(json) {
+          }).then(function (json) {
             delete json.uid;
             for (const key in json) {
               this.devices[key] = json[key];
@@ -501,6 +520,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.KETTLE':
                 this.app._addKettle(this.devices[id]);
+                break;
+              case 'action.devices.types.OUTLET':
+                this.app._addOutlet(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -709,6 +731,22 @@ limitations under the License.
             this._addDevice('kettles',
               SmartKettle.generate(kettleId,
                 this.kettles.length));
+          });
+      }
+
+      /**
+       * Adds a new smart outlet
+       * @param {object} outlet The device object
+       */
+      _addOutlet(outlet) {
+        this._createDevice(outlet)
+          .then((device) => {
+            this._addDevice('outlets', device);
+          })
+          .catch((outletId) => {
+            this._addDevice('outlets',
+              SmartOutlet.generate(outletId,
+                this.outlets.length));
           });
       }
     }
