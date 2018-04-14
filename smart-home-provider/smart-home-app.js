@@ -444,10 +444,19 @@ function registerAgent(app) {
         for (let k = 0; k < devices.length; k++) {
           let executionResponse = execDevice(data.uid, curExec, devices[k]);
           console.log("Device exec response", JSON.stringify(executionResponse));
+          const execState = {};
+          if (executionResponse.executionStates) {
+            executionResponse.executionStates.map((key) => {
+              execState[key] = executionResponse.states[key];
+            });
+          } else {
+            console.warn("No execution states were found for this device");
+          }
           respCommands.push({
             ids: [devices[k].id],
             status: executionResponse.status,
-            errorCode: executionResponse.errorCode ? executionResponse.errorCode : undefined
+            errorCode: executionResponse.errorCode ? executionResponse.errorCode : undefined,
+            states: execState
           });
         }
       }
@@ -535,7 +544,11 @@ function registerAgent(app) {
         }
       }
     });
-    return {status: "SUCCESS"};
+    return {
+      status: "SUCCESS",
+      states: execDevice.states,
+      executionStates: execDevice.executionStates
+    };
   }
 }
 
