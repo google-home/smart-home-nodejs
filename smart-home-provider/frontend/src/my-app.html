@@ -40,6 +40,7 @@ limitations under the License.
 <link rel="import" href="smart-coffeemaker.html">
 <link rel="import" href="smart-outlet.html">
 <link rel="import" href="smart-switch.html">
+<link rel="import" href="smart-airpurifier.html">
 
 <dom-module id="my-app">
   <template>
@@ -209,6 +210,10 @@ limitations under the License.
           <iron-icon icon="communication:call-merge"></iron-icon>
           <p>Outlet</p>
         </button>
+        <button dialog-confirm autofocus class="square" on-tap="_addAirPurifier">
+          <iron-icon icon="hardware:sim-card"></iron-icon>
+          <p>Air Purifier</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -317,6 +322,16 @@ limitations under the License.
         </div>
       </template>
     </iron-list>
+
+    <iron-list id="airpurifiers-list" items="[[airpurifiers]]" as="item"
+      grid>
+      <template>
+        <div class="item">
+          <smart-airpurifier device=[[item]]></smart-airpurifier>
+        </div>
+      </template>
+    </iron-list>
+
   </template>
 
   <script>
@@ -395,13 +410,17 @@ limitations under the License.
           },
           coffeemakers: {
             type: Array,
-            value: []
+            value: [],
           },
           outlets: {
             type: Array,
             value: [],
           },
           switchs: {
+            type: Array,
+            value: [],
+          },
+          airpurifiers: {
             type: Array,
             value: [],
           },
@@ -502,9 +521,9 @@ limitations under the License.
         };
 
         return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
-          .then(function (response) {
+          .then(function(response) {
             return response.json();
-          }).then(function (json) {
+          }).then(function(json) {
             delete json.uid;
             for (const key in json) {
               this.devices[key] = json[key];
@@ -566,6 +585,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.SWITCH':
                 this.app._addSwitch(this.devices[id]);
+                break;
+              case 'action.devices.types.AIRPURIFIER':
+                this.app._addAirPurifier(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -822,6 +844,22 @@ limitations under the License.
             this._addDevice('switchs',
               SmartSwitch.generate(switchId,
                 this.switchs.length));
+          });
+      }
+
+      /**
+       * Adds a new smart air purifier
+       * @param {object} airpurifier The device object
+       */
+      _addAirPurifier(airpurifier) {
+        this._createDevice(airpurifier)
+          .then((device) => {
+            this._addDevice('airpurifiers', device);
+          })
+          .catch((airpurifierId) => {
+            this._addDevice('airpurifiers',
+              SmartAirPurifier.generate(airpurifierId,
+                this.airpurifiers.length));
           });
       }
     }
