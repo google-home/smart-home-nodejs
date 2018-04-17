@@ -1,0 +1,204 @@
+<!--
+@license
+Copyright 2018, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/places-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="smart-device.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-acunit">
+  <template>
+    <style include="iron-flex iron-flex-alignment shared-styles">
+      iron-icon {
+        width: 80px;
+        height: 80px;
+      }
+
+      #thermostat {
+        margin-right: 36px;
+      }
+    </style>
+    <smart-device id='smart-device' device="{{device}}" type="acunits">
+      <div slot="device-controls" class="layout horizontal center-justified">
+        <strong>Setpoint</strong>
+        <paper-slider id="setpoint" title="Set Point" editable="true"
+          value="[[device.states.temperatureSetpointCelsius]]"
+          on-value-change="_handleSetpoint" min="30" max="100"></paper-slider>
+      </div>
+      <iron-icon id="acunit" icon="places:ac-unit" on-tap="_handleSpeedUp"
+        slot="device-icon"></iron-icon>
+      <div slot="device-states" class="layout horizontal center-justified">
+        <paper-input id="ambient" label="Ambient Temperature" value="[[device.states.temperatureAmbientCelsius]]"
+          on-input="_handleAmbient" auto-validate pattern="[0-9]+[.]?[0-9]*">
+          <div suffix>ºC</div>
+        </paper-input>
+      </div>
+    </smart-device>
+  </template>
+
+  <script>
+    let acUnitSpeed = 0;
+    /**
+     * Class for smart AC units.
+     */
+    class SmartAcUnit extends SmartDevice {
+      /**
+       * @return {string} HTML tag.
+       */
+      static get is() {
+        return 'smart-acunit';
+      }
+
+      /**
+       * Default constructor.
+       */
+      constructor() {
+        super();
+      }
+
+      /**
+       * Handles a change in the on/off state.
+       */
+      _handleSpeedUp() {
+        acUnitSpeed = (acUnitSpeed + 1) % 4;
+        this.device.states.currentFanSpeedSetting = String(acUnitSpeed);
+        this.device.states.on = this.device.states.currentFanSpeedSetting > 0;
+        this._notifyStateChange();
+      }
+
+      /**
+       * Callback that runs when the device state changes.
+       */
+      _deviceChanged() {
+        super._deviceChanged();
+        if (this.device.states.fanSpeed) {
+          // Handle parameters from command
+          this.device.states.currentFanSpeedSetting =
+            String(this.device.states.fanSpeed);
+          delete this.device.states.fanSpeed;
+        }
+        switch (this.device.states.currentFanSpeedSetting) {
+          case '0':
+            this.$.acunit.style.color = '#333';
+            break;
+          case '1':
+            this.$.acunit.style.color = '#d4e8ae';
+            break;
+          case '2':
+            this.$.acunit.style.color = '#b1e253';
+            break;
+          case '3':
+            this.$.acunit.style.color = '#9bea00';
+            break;
+        }
+      }
+
+      /**
+       * Generates a new smart AC unit
+       * @param {number} id The device id
+       * @param {number} count How many devices of this type already exist
+       * @return {object} Object containing SYNC properties and default state
+       */
+      static generate(id, count) {
+        const nicknames = [
+          'ac unit',
+          'temperature control system',
+          'hvac',
+        ];
+        return {
+          id: String(id),
+          properties: {
+            type: 'action.devices.types.AC_UNIT',
+            traits: [
+              'action.devices.traits.FanSpeed',
+              'action.devices.traits.TemperatureControl',
+            ],
+            name: {
+              defaultNames: [`Smart AC Unit ${id}`],
+              name: `Smart AC Unit ${id}`,
+              nicknames: [this.getNickname(nicknames, id, count)],
+            },
+            willReportState: false,
+            attributes: {
+              availableFanSpeeds: {
+                speeds: [{
+                  speed_name: '0',
+                  speed_values: [{
+                    speed_synonym: ['off'],
+                    lang: 'en',
+                  }],
+                }, {
+                  speed_name: '1',
+                  speed_values: [{
+                    speed_synonym: ['low'],
+                    lang: 'en',
+                  }],
+                }, {
+                  speed_name: '2',
+                  speed_values: [{
+                    speed_synonym: ['medium'],
+                    lang: 'en',
+                  }],
+                }, {
+                  speed_name: '3',
+                  speed_values: [{
+                    speed_synonym: ['highest', 'max'],
+                    lang: 'en',
+                  }],
+                }],
+                ordered: true,
+              },
+              reversible: false,
+              temperatureRange: {
+                minThresholdCelsius: 20,
+                maxThresholdCelsius: 40,
+              },
+              temperatureStepCelsius: 1,
+              temperatureUnitForUX: 'C', /* or 'F' */
+            },
+            deviceInfo: {
+              manufacturer: 'Smart Home Provider',
+              model: 'g1340',
+              swVersion: '1.0.31',
+              hwVersion: '1.1',
+            },
+            customData: {
+              smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+            },
+          },
+          states: {
+            online: true,
+            on: false,
+            currentFanSpeedSetting: 0,
+            temperatureSetpointCelsius: 35,
+            temperatureAmbientCelsius: 35,
+          },
+          executionStates: [
+            'currentFanSpeedSetting',
+          ],
+        };
+      }
+    }
+    customElements.define(SmartAcUnit.is, SmartAcUnit);
+  </script>
+</dom-module>

@@ -41,6 +41,7 @@ limitations under the License.
 <link rel="import" href="smart-outlet.html">
 <link rel="import" href="smart-switch.html">
 <link rel="import" href="smart-airpurifier.html">
+<link rel="import" href="smart-acunit.html">
 
 <dom-module id="my-app">
   <template>
@@ -214,6 +215,10 @@ limitations under the License.
           <iron-icon icon="hardware:sim-card"></iron-icon>
           <p>Air Purifier</p>
         </button>
+        <button dialog-confirm autofocus class="square" on-tap="_addAcUnit">
+          <iron-icon icon="places:ac-unit"></iron-icon>
+          <p>AC Unit</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -332,6 +337,14 @@ limitations under the License.
       </template>
     </iron-list>
 
+    <iron-list id="acunits-list" items="[[acunits]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-acunit device=[[item]]></smart-acunit>
+        </div>
+      </template>
+    </iron-list>
+
   </template>
 
   <script>
@@ -421,6 +434,10 @@ limitations under the License.
             value: [],
           },
           airpurifiers: {
+            type: Array,
+            value: [],
+          },
+          acunits: {
             type: Array,
             value: [],
           },
@@ -588,6 +605,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.AIRPURIFIER':
                 this.app._addAirPurifier(this.devices[id]);
+                break;
+              case 'action.devices.types.AC_UNIT':
+                this.app._addAcUnit(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -860,6 +880,22 @@ limitations under the License.
             this._addDevice('airpurifiers',
               SmartAirPurifier.generate(airpurifierId,
                 this.airpurifiers.length));
+          });
+      }
+
+      /**
+       * Adds a new smart AC unit
+       * @param {object} acunit The device object
+       */
+      _addAcUnit(acunit) {
+        this._createDevice(acunit)
+          .then((device) => {
+            this._addDevice('acunits', device);
+          })
+          .catch((acunitId) => {
+            this._addDevice('acunits',
+              SmartAcUnit.generate(acunitId,
+                this.acunits.length));
           });
       }
     }
