@@ -26,7 +26,7 @@ limitations under the License.
 <link rel="import" href="smart-device.html">
 <link rel="import" href="shared-styles.html">
 
-<dom-module id="smart-kettle">
+<dom-module id="smart-coffeemaker">
   <template>
     <style include="iron-flex iron-flex-alignment shared-styles">
       iron-icon {
@@ -38,7 +38,7 @@ limitations under the License.
         margin-right: 36px;
       }
     </style>
-    <smart-device id='smart-device' device="{{device}}" type="kettles">
+    <smart-device id='smart-device' device="{{device}}" type="coffeemakers">
       <div slot="device-controls" class="layout horizontal center-justified">
         <strong>Setpoint</strong>
         <!-- Set potential setpoints to 60F (15C) - 83F (28C) -->
@@ -46,7 +46,7 @@ limitations under the License.
           value="[[device.states.temperatureSetpointCelsius]]"
           on-value-change="_handleSetpoint" min="30" max="100"></paper-slider>
       </div>
-      <iron-icon id="kettle" icon="maps:local-drink" on-tap="_handleOnOff"
+      <iron-icon id="coffeemaker" icon="maps:local-cafe" on-tap="_handleOnOff"
         slot="device-icon"></iron-icon>
       <div slot="device-states" class="layout horizontal center-justified">
         <paper-input id="ambient" label="Ambient Temperature" value="[[device.states.temperatureAmbientCelsius]]"
@@ -59,14 +59,14 @@ limitations under the License.
 
   <script>
     /**
-     * Class for smart kettles.
+     * Class for smart coffee makers.
      */
-    class SmartKettle extends SmartDevice {
+    class SmartCoffeeMaker extends SmartDevice {
       /**
        * @return {string} HTML tag.
        */
       static get is() {
-        return 'smart-kettle';
+        return 'smart-coffeemaker';
       }
 
       /**
@@ -112,45 +112,46 @@ limitations under the License.
       _deviceChanged() {
         super._deviceChanged();
         if (this.device.states.on) {
-          this.$.kettle.style.color = '#9bea00';
+          this.$.coffeemaker.style.color = '#9bea00';
         } else {
-          this.$.kettle.style.color = '#eee';
+          this.$.coffeemaker.style.color = '#eee';
         }
       }
 
       /**
-       * Generates a new smart kettle
+       * Generates a new smart coffee maker
        * @param {number} id The device id
        * @param {number} count How many devices of this type already exist
        * @return {object} Object containing SYNC properties and default state
        */
       static generate(id, count) {
         const nicknames = [
-          'little teapot',
-          'ramen cooker',
-          'solder station',
+          'little coffee pot',
+          'coffee maker',
+          'my coffee cup',
+          'desktop espresso machine',
         ];
         return {
           id: String(id),
           properties: {
-            type: 'action.devices.types.KETTLE',
+            type: 'action.devices.types.COFFEE_MAKER',
             traits: [
               'action.devices.traits.OnOff',
               'action.devices.traits.TemperatureControl',
             ],
             name: {
-              defaultNames: [`Smart Kettle ${id}`],
-              name: `Smart Kettle ${id}`,
+              defaultNames: [`Smart Coffee Maker ${id}`],
+              name: `Smart Coffee Maker ${id}`,
               nicknames: [this.getNickname(nicknames, id, count)],
             },
             willReportState: false,
             attributes: {
               temperatureRange: {
                 minThresholdCelsius: 30,
-                maxThresholdCelsius: 100
+                maxThresholdCelsius: 100,
               },
               temperatureStepCelsius: 1,
-              temperatureUnitForUX: 'C' /* or 'F' */
+              temperatureUnitForUX: 'C', /* or 'F' */
             },
             deviceInfo: {
               manufacturer: 'Smart Home Provider',
@@ -166,12 +167,11 @@ limitations under the License.
             online: true,
             on: false,
             temperatureSetpointCelsius: 35,
-            temperatureAmbientCelsius: 35
+            temperatureAmbientCelsius: 35,
           },
         };
       }
     }
-
-    customElements.define(SmartKettle.is, SmartKettle);
+    customElements.define(SmartCoffeeMaker.is, SmartCoffeeMaker);
   </script>
 </dom-module>

@@ -37,6 +37,7 @@ limitations under the License.
 <link rel="import" href="smart-refrigerator.html">
 <link rel="import" href="smart-fan.html">
 <link rel="import" href="smart-kettle.html">
+<link rel="import" href="smart-coffeemaker.html">
 <link rel="import" href="smart-outlet.html">
 <link rel="import" href="smart-switch.html">
 
@@ -191,8 +192,12 @@ limitations under the License.
         </button>
         <button dialog-confirm autofocus class="square" id="kettleSelector"
           on-tap="_addKettle">
-          <iron-icon icon="maps:local-cafe"></iron-icon>
+          <iron-icon icon="maps:local-drink"></iron-icon>
           <p>Kettle</p>
+        </button>
+        <button dialog-confirm autofocus class="square" on-tap="_addCoffeeMaker">
+          <iron-icon icon="maps:local-cafe"></iron-icon>
+          <p>Coffee Maker</p>
         </button>
         <button dialog-confirm autofocus class="square" id="outletSelector"
           on-tap="_addOutlet">
@@ -288,6 +293,15 @@ limitations under the License.
       </template>
     </iron-list>
 
+    <iron-list id="coffeemakers-list" items="[[coffeemakers]]" as="item"
+      grid>
+      <template>
+        <div class="item">
+          <smart-coffeemaker device=[[item]]></smart-coffeemaker>
+        </div>
+      </template>
+    </iron-list>
+
     <iron-list id="outlets-list" items="[[outlets]]" as="item" grid>
       <template>
         <div class="item">
@@ -378,6 +392,10 @@ limitations under the License.
           kettles: {
             type: Array,
             value: [],
+          },
+          coffeemakers: {
+            type: Array,
+            value: []
           },
           outlets: {
             type: Array,
@@ -539,6 +557,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.KETTLE':
                 this.app._addKettle(this.devices[id]);
+                break;
+              case 'action.devices.types.COFFEE_MAKER':
+                this.app._addCoffeeMaker(this.devices[id]);
                 break;
               case 'action.devices.types.OUTLET':
                 this.app._addOutlet(this.devices[id]);
@@ -753,6 +774,22 @@ limitations under the License.
             this._addDevice('kettles',
               SmartKettle.generate(kettleId,
                 this.kettles.length));
+          });
+      }
+
+      /**
+       * Adds a new smart coffee maker
+       * @param {object} coffeeMaker The device object
+       */
+      _addCoffeeMaker(coffeeMaker) {
+        this._createDevice(coffeeMaker)
+          .then((device) => {
+            this._addDevice('coffeemakers', device);
+          })
+          .catch((coffeemakerId) => {
+            this._addDevice('coffeemakers',
+              SmartCoffeeMaker.generate(coffeemakerId,
+                this.coffeemakers.length));
           });
       }
 
