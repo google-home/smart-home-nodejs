@@ -19,6 +19,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../bower_components/iron-icons/maps-icons.html">
@@ -44,6 +45,7 @@ limitations under the License.
 <link rel="import" href="smart-airpurifier.html">
 <link rel="import" href="smart-acunit.html">
 <link rel="import" href="smart-oven.html">
+<link rel="import" href="smart-sprinkler.html">
 
 <dom-module id="my-app">
   <template>
@@ -211,7 +213,7 @@ limitations under the License.
         <button dialog-confirm autofocus class="square" id="switchSelector"
           on-tap="_addSwitch">
           <iron-icon icon="communication:call-merge"></iron-icon>
-          <p>Outlet</p>
+          <p>Switch</p>
         </button>
         <button dialog-confirm autofocus class="square" on-tap="_addAirPurifier">
           <iron-icon icon="hardware:sim-card"></iron-icon>
@@ -224,6 +226,10 @@ limitations under the License.
         <button dialog-confirm autofocus class="square" on-tap="_addOven">
           <iron-icon icon="av:web"></iron-icon>
           <p>Oven</p>
+        </button>
+        <button dialog-confirm autofocus class="square" on-tap="_addSprinkler">
+          <iron-icon icon="image:filter-vintage"></iron-icon>
+          <p>Sprinkler</p>
         </button>
       </div>
     </paper-dialog>
@@ -359,6 +365,15 @@ limitations under the License.
       </template>
     </iron-list>
 
+    <iron-list id="sprinklers-list" items="[[sprinklers]]" as="item"
+      grid>
+      <template>
+        <div class="item">
+          <smart-sprinkler device=[[item]]></smart-sprinkler>
+        </div>
+      </template>
+    </iron-list>
+
   </template>
 
   <script>
@@ -456,6 +471,10 @@ limitations under the License.
             value: [],
           },
           ovens: {
+            type: Array,
+            value: [],
+          },
+          sprinklers: {
             type: Array,
             value: [],
           },
@@ -629,6 +648,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.OVEN':
                 this.app._addOven(this.devices[id]);
+                break;
+              case 'action.devices.types.SPRINKLER':
+                this.app._addSprinkler(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -933,6 +955,22 @@ limitations under the License.
             this._addDevice('ovens',
               SmartOven.generate(ovenId,
                 this.ovens.length));
+          });
+      }
+
+      /**
+       * Adds a new smart sprinkler
+       * @param {object} sprinkler The device object
+       */
+      _addSprinkler(sprinkler) {
+        this._createDevice(sprinkler)
+          .then((device) => {
+            this._addDevice('sprinklers', device);
+          })
+          .catch((sprinklerId) => {
+            this._addDevice('sprinklers',
+              SmartSprinkler.generate(sprinklerId,
+                this.sprinklers.length));
           });
       }
     }
