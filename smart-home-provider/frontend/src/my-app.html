@@ -17,6 +17,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/communication-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
@@ -42,6 +43,7 @@ limitations under the License.
 <link rel="import" href="smart-switch.html">
 <link rel="import" href="smart-airpurifier.html">
 <link rel="import" href="smart-acunit.html">
+<link rel="import" href="smart-oven.html">
 
 <dom-module id="my-app">
   <template>
@@ -219,6 +221,10 @@ limitations under the License.
           <iron-icon icon="places:ac-unit"></iron-icon>
           <p>AC Unit</p>
         </button>
+        <button dialog-confirm autofocus class="square" on-tap="_addOven">
+          <iron-icon icon="av:web"></iron-icon>
+          <p>Oven</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -345,6 +351,14 @@ limitations under the License.
       </template>
     </iron-list>
 
+    <iron-list id="ovens-list" items="[[ovens]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-oven device=[[item]]></smart-oven>
+        </div>
+      </template>
+    </iron-list>
+
   </template>
 
   <script>
@@ -438,6 +452,10 @@ limitations under the License.
             value: [],
           },
           acunits: {
+            type: Array,
+            value: [],
+          },
+          ovens: {
             type: Array,
             value: [],
           },
@@ -608,6 +626,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.AC_UNIT':
                 this.app._addAcUnit(this.devices[id]);
+                break;
+              case 'action.devices.types.OVEN':
+                this.app._addOven(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -896,6 +917,22 @@ limitations under the License.
             this._addDevice('acunits',
               SmartAcUnit.generate(acunitId,
                 this.acunits.length));
+          });
+      }
+
+      /**
+       * Adds a new smart oven
+       * @param {object} oven The device object
+       */
+      _addOven(oven) {
+        this._createDevice(oven)
+          .then((device) => {
+            this._addDevice('ovens', device);
+          })
+          .catch((ovenId) => {
+            this._addDevice('ovens',
+              SmartOven.generate(ovenId,
+                this.ovens.length));
           });
       }
     }
