@@ -17,6 +17,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../bower_components/iron-icons/maps-icons.html">
@@ -37,6 +38,7 @@ limitations under the License.
 <link rel="import" href="smart-fan.html">
 <link rel="import" href="smart-kettle.html">
 <link rel="import" href="smart-outlet.html">
+<link rel="import" href="smart-switch.html">
 
 <dom-module id="my-app">
   <template>
@@ -57,7 +59,7 @@ limitations under the License.
       }
 
       #modal {
-        width: 42%;
+        width: 70%;
         display: -webkit-flex;
         /* Safari */
         -webkit-justify-content: space-around;
@@ -89,7 +91,7 @@ limitations under the License.
 
       #close {
         height: 30px;
-        width: 30px;
+        width: 80px;
         margin-top: 0px;
         float: right;
       }
@@ -197,6 +199,11 @@ limitations under the License.
           <iron-icon icon="notification:power"></iron-icon>
           <p>Outlet</p>
         </button>
+        <button dialog-confirm autofocus class="square" id="switchSelector"
+          on-tap="_addSwitch">
+          <iron-icon icon="communication:call-merge"></iron-icon>
+          <p>Outlet</p>
+        </button>
       </div>
     </paper-dialog>
 
@@ -288,6 +295,14 @@ limitations under the License.
         </div>
       </template>
     </iron-list>
+
+    <iron-list id="switchs-list" items="[[switchs]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-switch device=[[item]]></smart-switch>
+        </div>
+      </template>
+    </iron-list>
   </template>
 
   <script>
@@ -367,7 +382,11 @@ limitations under the License.
           outlets: {
             type: Array,
             value: [],
-          }
+          },
+          switchs: {
+            type: Array,
+            value: [],
+          },
         };
       }
 
@@ -523,6 +542,9 @@ limitations under the License.
                 break;
               case 'action.devices.types.OUTLET':
                 this.app._addOutlet(this.devices[id]);
+                break;
+              case 'action.devices.types.SWITCH':
+                this.app._addSwitch(this.devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
@@ -747,6 +769,22 @@ limitations under the License.
             this._addDevice('outlets',
               SmartOutlet.generate(outletId,
                 this.outlets.length));
+          });
+      }
+
+      /**
+       * Adds a new smart switch
+       * @param {object} smartswitch The device object
+       */
+      _addSwitch(smartswitch) {
+        this._createDevice(smartswitch)
+          .then((device) => {
+            this._addDevice('switchs', device);
+          })
+          .catch((switchId) => {
+            this._addDevice('switchs',
+              SmartSwitch.generate(switchId,
+                this.switchs.length));
           });
       }
     }
