@@ -486,6 +486,104 @@ app.requestSync = (authToken, uid) => {
     });
 };
 
+/**
+ * Pushes the current state of a device to the HomeGraph
+ */
+app.post('/smart-home-api/report-state', (request, response) => {
+  let authToken = authProvider.getAccessToken(request);
+  let uid = datastore.Auth.tokens[authToken].uid;
+
+  if (!datastore.isValidAuth(uid, authToken)) {
+    console.error('Invalid auth', authToken, 'for user', uid);
+    response.status(403).set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    }).json({error: 'invalid auth'});
+    return;
+  }
+
+  let device = request.body;
+  app.reportState(authToken, uid, device);
+
+  // otherwise, all good!
+  response.status(200)
+    .set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    })
+    .send({status: 'OK'});
+});
+
+
+app.reportState = (authToken, uid, device) => {
+  const https = require('https');
+  const {google} = require('googleapis');
+  const jwtClient = new google.auth.JWT(
+    config.jwt.client_email,
+    null,
+    config.jwt.private_key,
+    ['https://www.googleapis.com/auth/homegraph'],
+    null
+  );
+
+  const reportedStates = {};
+  if (!device.reportStates) {
+    console.warn(`Device ${device.id} has no states to report`);
+    return;
+  }
+  device.reportStates.map((key) => {
+    reportedStates[key] = device.states[key];
+  });
+  const postData = {
+    requestId: 'ff366a3cc', // Any unique ID
+    agentUserId: uid,
+    payload: {
+      devices: {
+        states: {
+          [device.id]: reportedStates,
+        },
+      },
+    },
+  };
+
+  console.log('Report State request', JSON.stringify(postData));
+
+  jwtClient.authorize((err, tokens) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const options = {
+      hostname: 'homegraph.googleapis.com',
+      port: 443,
+      path: '/v1/devices:reportStateAndNotification',
+      method: 'POST',
+      headers: {
+        Authorization: ` Bearer ${tokens.access_token}`,
+      },
+    };
+    return new Promise((resolve, reject) => {
+      let responseData = '';
+      const req = https.request(options, (res) => {
+        res.on('data', (d) => {
+          responseData += d.toString();
+        });
+        res.on('end', () => {
+          resolve(responseData);
+        });
+      });
+      req.on('error', (e) => {
+        reject(e);
+      });
+      // Write data to request body
+      req.write(JSON.stringify(postData));
+      req.end();
+    }).then((data) => {
+      console.info('Report State response', data);
+    });
+  });
+};
+
 const appPort = process.env.PORT || config.devPortSmartHome;
 
 const server = app.listen(appPort, () => {

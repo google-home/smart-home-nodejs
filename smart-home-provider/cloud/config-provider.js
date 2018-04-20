@@ -23,6 +23,8 @@ Config.smartHomeProviderGoogleClientId = 'ZxjqWpsYj3';
 Config.smartHomeProvideGoogleClientSecret = 'hIMH3uWlMVrqa7FAbKLBoNUMCyLCtv';
 // Client API Key generated on the console
 Config.smartHomeProviderApiKey = '<API_KEY>';
+// Client service key to use for reporting state
+Config.jwt = require('./jwt-key.json');
 // Running server locally using ngrok
 Config.isLocal = false;
 // If true, all devices will be cleared when the frontend page refreshes
@@ -45,10 +47,11 @@ init();
 
 exports.devPortSmartHome = Config.devPortSmartHome;
 exports.smartHomeProviderGoogleClientId =
-    Config.smartHomeProviderGoogleClientId;
+  Config.smartHomeProviderGoogleClientId;
 exports.smartHomeProvideGoogleClientSecret =
-    Config.smartHomeProvideGoogleClientSecret;
+  Config.smartHomeProvideGoogleClientSecret;
 exports.smartHomeProviderCloudEndpoint = Config.smartHomeProviderCloudEndpoint;
 exports.smartHomeProviderApiKey = Config.smartHomeProviderApiKey;
+exports.jwt = Config.jwt;
 exports.isLocal = Config.isLocal;
 exports.enableReset = Config.enableReset;

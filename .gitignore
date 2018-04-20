@@ -1,5 +1,5 @@
 .idea
 *iml
 gactions
-creds.data
-
+**/creds.data
+smart-home-provider/cloud/jwt-key.json
