@@ -36,12 +36,14 @@ See the developer guide and release notes at [https://developers.google.com/acti
 
 #### Create and setup project in Actions Console
 
-1. Open the [Actions Console](http://console.actions.google.com) and create a new project. Click 'Smart home actions'.
-1. Click Okay.
-1. Click ADD under App information.
-1. Give your App some information like an invocation name, some description, and
- some policy and contact info.
-1. Click Save.
+1. Use the [Actions on Google Console](https://console.actions.google.com) to add a new project with a name of your choosing and click *Create Project*.
+1. Click *Home Control*, then click *Smart Home*.
+1. On the left navigation menu under *SETUP*, click on *Invocation*.
+1. Add your App's name. Click *Save*.
+1. On the left navigation menu under *DEPLOY*, click on *Directory Information*.
+1. Add your App info, including images, a contact email and privacy policy. This information can all be edited before submitting for review.
+1. Click *Save*.
+
 
 #### Add Request Sync
 The Request Sync feature allows a cloud integration to send a request to the Home Graph
@@ -107,18 +109,21 @@ enable it for cloud control.
 
 #### Start testing
 
-1. Back in the Actions Console, select your smart home action and enter
-   the URL for fulfillment, e.g. https://xyz123.ngrok.io/smarthome
-1. Click Add under Account Linking.
-1. Select 'Authorization Code' for Grant Type.
+1. Navigate back to the [Actions on Google Console](https://console.actions.google.com).
+1. On the left navigation menu under *BUILD*, click on *Actions*. Click on *Add Your First Action* and choose your app's language(s).
+1. Enter the URL for fulfillment, e.g. https://xyz123.ngrok.io/smarthome, click *Done*.
+1. On the left navigation menu under *ADVANCED OPTIONS*, click on *Account Linking*. 
+1. Select *No, I only want to allow account creation on my website*. Click *Next*.
+1. For Linking Type, select *OAuth*.
+1. For Grant Type, select 'Authorization Code' for Grant Type.
 1. Under Client Information, enter the client ID and secret from earlier.
 1. The Authorization URL is the hosted URL of your app with '/oauth' as the
 path, e.g. https://xyz123.ngrok.io/oauth
 1. The Token URL is the hosted URL of your app with '/token' as the path,
 e.g. https://xyz123.ngrok.io/token
 1. Enter any remaining necessary information you might need for
-authentication your app. Then Save.
-1. Press the **TEST DRAFT** button to begin testing this app.
+authentication your app. Click *Save*.
+1. On the left navigation menu under *Test*, click on *Simulator*, to begin testing this app.
 
 #### Setup Account linking
 
