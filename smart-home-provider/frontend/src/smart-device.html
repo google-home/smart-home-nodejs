@@ -183,7 +183,8 @@ limitations under the License.
        * Handles a change in the proactive reporting state.
        */
       _handleReportState() {
-        this.device.properties.willReportState = !this.device.properties.willReportState;
+        this.device.properties.willReportState =
+          !this.device.properties.willReportState;
         this._handleRegister(); // Update reporting state
         this._deviceChanged(); // Update UI
       }
@@ -237,6 +238,10 @@ limitations under the License.
         }
       }
 
+      /**
+       * Sends a call to the server to update the device state
+       * in the home graph
+       */
       reportState() {
         // Send a JSON payload with the device's updated state to HomeGraph
         // Only if enabled for this device
@@ -365,15 +370,16 @@ limitations under the License.
         if (this._smartDevice) {
           this._smartDevice.$.cloud.icon = this.device.states.online
             ? 'cloud' : 'cloud-off';
-          this._smartDevice.$.reportState.style.color = this.device.properties.willReportState
-            ? '#9bea00' : '#757575';
-          this._smartDevice.$.reportState.icon = this.device.properties.willReportState
-            ? 'arrow-upward' : 'arrow-downward';
+          this._smartDevice.$.reportState.style.color =
+            this.device.properties.willReportState ? '#9bea00' : '#757575';
+          this._smartDevice.$.reportState.icon =
+            this.device.properties.willReportState
+              ? 'arrow-upward' : 'arrow-downward';
         } else {
           this.$.cloud.icon = this.device.states.online
             ? 'cloud' : 'cloud-off';
-          this.$.reportState.style.color = this.device.properties.willReportState
-            ? '#9bea00' : '#757575';
+          this.$.reportState.style.color =
+            this.device.properties.willReportState ? '#9bea00' : '#757575';
           this.$.reportState.icon = this.device.properties.willReportState
             ? 'arrow-upward' : 'arrow-downward';
         }

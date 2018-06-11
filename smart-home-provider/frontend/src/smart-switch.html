@@ -27,90 +27,90 @@ limitations under the License.
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="smart-switch">
-    <template>
-        <smart-device id='smart-device' device="{{device}}" type="switches">
-            <iron-icon id="switch" icon="communication:call-merge" on-tap="_handleOnOff"
-                slot="device-icon"></iron-icon>
-        </smart-device>
-    </template>
+  <template>
+    <smart-device id='smart-device' device="{{device}}" type="switches">
+      <iron-icon id="switch" icon="communication:call-merge" on-tap="_handleOnOff"
+        slot="device-icon"></iron-icon>
+    </smart-device>
+  </template>
 
-    <script>
-        /**
-         * Class for smart switches.
-         */
-        class SmartSwitch extends SmartDevice {
-            /**
-             * @return {string} HTML tag.
-             */
-            static get is() {
-                return 'smart-switch';
-            }
+  <script>
+    /**
+     * Class for smart switches.
+     */
+    class SmartSwitch extends SmartDevice {
+      /**
+       * @return {string} HTML tag.
+       */
+      static get is() {
+        return 'smart-switch';
+      }
 
-            /**
-             * Default constructor.
-             */
-            constructor() {
-                super();
-            }
+      /**
+       * Default constructor.
+       */
+      constructor() {
+        super();
+      }
 
-            /**
-             * Handles a change in the on/off state.
-             */
-            _handleOnOff() {
-                this.device.states.on = !this.device.states.on;
-                this._notifyStateChange();
-            }
+      /**
+       * Handles a change in the on/off state.
+       */
+      _handleOnOff() {
+        this.device.states.on = !this.device.states.on;
+        this._notifyStateChange();
+      }
 
-            /**
-             * Callback that runs when the device state changes.
-             */
-            _deviceChanged() {
-                super._deviceChanged();
-                if (this.device.states.on) {
-                    this.$.switch.style.color = '#9bea00';
-                } else {
-                    this.$.switch.style.color = '#eee';
-                }
-            }
-
-            /**
-             * Generates a new smart switch
-             * @param {number} id The device id
-             * @param {number} count How many devices of this type already exist
-             * @return {object} Object containing SYNC properties and default state
-             */
-            static generate(id, count) {
-                const nicknames = ['smart switch'];
-                return {
-                    id: String(id),
-                    properties: {
-                        type: 'action.devices.types.SWITCH',
-                        traits: [
-                            'action.devices.traits.OnOff',
-                        ],
-                        name: {
-                            defaultNames: [`Smart Switch ${id}`],
-                            name: `Smart Switch ${id}`,
-                            nicknames: [this.getNickname(nicknames, id, count)],
-                        },
-                        willReportState: false,
-                        deviceInfo: {
-                            manufacturer: 'Smart Home Provider',
-                            model: 'g1340',
-                            swVersion: '1.0.31',
-                            hwVersion: '1.1',
-                        },
-                        customData: {
-                            smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
-                        },
-                    },
-                    states: {
-                        online: true,
-                        on: false,
-                    },
-                };
-            }
+      /**
+       * Callback that runs when the device state changes.
+       */
+      _deviceChanged() {
+        super._deviceChanged();
+        if (this.device.states.on) {
+          this.$.switch.style.color = '#9bea00';
+        } else {
+          this.$.switch.style.color = '#eee';
         }
-        customElements.define(SmartSwitch.is, SmartSwitch);
-    </script>
+      }
+
+      /**
+       * Generates a new smart switch
+       * @param {number} id The device id
+       * @param {number} count How many devices of this type already exist
+       * @return {object} Object containing SYNC properties and default state
+       */
+      static generate(id, count) {
+        const nicknames = ['smart switch'];
+        return {
+          id: String(id),
+          properties: {
+            type: 'action.devices.types.SWITCH',
+            traits: [
+              'action.devices.traits.OnOff',
+            ],
+            name: {
+              defaultNames: [`Smart Switch ${id}`],
+              name: `Smart Switch ${id}`,
+              nicknames: [this.getNickname(nicknames, id, count)],
+            },
+            willReportState: false,
+            deviceInfo: {
+              manufacturer: 'Smart Home Provider',
+              model: 'g1340',
+              swVersion: '1.0.31',
+              hwVersion: '1.1',
+            },
+            customData: {
+              smartHomeProviderId: 'fiGgZ0vrhFRgwf5XJkna2GRwO8z80J',
+            },
+          },
+          states: {
+            online: true,
+            on: false,
+          },
+        };
+      }
+    }
+    customElements.define(SmartSwitch.is, SmartSwitch);
+  </script>
 </dom-module>
