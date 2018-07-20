@@ -2,4 +2,5 @@
 *iml
 gactions
 **/creds.data
+**/package-lock.json
 smart-home-provider/cloud/jwt-key.json
