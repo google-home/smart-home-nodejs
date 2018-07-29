@@ -17,6 +17,8 @@
 let Config = {};
 
 Config.devPortSmartHome = '3000';
+// Change this to a unique subdomain to ensure it won't change during your tests
+Config.devSubdomainSmartHome = 'smart-home-demo';
 // Client id that Google will use
 Config.smartHomeProviderGoogleClientId = 'ZxjqWpsYj3';
 // Client secret that Google will use
@@ -45,6 +47,7 @@ function init() {
 }
 init();
 
+exports.devSubdomainSmartHome = Config.devSubdomainSmartHome;
 exports.devPortSmartHome = Config.devPortSmartHome;
 exports.smartHomeProviderGoogleClientId =
   Config.smartHomeProviderGoogleClientId;

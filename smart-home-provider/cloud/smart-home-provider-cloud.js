@@ -15,7 +15,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const fetch = require('node-fetch');
 const morgan = require('morgan');
-const ngrok = require('ngrok');
+const localtunnel = require('localtunnel');
 const session = require('express-session');
 
 // internal app deps
@@ -593,31 +593,37 @@ const server = app.listen(appPort, () => {
   console.log('Smart Home Cloud and App listening at %s:%s', host, port);
 
   if (config.isLocal) {
-    ngrok.connect(config.devPortSmartHome, (err, url) => {
+    localtunnel(config.devPortSmartHome, {subdomain: config.devSubdomainSmartHome}, (err, tunnel) => {
       if (err) {
-        console.log('ngrok err', err);
+        console.log('localtunnel err', err);
+        process.exit();
+      }
+
+      if (tunnel.url !== 'https://' + config.devSubdomainSmartHome + '.localtunnel.me') {
+        console.log('localtunnel subdomain already in use, specify a different one in' +
+          ' config-provider.js', config.devSubdomainSmartHome);
         process.exit();
       }
 
       console.log('|###################################################|');
       console.log('|                                                   |');
-      console.log('|        COPY & PASTE NGROK URL BELOW:              |');
+      console.log('|     COPY & PASTE LOCALTUNNEL URL BELOW:           |');
       console.log('|                                                   |');
-      console.log('|          ' + url + '                |');
+      console.log('|     ' + tunnel.url + '        |');
       console.log('|                                                   |');
       console.log('|###################################################|');
 
       console.log('=====');
       console.log('Visit the Actions on Google console at http://console.actions.google.com');
       console.log('Replace the webhook URL in the Actions section with:');
-      console.log('    ' + url + '/smarthome');
+      console.log('    ' + tunnel.url + '/smarthome');
 
       console.log('In the console, set the Authorization URL to:');
-      console.log('    ' + url + '/oauth');
+      console.log('    ' + tunnel.url + '/oauth');
 
       console.log('');
       console.log('Then set the Token URL to:');
-      console.log('    ' + url + '/token');
+      console.log('    ' + tunnel.url + '/token');
       console.log('');
 
       console.log('Finally press the \'TEST DRAFT\' button');

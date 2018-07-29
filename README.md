@@ -108,14 +108,14 @@ enable it for cloud control.
 #### Start testing
 
 1. Back in the Actions Console, select your smart home action and enter
-   the URL for fulfillment, e.g. https://xyz123.ngrok.io/smarthome
+   the URL for fulfillment, e.g. https://smart-home-demo.localtunnel.me/smarthome
 1. Click Add under Account Linking.
 1. Select 'Authorization Code' for Grant Type.
 1. Under Client Information, enter the client ID and secret from earlier.
 1. The Authorization URL is the hosted URL of your app with '/oauth' as the
-path, e.g. https://xyz123.ngrok.io/oauth
+path, e.g. https://smart-home-demo.localtunnel.me/oauth
 1. The Token URL is the hosted URL of your app with '/token' as the path,
-e.g. https://xyz123.ngrok.io/token
+e.g. https://smart-home-demo.localtunnel.me/token
 1. Enter any remaining necessary information you might need for
 authentication your app. Then Save.
 1. Press the **TEST DRAFT** button to begin testing this app.
@@ -130,7 +130,7 @@ to create the project in the Actions Console, enter your Assistant settings.
 1. Log in to your service.
 1. Start using the Google Assistant in the Actions Console to control your devices. Try saying 'turn my lights on'.
 
-:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://xyz123.ngrok.io and click the add icon to create a device your server will receive a new SYNC command.
+:information_source: Assistant will only provide you control over items that are registered, so if you visit your front end https://smart-home-demo.localtunnel.me and click the add icon to create a device your server will receive a new SYNC command.
 
 
 ### Steps for testing with mock-assistant-platform
