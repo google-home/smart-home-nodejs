@@ -148,7 +148,7 @@ to create the project in the Actions Console, enter your Assistant settings.
 
     * If running locally:
 
-          node cloud/smart-home-provider-cloud.js isLocal
+          npm start
 
     * If running in a hosted environment
 
