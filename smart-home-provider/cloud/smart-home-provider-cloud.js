@@ -613,14 +613,14 @@ const server = app.listen(appPort, () => {
       console.log('=====');
       console.log('Visit the Actions on Google console at http://console.actions.google.com');
       console.log('Replace the webhook URL in the Actions section with:');
-      console.log('    ' + tunnel.url + '/smarthome');
+      console.log(`    ${tunnel.url}/smarthome`);
 
       console.log('In the console, set the Authorization URL to:');
-      console.log('    ' + tunnel.url + '/oauth');
+      console.log(`    ${tunnel.url}/oauth`);
 
       console.log('');
       console.log('Then set the Token URL to:');
-      console.log('    ' + tunnel.url + '/token');
+      console.log(`    ${tunnel.url}/token`);
       console.log('');
 
       console.log('Finally press the \'TEST DRAFT\' button');
