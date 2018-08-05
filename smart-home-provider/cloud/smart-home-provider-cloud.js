@@ -605,13 +605,10 @@ const server = app.listen(appPort, () => {
         process.exit();
       }
 
-      console.log('|###################################################|');
-      console.log('|                                                   |');
-      console.log('|     COPY & PASTE LOCALTUNNEL URL BELOW:           |');
-      console.log('|                                                   |');
-      console.log('|     ' + tunnel.url + '        |');
-      console.log('|                                                   |');
-      console.log('|###################################################|');
+      console.log('###################################################');
+      console.log('COPY & PASTE LOCALTUNNEL URL BELOW:');
+      console.log(`    ${tunnel.url}`);
+      console.log('###################################################');
 
       console.log('=====');
       console.log('Visit the Actions on Google console at http://console.actions.google.com');
