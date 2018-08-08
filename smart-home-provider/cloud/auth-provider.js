@@ -13,7 +13,7 @@
 
 /**
  * This auth is going to use the Authorization Code flow, described in the docs:
- * https://developers.google.com/actions/develop/identity/oauth2-code-flow
+ * https://developers.google.com/actions/identity/oauth2-code-flow
  */
 
 /* eslint require-jsdoc: "off" */

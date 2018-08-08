@@ -153,11 +153,11 @@ to create the project in the Actions Console, enter your Assistant settings.
 
     * If running locally:
 
-          node smart-home-provider-cloud.js isLocal
+          npm start
 
     * If running in a hosted environment
 
-          node smart-home-provider-cloud.js smart-home="https://your_domain.com"
+          node cloud/smart-home-provider-cloud.js smart-home="https://your_domain.com"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.
