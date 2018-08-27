@@ -46,7 +46,6 @@ function registerAgent(app) {
 
     if (!reqdata.inputs) {
       response.status(401).set({
-        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       }).json({error: 'missing inputs'});
     }
@@ -55,7 +54,6 @@ function registerAgent(app) {
       let intent = input.intent;
       if (!intent) {
         response.status(401).set({
-          'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         }).json({error: 'missing inputs'});
         continue;
@@ -160,7 +158,6 @@ function registerAgent(app) {
           break;
         default:
           response.status(401).set({
-            'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           }).json({error: 'missing intent'});
           break;
@@ -172,7 +169,6 @@ function registerAgent(app) {
    */
   app.options('/smarthome', function(request, response) {
     response.status(200).set({
-      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }).send('null');
   });
@@ -260,7 +256,6 @@ function registerAgent(app) {
     let devices = app.smartHomePropertiesSync(data.uid);
     if (!devices) {
       response.status(500).set({
-        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       }).json({error: 'failed'});
       return;
@@ -335,7 +330,6 @@ function registerAgent(app) {
     let devices = app.smartHomeQueryStates(data.uid, deviceIds);
     if (!devices) {
       response.status(500).set({
-        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       }).json({error: 'failed'});
       return;
