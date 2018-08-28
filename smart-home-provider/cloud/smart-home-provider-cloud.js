@@ -17,7 +17,7 @@ const fetch = require('node-fetch');
 const morgan = require('morgan');
 const ngrok = require('ngrok');
 const session = require('express-session');
-var cors = require('cors')
+const cors = require('cors')
 // internal app deps
 const googleHa = require('../smart-home-app');
 const datastore = require('./datastore');
