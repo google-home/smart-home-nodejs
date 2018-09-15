@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
     "ejs": "^2.5.7",
     "express": "^4.16.0",
     "express-session": "^1.15.6",
