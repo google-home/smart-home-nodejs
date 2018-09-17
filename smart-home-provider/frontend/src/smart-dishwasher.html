@@ -32,9 +32,8 @@ limitations under the License.
         <smart-device id="smart-device" device="{{device}}" type="dishwashers">
             <iron-icon id="dishwasher" icon="maps:local-laundry-service" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
             <div slot="device-states">
-                <div id='toggle-extra-rinse' class='toggle-off'>Extra Rinse</div>
-                <div id='toggle-permanent-press' class='toggle-off'>Permanent Press</div>
-                <div>Load: <b>{{device.states.currentModeSettings.load}}</b>
+                <div id='toggle-extra-drying' class='toggle-off'>Extra Drying</div>
+                <!-- <div>Load: <b>{{device.states.currentModeSettings.load}}</b> -->
             </div>
         </smart-device>
     </template>
@@ -120,15 +119,10 @@ limitations under the License.
           if (this.device.states.updateToggleSettings) {
             this.device.states.currentToggleSettings =
               this.device.states.updateToggleSettings;
-            if (this.device.states.currentToggleSettings['extra rinse']) {
-              this.$['toggle-extra-rinse'].classList.remove('toggle-off');
+            if (this.device.states.currentToggleSettings['extra drying']) {
+              this.$['toggle-extra-drying'].classList.remove('toggle-off');
             } else {
-              this.$['toggle-extra-rinse'].classList.add('toggle-off');
-            }
-            if (this.device.states.currentToggleSettings['permanent press']) {
-              this.$['toggle-permanent-press'].classList.remove('toggle-off');
-            } else {
-              this.$['toggle-permanent-press'].classList.add('toggle-off');
+              this.$['toggle-extra-drying'].classList.add('toggle-off');
             }
           }
 
@@ -151,7 +145,7 @@ limitations under the License.
          * @return {object} Object containing SYNC properties and default state
          */
          static generate(id, count) {
-          const nicknames = ['washing machine', 'acme washer'];
+          const nicknames = ['dish cleaner'];
           return {
             id: String(id),
             properties: {
@@ -159,48 +153,29 @@ limitations under the License.
               traits: [
                 'action.devices.traits.OnOff',
                 'action.devices.traits.StartStop',
-                'action.devices.traits.Modes',
+                // 'action.devices.traits.Modes',
                 'action.devices.traits.Toggles',
                 'action.devices.traits.RunCycle',
               ],
               name: {
-                defaultNames: ['Smart Washer'],
-                name: `Smart Washer ${id}`,
+                defaultNames: ['Smart DishWasher'],
+                name: `Smart DishWasher ${id}`,
                 nicknames: [this.getNickname(nicknames, id, count)],
               },
               willReportState: false,
               attributes: {
-                availableModes: [{
-                  name: 'load',
-                  name_values: [{
-                    name_synonym: ['load', 'size', 'load size'],
-                    lang: 'ENGLISH',
-                  }],
-                  settings: [{
-                    setting_name: 'small',
-                    setting_values: [{
-                      setting_synonym: ['small', 'half'],
-                        lang: 'ENGLISH',
-                      }],
-                    }, {
-                      setting_name: 'large',
-                      setting_values: [{
-                        setting_synonym: ['large', 'full'],
-                        lang: 'ENGLISH',
-                      }],
-                    }],
-                    ordered: true,
-                }],
+                // availableModes: [
+                // TODO: add mode (programme) like
+                // sensitive utensils, TurboSpeed, prerinse, auto, eco
+                // ],
+                // TODO: add more options like
+                //  Express Wash/ Speed Perfect/ (VarioSpeed)、
+                //  Half load、
+                //  Hygiene, Extra drying
                 availableToggles: [{
-                  name: 'extra rinse',
+                  name: 'extra drying',
                   name_values: [{
-                    name_synonym: ['extra', 'rinse'],
-                    lang: 'ENGLISH',
-                  }],
-                }, {
-                  name: 'permanent press',
-                  name_values: [{
-                    name_synonym: ['permanent', 'press'],
+                    name_synonym: ['extra', 'drying'],
                     lang: 'ENGLISH',
                   }],
                 }],
@@ -224,17 +199,15 @@ limitations under the License.
               isPaused: false,
               currentRunCycle: [{
                 currentCycle: "rinse",
-                nextCycle: "spin",
+                nextCycle: "drying",
                 lang: "en"
               }],
               currentTotalRemainingTime: 3600,
               currentCycleRemainingTime: 1800,
-              currentModeSettings: {
-                load: "large"
-              },
+              // currentModeSettings: {
+              // },
               currentToggleSettings: {
-                extraRinse: false,
-                permanentPress: false
+                extraDrying: false,
               }
             }
           };
