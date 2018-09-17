@@ -1,0 +1,245 @@
+<!--
+@license
+Copyright 2017, Google, Inc.
+Licensed under the Apache License, Version 2.0 (the 'License');
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an 'AS IS' BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="smart-dishwasher">
+    <template>
+        <style include="shared-styles"></style>
+        <smart-device id="smart-device" device="{{device}}" type="dishwashers">
+            <iron-icon id="dishwasher" icon="maps:local-laundry-service" on-tap="_handleOnOff" slot="device-icon"></iron-icon>
+            <div slot="device-states">
+                <div id='toggle-extra-rinse' class='toggle-off'>Extra Rinse</div>
+                <div id='toggle-permanent-press' class='toggle-off'>Permanent Press</div>
+                <div>Load: <b>{{device.states.currentModeSettings.load}}</b>
+            </div>
+        </smart-device>
+    </template>
+
+    <script>
+      /**
+       * Class for smart washers.
+       */
+      class SmartDishWasher extends SmartDevice {
+        /**
+         * @return {string} HTML tag.
+         */
+        static get is() {
+          return 'smart-dishwasher';
+        }
+
+        /**
+         * Default constructor.
+         */
+        constructor() {
+          super();
+        }
+
+        /**
+         * Handles a change in the on/off state.
+         */
+        _handleOnOff() {
+          this.device.states.on = !this.device.states.on;
+          this._notifyStateChange();
+        }
+
+        /**
+         * Handles one or many change in the state.
+         * @param {array} changes An array of changed states
+         */
+        _changeState(changes) {
+          if (!this.device.states.online) {
+            console.log('device offline, nothing changed');
+          } else {
+            for (let name in changes) {
+              if (name == 'start') {
+                this.device.states.isRunning = changes[name];
+                // starting off device -> turn it on and start it
+                if (this.device.states.isRunning) {
+                  this.device.states.on = true;
+                }
+                // if a device has been started/stopped, it can't be paused
+                this.device.states.isPaused = false;
+              } else if (name == 'pause') {
+                // else if still running and pausable,
+                // set isPaused to whatever is in changes
+                if (this.device.properties.attributes.pausable) {
+                  if (this.device.states.isRunning || this.device.states.isPaused) {
+                    this.device.states.isPaused = changes[name];
+                    this.device.states.isRunning = !changes[name];
+                  }
+                } else {
+                  this.device.states.isRunning = false;
+                }
+              } else {
+                const value = changes[name];
+                this.set('device.states.' + name, value);
+              }
+            }
+          }
+          if (!this.device.states.on) {
+            // device off, stop everything
+            this.device.states.isRunning = false;
+            this.device.states.isPaused = false;
+          }
+          this._notifyStateChange();
+        }
+
+        /**
+         * Callback that runs when the device state changes.
+         */
+        _deviceChanged() {
+          super._deviceChanged();
+          if (!this.device.states) {
+            return;
+          }
+
+          if (this.device.states.updateToggleSettings) {
+            this.device.states.currentToggleSettings =
+              this.device.states.updateToggleSettings;
+            if (this.device.states.currentToggleSettings['extra rinse']) {
+              this.$['toggle-extra-rinse'].classList.remove('toggle-off');
+            } else {
+              this.$['toggle-extra-rinse'].classList.add('toggle-off');
+            }
+            if (this.device.states.currentToggleSettings['permanent press']) {
+              this.$['toggle-permanent-press'].classList.remove('toggle-off');
+            } else {
+              this.$['toggle-permanent-press'].classList.add('toggle-off');
+            }
+          }
+
+          if (this.device.states.isPaused) {
+            this.$.dishwasher.style.color = '#ff7733';
+          } else if (this.device.states.isRunning) {
+            this.$.dishwasher.style.color = '#3399ff';
+          } else if (this.device.states.on) {
+            this.$.dishwasher.style.color = '#9bea00';
+          }
+          if (!this.device.states.on) {
+            this.$.dishwasher.style.color = '#eee';
+          }
+        }
+
+        /**
+         * Generates a new smart washer
+         * @param {number} id The device id
+         * @param {number} count How many devices of this type already exist
+         * @return {object} Object containing SYNC properties and default state
+         */
+         static generate(id, count) {
+          const nicknames = ['washing machine', 'acme washer'];
+          return {
+            id: String(id),
+            properties: {
+              type: 'action.devices.types.DISHWASHER',
+              traits: [
+                'action.devices.traits.OnOff',
+                'action.devices.traits.StartStop',
+                'action.devices.traits.Modes',
+                'action.devices.traits.Toggles',
+                'action.devices.traits.RunCycle',
+              ],
+              name: {
+                defaultNames: ['Smart Washer'],
+                name: `Smart Washer ${id}`,
+                nicknames: [this.getNickname(nicknames, id, count)],
+              },
+              willReportState: false,
+              attributes: {
+                availableModes: [{
+                  name: 'load',
+                  name_values: [{
+                    name_synonym: ['load', 'size', 'load size'],
+                    lang: 'ENGLISH',
+                  }],
+                  settings: [{
+                    setting_name: 'small',
+                    setting_values: [{
+                      setting_synonym: ['small', 'half'],
+                        lang: 'ENGLISH',
+                      }],
+                    }, {
+                      setting_name: 'large',
+                      setting_values: [{
+                        setting_synonym: ['large', 'full'],
+                        lang: 'ENGLISH',
+                      }],
+                    }],
+                    ordered: true,
+                }],
+                availableToggles: [{
+                  name: 'extra rinse',
+                  name_values: [{
+                    name_synonym: ['extra', 'rinse'],
+                    lang: 'ENGLISH',
+                  }],
+                }, {
+                  name: 'permanent press',
+                  name_values: [{
+                    name_synonym: ['permanent', 'press'],
+                    lang: 'ENGLISH',
+                  }],
+                }],
+                pausable: true,
+              },
+              roomHint: '',
+              deviceInfo: {
+                manufacturer: 'Smart Home Provider',
+                model: 'g14011',
+                swVersion: '1.0.11',
+                hwVersion: '1.0',
+              },
+              customData: {
+                smartHomeProviderId: 'FkldJVJCmDNSaoLkoq0txiz8Byf2Hr',
+              },
+            },
+            states: {
+              on: false,
+              online: true,
+              isRunning: false,
+              isPaused: false,
+              currentRunCycle: [{
+                currentCycle: "rinse",
+                nextCycle: "spin",
+                lang: "en"
+              }],
+              currentTotalRemainingTime: 3600,
+              currentCycleRemainingTime: 1800,
+              currentModeSettings: {
+                load: "large"
+              },
+              currentToggleSettings: {
+                extraRinse: false,
+                permanentPress: false
+              }
+            }
+          };
+         }
+      }
+      customElements.define(SmartDishWasher.is, SmartDishWasher);
+    </script>
+</dom-module>

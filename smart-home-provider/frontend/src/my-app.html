@@ -36,6 +36,7 @@ limitations under the License.
 <link rel="import" href="smart-camera.html">
 <link rel="import" href="smart-vacuum.html">
 <link rel="import" href="smart-washer.html">
+<link rel="import" href="smart-dishwasher.html">
 <link rel="import" href="smart-refrigerator.html">
 <link rel="import" href="smart-fan.html">
 <link rel="import" href="smart-kettle.html">
@@ -186,6 +187,11 @@ limitations under the License.
           <iron-icon icon="maps:local-laundry-service"></iron-icon>
           <p>Washer</p>
         </button>
+        <button dialog-confirm autofocus class="square" id="dishWasherSelector"
+          on-tap="_addDishWasher">
+          <iron-icon icon="maps:local-laundry-service"></iron-icon>
+          <p>DishWasher</p>
+        </button>
         <button dialog-confirm autofocus class="square" id="refrigeratorSelector"
           on-tap="_addRefrigerator">
           <iron-icon icon="places:kitchen"></iron-icon>
@@ -286,6 +292,14 @@ limitations under the License.
       <template>
         <div class="item">
           <smart-washer device=[[item]]></smart-washer>
+        </div>
+      </template>
+    </iron-list>
+
+    <iron-list id="dishwashers-list" items="[[dishwashers]]" as="item" grid>
+      <template>
+        <div class="item">
+          <smart-dishwasher device=[[item]]></smart-dishwasher>
         </div>
       </template>
     </iron-list>
@@ -431,6 +445,10 @@ limitations under the License.
             value: [],
           },
           washers: {
+            type: Array,
+            value: [],
+          },
+          dishwashers: {
             type: Array,
             value: [],
           },
@@ -622,6 +640,11 @@ limitations under the License.
                 this.devices[id].states.isPaused = false;
                 this.app._addWasher(this.devices[id]);
                 break;
+              case 'action.devices.types.DISHWASHER':
+                this.devices[id].states.isRunning = false;
+                this.devices[id].states.isPaused = false;
+                this.app._addDishWasher(this.devices[id]);
+                break;
               case 'action.devices.types.REFRIGERATOR':
                 this.app._addRefrigerator(this.devices[id]);
                 break;
@@ -811,6 +834,21 @@ limitations under the License.
           .catch((washerId) => {
             this._addDevice('washers',
               SmartWasher.generate(washerId, this.washers.length));
+          });
+      }
+
+      /**
+       * Adds a new smart dishwasher
+       * @param {object} dishwasher The device object
+       */
+      _addDishWasher(dishwasher) {
+        this._createDevice(dishwasher)
+          .then((device) => {
+            this._addDevice('dishwashers', device);
+          })
+          .catch((dishwasherId) => {
+            this._addDevice('dishwashers',
+              SmartDishWasher.generate(dishwasherId, this.dishwashers.length));
           });
       }
 
