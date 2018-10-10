@@ -175,7 +175,7 @@ enable it for cloud control.
        node platform help
        node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" sync
        node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" query
-       node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" ex
+       node platform url="https://<NGROK_DOMAIN>.ngrok.io/smarthome" exec
 
 ### Examples of SYNC, QUERY, and EXEC requests
 
