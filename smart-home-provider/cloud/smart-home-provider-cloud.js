@@ -17,7 +17,7 @@ const fetch = require('node-fetch');
 const morgan = require('morgan');
 const ngrok = require('ngrok');
 const session = require('express-session');
-const cors = require('cors')
+const cors = require('cors');
 // internal app deps
 const googleHa = require('../smart-home-app');
 const datastore = require('./datastore');
@@ -34,7 +34,7 @@ if (config.smartHomeProviderApiKey === '<API_KEY>') {
 }
 
 const app = express();
-app.use(cors())
+app.use(cors());
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -405,7 +405,7 @@ app.smartHomeQuery = (uid, deviceList) => {
 
 app.smartHomeQueryStates = (uid, deviceList) => {
   // console.log('smartHomeQueryStates deviceList: ', deviceList);
-  if (!deviceList || deviceList == {}) {
+  if (!deviceList || !Object.keys(deviceList).length) {
     // console.log('using empty device list');
     deviceList = null;
   }
@@ -424,8 +424,9 @@ app.smartHomeExec = (uid, device) => {
 
 app.changeState = (command) => {
   return new Promise((resolve, reject) => {
-    if (command.type == 'change') {
+    if (command.type === 'change') {
       for (let deviceId in command.state) {
+        if (!command.state.hasOwnProperty(deviceId)) continue;
         const deviceChanges = command.state[deviceId];
         // console.log('>>> changeState: deviceChanges', deviceChanges);
 
@@ -440,7 +441,7 @@ app.changeState = (command) => {
         connection.write('data: ' + JSON.stringify(deviceChanges) + '\n\n');
       }
       resolve();
-    } else if (command.type == 'delete') {
+    } else if (command.type === 'delete') {
       reject(new Error('Device deletion unimplemented'));
     } else {
       reject(new Error('Unknown change type "' + command.type + '"'));
