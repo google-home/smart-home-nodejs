@@ -26,6 +26,9 @@ const util = require('util');
 // eslint-disable-next-line no-unused-vars
 const session = require('express-session');
 
+const clientId = "ENTER CLIENT ID HERE"
+const clientSecret = "ENTER CLIENT SECRET HERE"
+
 Auth.getAccessToken = function(request) {
   return request.headers.authorization ?
       request.headers.authorization.split(' ')[1] : null;
@@ -263,11 +266,8 @@ Auth.registerAuth = function(app) {
    */
   app.all('/token', function(req, res) {
     console.log('/token query', req.query);
+    console.log('/token headers', req.headers);
     console.log('/token body', req.body);
-    let clientId = req.query.client_id
-        ? req.query.client_id : req.body.client_id;
-    let clientSecret = req.query.client_secret
-        ? req.query.client_secret : req.body.client_secret;
     let grantType = req.query.grant_type
         ? req.query.grant_type : req.body.grant_type;
 
@@ -314,10 +314,6 @@ Auth.registerAuth = function(app) {
  */
 function handleAuthCode(req, res) {
   console.log('handleAuthCode', req.query);
-  let clientId = req.query.client_id
-      ? req.query.client_id : req.body.client_id;
-  let clientSecret = req.query.client_secret
-      ? req.query.client_secret : req.body.client_secret;
   let code = req.query.code ? req.query.code : req.body.code;
 
   let client = SmartHomeModel.getClient(clientId, clientSecret);
@@ -364,13 +360,8 @@ function handleAuthCode(req, res) {
  * }
  */
 function handleRefreshToken(req, res) {
-  let clientId = req.query.client_id
-      ? req.query.client_id : req.body.client_id;
-  let clientSecret = req.query.client_secret
-      ? req.query.client_secret : req.body.client_secret;
   let refreshToken = req.query.refresh_token
       ? req.query.refresh_token : req.body.refresh_token;
-
   let client = SmartHomeModel.getClient(clientId, clientSecret);
   if (!client) {
     console.error('invalid client id or secret %s, %s',
