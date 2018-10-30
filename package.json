@@ -1,0 +1,41 @@
+{
+  "name": "smart-home-app-sample",
+  "version": "0.0.1",
+  "description": "Mock implementation of device manufacturer platform to facilitate development of sample device and adapter.",
+  "main": "dist/index.js",
+  "private": true,
+  "scripts": {
+    "build": "./node_modules/.bin/tsc && cp src/*.json dist/",
+    "deploy": "yarn build && gcloud app deploy && gcloud app logs tail -s default",
+    "lint": "./node_modules/.bin/tslint -p .",
+    "start": "node dist/index.js",
+    "start:local": "node dist/index.js isLocal",
+    "test": "yarn lint"
+  },
+  "author": "Google Inc.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "^8.0.0"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.4",
+    "@types/express": "^4.16.0",
+    "@types/morgan": "^1.7.35",
+    "actions-on-google": "^2.5.0",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "ejs": "^2.5.7",
+    "express": "^4.16.0",
+    "express-session": "^1.15.6",
+    "firebase-admin": "~5.13.0",
+    "googleapis": "^27.0.0",
+    "morgan": "^1.9.0",
+    "ngrok": "^2.3.0",
+    "node-fetch": "^1.6.3"
+  },
+  "devDependencies": {
+    "tslint": "^5.9.1",
+    "tslint-eslint-rules": "^5.1.0",
+    "typescript": "^3.1.3"
+  }
+}
