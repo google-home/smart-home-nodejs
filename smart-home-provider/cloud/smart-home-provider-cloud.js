@@ -33,6 +33,8 @@ if (config.smartHomeProviderApiKey === '<API_KEY>') {
   process.exit();
 }
 
+datastore.init();
+
 const app = express();
 app.use(cors());
 app.use(morgan('dev'));
@@ -64,7 +66,7 @@ const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:request
  *       (http://expressjs.com/en/guide/writing-middleware.html)
  */
 app.post('/smart-home-api/auth', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!uid || !authToken) {
@@ -111,7 +113,7 @@ app.post('/smart-home-api/auth', (request, response) => {
  * }
  */
 app.post('/smart-home-api/register-device', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -147,7 +149,7 @@ app.post('/smart-home-api/register-device', (request, response) => {
  * Can be used to reset all devices for a user account.
  */
 app.post('/smart-home-api/reset-devices', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -183,7 +185,7 @@ app.post('/smart-home-api/reset-devices', (request, response) => {
  * Removing a device would be supplying the device id without any traits.
  */
 app.post('/smart-home-api/remove-device', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -230,7 +232,7 @@ app.post('/smart-home-api/remove-device', (request, response) => {
  * }
  */
 app.post('/smart-home-api/exec', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -262,7 +264,7 @@ app.post('/smart-home-api/exec', (request, response) => {
 });
 
 app.post('/smart-home-api/execute-scene', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   reqdata = request.body;
@@ -301,7 +303,7 @@ app.post('/smart-home-api/execute-scene', (request, response) => {
 app.post('/smart-home-api/status', (request, response) => {
   // console.log('post /smart-home-api/status');
 
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -474,7 +476,7 @@ app.requestSync = (authToken, uid) => {
  * Pushes the current state of a device to the HomeGraph
  */
 app.post('/smart-home-api/report-state', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {

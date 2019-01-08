@@ -40,7 +40,10 @@
  */
 
 const config = require('./config-provider');
-const Data = {};
+const fs = require('fs');
+let Data = {
+  version: 0,
+};
 
 /**
  * Structure of Auth
@@ -73,7 +76,7 @@ const Data = {};
  * for testing this mock OAuth server. These fake users can be used just to
  * test the service. This is not real user data.
  */
-const Auth = {
+let Auth = {
   clients: {
     'RKkWfsi0Z9': {
       clientId: 'RKkWfsi0Z9',
@@ -202,7 +205,41 @@ Auth.clients[config.smartHomeProviderGoogleClientId] = {
   clientSecret: config.smartHomeProvideGoogleClientSecret,
 };
 
-Data.version = 0;
+writeData = function(filename, data) {
+  fs.writeFile(filename, JSON.stringify(data, null, 2), 'utf8', (err) => {
+    if (err) {
+      console.log(err);
+    }
+  });
+};
+
+readDataAuth = function() {
+  fs.readFile('auth.json', 'utf8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      Auth = JSON.parse(data);
+      console.log(Auth);
+    }
+  });
+};
+
+readData = function() {
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      Data = JSON.parse(data);
+      console.log(Data);
+    }
+  });
+};
+
+init = function() {
+  readDataAuth();
+  readData();
+};
+
 
 /**
  * get a full status for everything stored for a user
@@ -227,7 +264,7 @@ Data.version = 0;
  *   }
  * }
  */
-Data.getUid = function(uid) {
+getUid = function(uid) {
   // console.log('getUid', uid);
   return Data[uid];
 };
@@ -246,7 +283,7 @@ Data.getUid = function(uid) {
  *   <device id>: {...},
  * }
  */
-Data.getStates = function(uid, deviceIds = undefined) {
+getStates = function(uid, deviceIds = undefined) {
   // console.log('getStates', uid);
   let states = {};
 
@@ -282,7 +319,7 @@ Data.getStates = function(uid, deviceIds = undefined) {
  *   <device id>: {...},
  * }
  */
-Data.getProperties = function(uid, deviceIds = undefined) {
+getProperties = function(uid, deviceIds = undefined) {
   // console.log('getProperties', uid);
   let properties = {};
 
@@ -331,7 +368,7 @@ Data.getProperties = function(uid, deviceIds = undefined) {
  *   }
  * }
  */
-Data.getStatus = function(uid, deviceIds = undefined) {
+  getStatus = function(uid, deviceIds = undefined) {
   // return Data.getUid(uid);
   if (!Data[uid]) {
     console.error('cannot getStatus of devices without first registering ' +
@@ -343,7 +380,7 @@ Data.getStatus = function(uid, deviceIds = undefined) {
   if (!deviceIds || deviceIds == {} ||
       (Object.keys(deviceIds).length === 0
           && deviceIds.constructor === Object)) {
-    return Data.getUid(uid);
+    return getUid(uid);
   }
 
   let devices = {};
@@ -365,16 +402,18 @@ Data.getStatus = function(uid, deviceIds = undefined) {
  * @param uid
  * @param authToken
  */
-Data.registerUser = function(uid, authToken) {
+registerUser = function(uid, authToken) {
   if (!authToken) {
     console.error('cannot register a user without an authToken!');
     return;
   }
   if (!Data[uid]) {
-Data[uid] = {};
-}
+    Data[uid] = {};
+  }
   Auth[uid] = authToken;
   Data.version++;
+  writeData('data.json', Data);
+  writeData('auth.json', Auth);
 };
 
 /**
@@ -383,7 +422,7 @@ Data[uid] = {};
  * @param uid
  * @param authToken
  */
-Data.removeUser = function(uid, authToken) {
+removeUser = function(uid, authToken) {
   if (!authToken) {
     console.error('cannot remove a user without an authToken!');
     return;
@@ -395,6 +434,8 @@ Data.removeUser = function(uid, authToken) {
   delete Data[uid];
   delete Auth[uid];
   Data.version++;
+  writeData('data.json', Data);
+  writeData('auth.json', Auth);
 };
 
 /**
@@ -418,7 +459,7 @@ Data.removeUser = function(uid, authToken) {
  *   }
  * }
  */
-Data.execDevice = function(uid, device) {
+execDevice = function(uid, device) {
   if (!Data[uid]) {
     console.error('cannot register a device without first registering ' +
       'the user!');
@@ -456,6 +497,7 @@ Data.execDevice = function(uid, device) {
   }
   // console.log('execDevice after', Data[uid][device.id]);
   Data.version++;
+  writeData('data.json', Data);
 };
 
 /**
@@ -464,15 +506,15 @@ Data.execDevice = function(uid, device) {
  * @param uid
  * @param device
  */
-Data.registerDevice = function(uid, device) {
+registerDevice = function(uid, device) {
   // wrapper for exec, since they do the same thing
-  Data.execDevice(uid, device);
+  execDevice(uid, device);
 };
 
 /**
  * resets user account, deleting all devices on page refresh
  */
-Data.resetDevices = function(uid) {
+resetDevices = function(uid) {
   // Deletes all devices for the user.
   if (!Data[uid]) {
     console.error('cannot remove a device without first registering the user!');
@@ -481,6 +523,7 @@ Data.resetDevices = function(uid) {
   console.info('Deleting all devices for ' + uid);
   Data[uid] = {};
   Data.version = 0;
+  writeData('data.json', Data);
 };
 
 /**
@@ -489,7 +532,7 @@ Data.resetDevices = function(uid) {
  * @param uid
  * @param device
  */
-Data.removeDevice = function(uid, device) {
+removeDevice = function(uid, device) {
   if (!Data[uid]) {
     console.error('cannot remove a device without first registering the user!');
     return;
@@ -497,6 +540,7 @@ Data.removeDevice = function(uid, device) {
   console.info('Deleting device ' + device.id + ' for ' + uid);
   delete Data[uid][device.id];
   Data.version++;
+  writeData('data.json', Data);
 };
 
 /**
@@ -506,8 +550,8 @@ Data.removeDevice = function(uid, device) {
  * @param authToken
  * @return {boolean}
  */
-Data.isValidAuth = function(uid, authToken) {
-  return (Data.getUid(uid));
+isValidAuth = function(uid, authToken) {
+  return (getUid(uid));
 
   // FIXME - reenable below once a more stable auth has been put in place
   // if (!Data.getUid(uid) || !Auth[uid])
@@ -515,15 +559,16 @@ Data.isValidAuth = function(uid, authToken) {
   // return (authToken == Auth[uid]);
 };
 
-exports.getUid = Data.getUid;
-exports.getStatus = Data.getStatus;
-exports.getStates = Data.getStates;
-exports.getProperties = Data.getProperties;
-exports.isValidAuth = Data.isValidAuth;
-exports.registerUser = Data.registerUser;
-exports.removeUser = Data.removeUser;
-exports.execDevice = Data.execDevice;
-exports.registerDevice = Data.registerDevice;
-exports.resetDevices = Data.resetDevices;
-exports.removeDevice = Data.removeDevice;
+exports.getUid = getUid;
+exports.getStatus = getStatus;
+exports.getStates = getStates;
+exports.getProperties = getProperties;
+exports.isValidAuth = isValidAuth;
+exports.registerUser = registerUser;
+exports.removeUser = removeUser;
+exports.execDevice = execDevice;
+exports.registerDevice = registerDevice;
+exports.resetDevices = resetDevices;
+exports.removeDevice = removeDevice;
 exports.Auth = Auth;
+exports.init = init;

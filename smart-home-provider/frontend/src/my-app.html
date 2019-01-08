@@ -491,15 +491,7 @@ limitations under the License.
           this.$.add.addEventListener('click', (e) => this.$.modal.open());
           this._auth()
             .then(() => {
-              const options = {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + AUTH_TOKEN,
-                },
-              };
-              return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT +
-                '/reset-devices', options);
+              return this._refresh();
             });
         });
       }
@@ -575,86 +567,80 @@ limitations under the License.
         };
 
         return fetch(SMART_HOME_PROVIDER_CLOUD_ENDPOINT + '/status', options)
-          .then(function(response) {
+          .then((response) => {
             return response.json();
-          }).then(function(json) {
-            delete json.uid;
+          }).then((json) => {
+            var devices = [];
             for (const key in json) {
-              this.devices[key] = json[key];
+              devices[key] = json[key];
             }
-            console.log(this.devices);
-            this._handleRefresh();
+            console.log(devices);
+            this._handleRefresh(devices);
           });
       }
 
       /**
        * Handles response from server that gets current status.
        */
-      _handleRefresh() {
-        if (Object.keys(this.devices).length == 0) {
+      _handleRefresh(devices) {
+        if (Object.keys(devices).length == 0) {
           console.log('no devices');
         } else {
-          for (const id of Object.keys(this.devices)) {
-            this.devices[id].id = id;
-            delete this.devices[id].properties.id;
-            this.devices[id].states.on = false;
-            this.devices[id].states.online = false;
-            switch (this.devices[id].properties.type) {
+          for (const id of Object.keys(devices)) {
+            devices[id].id = id;
+            delete devices[id].properties.id;
+            switch (devices[id].properties.type) {
               case 'action.devices.types.LIGHT':
-                this.app._addLight(this.devices[id]);
+                this._addLight(devices[id]);
                 break;
               case 'action.devices.types.THERMOSTAT':
-                this.app._addThermostat(this.devices[id]);
+                this._addThermostat(devices[id]);
                 break;
               case 'action.devices.types.SCENE':
-                this.app._addScene(this.devices[id]);
+                this._addScene(devices[id]);
                 break;
               case 'action.devices.types.CAMERA':
-                this.app._addCamera(this.devices[id]);
+                this._addCamera(devices[id]);
                 break;
               case 'action.devices.types.VACUUM':
-                this.devices[id].states.isRunning = false;
-                this.devices[id].states.isPaused = false;
-                this.app._addVacuum(this.devices[id]);
+                this._addVacuum(devices[id]);
                 break;
               case 'action.devices.types.WASHER':
-                this.devices[id].states.isRunning = false;
-                this.devices[id].states.isPaused = false;
-                this.app._addWasher(this.devices[id]);
+                this._addWasher(devices[id]);
                 break;
               case 'action.devices.types.REFRIGERATOR':
-                this.app._addRefrigerator(this.devices[id]);
+                this._addRefrigerator(devices[id]);
                 break;
               case 'action.devices.types.FAN':
-                this.app._addFan(this.devices[id]);
+                this._addFan(devices[id]);
                 break;
               case 'action.devices.types.KETTLE':
-                this.app._addKettle(this.devices[id]);
+                this._addKettle(devices[id]);
                 break;
               case 'action.devices.types.COFFEE_MAKER':
-                this.app._addCoffeeMaker(this.devices[id]);
+                this._addCoffeeMaker(devices[id]);
                 break;
               case 'action.devices.types.OUTLET':
-                this.app._addOutlet(this.devices[id]);
+                this._addOutlet(devices[id]);
                 break;
               case 'action.devices.types.SWITCH':
-                this.app._addSwitch(this.devices[id]);
+                this._addSwitch(devices[id]);
                 break;
               case 'action.devices.types.AIRPURIFIER':
-                this.app._addAirPurifier(this.devices[id]);
+                this._addAirPurifier(devices[id]);
                 break;
               case 'action.devices.types.AC_UNIT':
-                this.app._addAcUnit(this.devices[id]);
+                this._addAcUnit(devices[id]);
                 break;
               case 'action.devices.types.OVEN':
-                this.app._addOven(this.devices[id]);
+                this._addOven(devices[id]);
                 break;
               case 'action.devices.types.SPRINKLER':
-                this.app._addSprinkler(this.devices[id]);
+                this._addSprinkler(devices[id]);
                 break;
               default:
                 console.warn(`Unable to handle unknown device type` +
-                  `${this.devices[id].properties.type}`);
+                  `${devices[id].properties.type}`);
                 break;
             }
             nextDeviceId = parseInt(id) + 1;

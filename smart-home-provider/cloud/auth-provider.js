@@ -26,12 +26,12 @@ const util = require('util');
 // eslint-disable-next-line no-unused-vars
 const session = require('express-session');
 
-Auth.getAccessToken = function(request) {
-  return request.headers.authorization ?
-      request.headers.authorization.split(' ')[1] : null;
+Auth.getAccessToken = function(headers) {
+  return headers.authorization ?
+      headers.authorization.split(' ')[1] : null;
 };
-Auth.getUid = function(request) {
-  return request.headers.uid;
+Auth.getUid = function(headers) {
+  return headers.uid;
 };
 
 const SmartHomeModel = {};
