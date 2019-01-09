@@ -495,6 +495,10 @@ execDevice = function(uid, device) {
     // update array of states
     Data[uid][device.id].executionStates = device.executionStates;
   }
+  if (device.hasOwnProperty('reportStates')) {
+    // update array of states
+    Data[uid][device.id].reportStates = device.reportStates;
+  }
   // console.log('execDevice after', Data[uid][device.id]);
   Data.version++;
   writeData('data.json', Data);

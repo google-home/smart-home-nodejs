@@ -17,10 +17,14 @@
 const datastore = require('./cloud/datastore');
 const config = require('./cloud/config-provider');
 const authProvider = require('./cloud/auth-provider');
-const { smarthome } = require('actions-on-google');
-const bodyParser = require('body-parser')
+const {smarthome} = require('actions-on-google');
+const bodyParser = require('body-parser');
 
-var smartHomeApp;
+let smartHomeApp;
+
+function makeRequestId() {
+  return new Date().getTime().toString();
+}
 
 function registerAgent(app) {
   console.log('smart-home-app registerAgent');
@@ -28,7 +32,7 @@ function registerAgent(app) {
   smartHomeApp = smarthome({
     debug: true,
     jwt: config.jwt,
-    key: config.smartHomeProviderApiKey
+    key: config.smartHomeProviderApiKey,
   });
 
   app.use(bodyParser.json());
@@ -76,9 +80,7 @@ function registerAgent(app) {
      *   }]
      * }
      */
-    
     return query(body, headers);
-
   });
 
   smartHomeApp.onExecute((body, headers) => {
@@ -118,7 +120,6 @@ function registerAgent(app) {
      * }
      */
     return exec(body, headers);
-
   });
 
   /**
@@ -216,8 +217,8 @@ function registerAgent(app) {
     let devices = app.smartHomePropertiesSync(uid);
     if (!devices) {
       return {
-        error: 'failed'
-      }
+        error: 'failed',
+      };
     }
     let deviceList = [];
     Object.keys(devices).forEach(function(key) {
@@ -395,7 +396,7 @@ function registerAgent(app) {
     let uid = datastore.Auth.tokens[authToken].uid;
 
     let respCommands = [];
-    let commands = request.inputs[0].payload.commands
+    let commands = request.inputs[0].payload.commands;
     for (let i = 0; i < commands.length; i++) {
       let curCommand = commands[i];
       for (let j = 0; j < curCommand.execution.length; j++) {
@@ -517,10 +518,10 @@ function registerAgent(app) {
 function requestSync(uid) {
   smartHomeApp.requestSync(uid)
   .then((res) => {
-    console.log("requestSync success " + res);
+    console.log('requestSync success ' + res);
   })
   .catch((res) => {
-    console.log("requestSync error " + res);
+    console.log('requestSync error ' + res);
   });
 }
 
@@ -529,13 +530,13 @@ function reportState(uid, device) {
     console.warn(`Device ${device.id} has no states to report`);
     return;
   }
-  
+
   const reportedStates = {};
   device.reportStates.map((key) => {
     reportedStates[key] = device.states[key];
   });
   smartHomeApp.reportState( {
-    requestId: 'ff366a3cc', // Any unique ID
+    requestId: makeRequestId(), // Any unique ID
     agentUserId: uid,
     payload: {
       devices: {
@@ -546,10 +547,10 @@ function reportState(uid, device) {
     },
   })
   .then((res) => {
-    console.log("reportState success " + res);
+    console.log('reportState success ' + res);
   })
   .catch((res) => {
-    console.log("reportState error " + res);
+    console.log('reportState error ' + res);
   });
 }
 

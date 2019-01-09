@@ -51,8 +51,6 @@ app.use(session({
   cookie: {secure: false},
 }));
 const deviceConnections = {};
-// eslint-disable-next-line max-len
-//const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
 
 /**
  * auth method
@@ -364,9 +362,9 @@ app.get('/getauthcode', (req, resp) => {
   if (!req.session.user) {
     resp.status(200).send('' +
       '(function(){' +
-      'window.location.replace("/login?client_id=' +
+      'window.location.replace("' + config.smartHomeProviderCloudEndpoint + '/login?client_id=' +
       config.smartHomeProviderGoogleClientId +
-      '&redirect_uri=/frontend&state=cool_jazz")' +
+      '&redirect_uri=' + config.smartHomeProviderCloudEndpoint + '/frontend&state=cool_jazz")' +
       '})();' +
       '');// redirect to login
   } else {
