@@ -46,9 +46,9 @@ limitations under the License.
 <link rel="import" href="smart-acunit.html">
 <link rel="import" href="smart-oven.html">
 <link rel="import" href="smart-sprinkler.html">
-
 <dom-module id="my-app">
   <template>
+    <script src="../getauthcode"></script>
     <style>
       :host {
         --app-primary-color: #4285f4;
@@ -377,7 +377,7 @@ limitations under the License.
   </template>
 
   <script>
-    const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = 'smart-home-api';
+    // const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = 'smart-home-api';
     let nextDeviceId = 0;
     /*
      * @return { number } Properties of this class

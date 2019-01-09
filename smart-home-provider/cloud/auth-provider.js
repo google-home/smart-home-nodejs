@@ -224,7 +224,7 @@ Auth.registerAuth = function(app) {
 
     let clientId = req.body.client_id;
     let redirectUri = decodeURIComponent(req.body.redirect_uri);
-    if (redirectUri == '/') {
+    if (redirectUri == '/' || redirectUri == 'undefined') {
       redirectUri = config.smartHomeProviderCloudEndpoint;
     }
 

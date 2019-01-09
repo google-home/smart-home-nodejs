@@ -323,6 +323,7 @@ limitations under the License.
           this._source.addEventListener('error', function(error) {
             if (error.eventPhase == 2) {
               console.log('>>> event source closed');
+              this._source.close();
               setTimeout(this._changeEventSource.bind(this), 30000);
               return;
             } else {

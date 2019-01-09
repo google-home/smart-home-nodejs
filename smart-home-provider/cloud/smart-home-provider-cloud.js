@@ -371,6 +371,7 @@ app.get('/getauthcode', (req, resp) => {
     resp.status(200).send('' +
       'var AUTH_TOKEN = "' + req.session.user.tokens[0] + '";' +
       'var USERNAME = "' + req.session.user.name + '";' +
+      'var SMART_HOME_PROVIDER_CLOUD_ENDPOINT = "' + config.smartHomeProviderCloudEndpoint + '/smart-home-api";' +
       '');
   }
 });

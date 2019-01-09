@@ -11,7 +11,7 @@
       "program": "${workspaceFolder}/smart-home-provider/cloud/smart-home-provider-cloud.js",
       "cwd": "${workspaceFolder}/smart-home-provider",
       "args": [
-        "smart-home=\"http://localhost:3000\"",
+        "smart-home=http://localhost:3000",
         "disableReset",
       ],
       
