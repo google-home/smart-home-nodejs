@@ -52,7 +52,7 @@ app.use(session({
 }));
 const deviceConnections = {};
 // eslint-disable-next-line max-len
-const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
+//const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
 
 /**
  * auth method
@@ -135,7 +135,7 @@ app.post('/smart-home-api/register-device', (request, response) => {
     return;
   }
 
-  app.requestSync(authToken, uid);
+  app.requestSync(uid);
 
   // otherwise, all good!
   response.status(200)
@@ -169,7 +169,7 @@ app.post('/smart-home-api/reset-devices', (request, response) => {
     datastore.resetDevices(uid);
 
     // Resync for the user
-    app.requestSync(authToken, uid);
+    app.requestSync(uid);
   }
 
   // otherwise, all good!
@@ -207,7 +207,7 @@ app.post('/smart-home-api/remove-device', (request, response) => {
     return;
   }
 
-  app.requestSync(authToken, uid);
+  app.requestSync(uid);
 
   // otherwise, all good!
   response.status(200)
@@ -252,7 +252,7 @@ app.post('/smart-home-api/exec', (request, response) => {
 
   if (request.body.nameChanged) {
     console.log('calling request sync from exec to update name');
-    app.requestSync(authToken, uid);
+    app.requestSync(uid);
   }
 
   // otherwise, all good!
@@ -451,25 +451,8 @@ app.changeState = (command) => {
   });
 };
 
-app.requestSync = (authToken, uid) => {
-  // REQUEST_SYNC
-  const apiKey = config.smartHomeProviderApiKey;
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-  optBody = {
-    'agentUserId': uid,
-  };
-  options.body = JSON.stringify(optBody);
-  console.info('POST REQUEST_SYNC', requestSyncEndpoint + apiKey);
-  console.info(`POST payload: ${JSON.stringify(options)}`);
-  fetch(requestSyncEndpoint + apiKey, options)
-    .then((res) => {
-      console.log('request-sync response', res.status, res.statusText);
-    });
+app.requestSync = (uid) => {
+  googleHa.registerAgent.requestSync(uid);
 };
 
 /**
@@ -488,7 +471,7 @@ app.post('/smart-home-api/report-state', (request, response) => {
   }
 
   let device = request.body;
-  app.reportState(authToken, uid, device);
+  app.reportState(uid, device);
 
   // otherwise, all good!
   response.status(200)
@@ -499,73 +482,8 @@ app.post('/smart-home-api/report-state', (request, response) => {
 });
 
 
-app.reportState = (authToken, uid, device) => {
-  const https = require('https');
-  const {google} = require('googleapis');
-  const jwtClient = new google.auth.JWT(
-    config.jwt.client_email,
-    null,
-    config.jwt.private_key,
-    ['https://www.googleapis.com/auth/homegraph'],
-    null
-  );
-
-  const reportedStates = {};
-  if (!device.reportStates) {
-    console.warn(`Device ${device.id} has no states to report`);
-    return;
-  }
-  device.reportStates.map((key) => {
-    reportedStates[key] = device.states[key];
-  });
-  const postData = {
-    requestId: 'ff366a3cc', // Any unique ID
-    agentUserId: uid,
-    payload: {
-      devices: {
-        states: {
-          [device.id]: reportedStates,
-        },
-      },
-    },
-  };
-
-  console.log('Report State request', JSON.stringify(postData));
-
-  jwtClient.authorize((err, tokens) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const options = {
-      hostname: 'homegraph.googleapis.com',
-      port: 443,
-      path: '/v1/devices:reportStateAndNotification',
-      method: 'POST',
-      headers: {
-        Authorization: ` Bearer ${tokens.access_token}`,
-      },
-    };
-    return new Promise((resolve, reject) => {
-      let responseData = '';
-      const req = https.request(options, (res) => {
-        res.on('data', (d) => {
-          responseData += d.toString();
-        });
-        res.on('end', () => {
-          resolve(responseData);
-        });
-      });
-      req.on('error', (e) => {
-        reject(e);
-      });
-      // Write data to request body
-      req.write(JSON.stringify(postData));
-      req.end();
-    }).then((data) => {
-      console.info('Report State response', data);
-    });
-  });
+app.reportState = (uid, device) => {
+  googleHa.registerAgent.reportState(uid, device);
 };
 
 const appPort = process.env.PORT || config.devPortSmartHome;

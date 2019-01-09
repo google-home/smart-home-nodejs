@@ -20,10 +20,12 @@ const authProvider = require('./cloud/auth-provider');
 const { smarthome } = require('actions-on-google');
 const bodyParser = require('body-parser')
 
+var smartHomeApp;
+
 function registerAgent(app) {
   console.log('smart-home-app registerAgent');
 
-  const smartHomeApp = smarthome({
+  smartHomeApp = smarthome({
     debug: true,
     jwt: config.jwt,
     key: config.smartHomeProviderApiKey
@@ -387,9 +389,9 @@ function registerAgent(app) {
    *   }
    * }
    */
-  function exec(request) {
+  function exec(request, headers) {
     console.log('exec', JSON.stringify(request));
-    let authToken = authProvider.getAccessToken(request);
+    let authToken = authProvider.getAccessToken(headers);
     let uid = datastore.Auth.tokens[authToken].uid;
 
     let respCommands = [];
@@ -422,7 +424,7 @@ function registerAgent(app) {
       }
     }
     let resBody = {
-      requestId: data.requestId,
+      requestId: request.requestId,
       payload: {
         commands: respCommands,
       },
@@ -511,5 +513,47 @@ function registerAgent(app) {
     };
   }
 }
+
+function requestSync(uid) {
+  smartHomeApp.requestSync(uid)
+  .then((res) => {
+    console.log("requestSync success " + res);
+  })
+  .catch((res) => {
+    console.log("requestSync error " + res);
+  });
+}
+
+function reportState(uid, device) {
+  if (!device.reportStates) {
+    console.warn(`Device ${device.id} has no states to report`);
+    return;
+  }
+  
+  const reportedStates = {};
+  device.reportStates.map((key) => {
+    reportedStates[key] = device.states[key];
+  });
+  smartHomeApp.reportState( {
+    requestId: 'ff366a3cc', // Any unique ID
+    agentUserId: uid,
+    payload: {
+      devices: {
+        states: {
+          [device.id]: reportedStates,
+        },
+      },
+    },
+  })
+  .then((res) => {
+    console.log("reportState success " + res);
+  })
+  .catch((res) => {
+    console.log("reportState error " + res);
+  });
+}
+
+registerAgent.requestSync = requestSync;
+registerAgent.reportState = reportState;
 
 exports.registerAgent = registerAgent;
