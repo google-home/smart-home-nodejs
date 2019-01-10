@@ -494,7 +494,10 @@ function registerAgent(app) {
     // TODO - add error and debug to response
 
     deviceCommand.state[curDevice.id] = execDevice[curDevice.id].states;
-    app.changeState(deviceCommand);
+    app.changeState(deviceCommand)
+      .catch((error) =>{
+        console.error('changeState failed', error);
+      });
 
     execDevice = execDevice[curDevice.id];
 

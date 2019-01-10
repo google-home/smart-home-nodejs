@@ -309,18 +309,24 @@ limitations under the License.
       _changeEventSource() {
         if (!this.device.states.online) {
           // going offline
+          console.log('>>> event source offline ' + this.device.id);
           this._source.close();
         } else {
           // going online
+          console.log('>>> event source online ' + SMART_HOME_PROVIDER_CLOUD_ENDPOINT
+            + '/device-connection/' + this.device.id);
           this._source = new EventSource(SMART_HOME_PROVIDER_CLOUD_ENDPOINT
             + '/device-connection/' + this.device.id);
+
           this._source.addEventListener('change', function(e) {
+            console.log('>>> event source change state ',e);
             this._changeState(JSON.parse(e.data));
           }.bind(this));
-          this._source.addEventListener('pullUp', function(e) {
+            this._source.addEventListener('pullUp', function(e) {
+            console.log('>>> event source pull up ',e);
             this._exec();
           }.bind(this));
-          this._source.addEventListener('error', function(error) {
+            this._source.addEventListener('error', function(error) {
             if (error.eventPhase == 2) {
               console.log('>>> event source closed');
               this._source.close();
@@ -401,7 +407,10 @@ limitations under the License.
         this._callSmartHomeProviderCloud('/exec', 'POST', this.device)
           .then(() => {
             console.log('>>> exec to Smart Home Provider Cloud');
-          });
+          })
+          .catch((err) => {
+            console.log('>>> exec to Smart Home Provider Cloud Error: ' + err);
+          })
       }
 
       /**

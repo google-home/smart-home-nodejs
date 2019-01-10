@@ -234,7 +234,7 @@ Auth.registerAuth = function(app) {
       return res.redirect(util.format(
           '%s/%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
           config.smartHomeProviderCloudEndpoint,
-          'frontend', clientId,
+          'frontend/', clientId,
           encodeURIComponent(redirectUri), req.body.state));
     }
 
@@ -242,7 +242,7 @@ Auth.registerAuth = function(app) {
     req.session.user = user;
 
     // Successful logins should send the user back to /oauth/.
-    let path = decodeURIComponent(req.body.redirect) || '/frontend';
+    let path = decodeURIComponent(req.body.redirect) || config.smartHomeProviderCloudEndpoint + '/frontend/';
 
     console.log('login successful ', user.name);
     let authCode = SmartHomeModel.generateAuthCode(user.uid,

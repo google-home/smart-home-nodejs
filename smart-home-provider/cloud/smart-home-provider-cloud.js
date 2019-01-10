@@ -334,7 +334,7 @@ app.post('/smart-home-api/status', (request, response) => {
  */
 app.get('/smart-home-api/device-connection/:deviceId', (request, response) => {
   const deviceId = request.params.deviceId;
-  // console.log('get /smart-home-api/device-connection/' + deviceId);
+  console.log('get /smart-home-api/device-connection/' + deviceId);
   deviceConnections[deviceId] = response;
 
   response.writeHead(200, {
@@ -353,7 +353,7 @@ app.get('/smart-home-api/device-connection/:deviceId', (request, response) => {
 // frontend UI
 app.set('jsonp callback name', 'cid');
 
-app.get('/getauthcode', (req, resp) => {
+app.get(['/getauthcode', '/frontend/getauthcode'], (req, resp) => {
   /* forbid caching to force reload of getauthcode */
   resp.set('Cache-Control', 'no-store, must-revalidate');
   /* set correct mime type else browser will refuse to execute the script*/
@@ -364,7 +364,7 @@ app.get('/getauthcode', (req, resp) => {
       '(function(){' +
       'window.location.replace("' + config.smartHomeProviderCloudEndpoint + '/login?client_id=' +
       config.smartHomeProviderGoogleClientId +
-      '&redirect_uri=' + config.smartHomeProviderCloudEndpoint + '/frontend&state=cool_jazz")' +
+      '&redirect_uri=' + config.smartHomeProviderCloudEndpoint + '/frontend/&state=cool_jazz")' +
       '})();' +
       '');// redirect to login
   } else {
@@ -429,17 +429,18 @@ app.changeState = (command) => {
       for (let deviceId in command.state) {
         if (!command.state.hasOwnProperty(deviceId)) continue;
         const deviceChanges = command.state[deviceId];
-        // console.log('>>> changeState: deviceChanges', deviceChanges);
+        console.log('>>> changeState: deviceChanges', deviceChanges);
 
         const connection = deviceConnections[deviceId];
         if (!connection) {
-          // console.log('>>> changeState: connection not found for', deviceId);
+          console.log('>>> changeState: connection not found for', deviceId);
           return reject(new Error('Device ' + deviceId +
             ' unknown to Amce Cloud'));
         }
-
-        connection.write('event: change\n');
-        connection.write('data: ' + JSON.stringify(deviceChanges) + '\n\n');
+        const data = 'event: change\n' + 'data: ' + JSON.stringify(deviceChanges) + '\n\n\n\n';
+        console.log('>>> changeState: deviceChanges', data);
+        
+        connection.write(data);
       }
       resolve();
     } else if (command.type === 'delete') {
@@ -499,6 +500,7 @@ const server = app.listen(appPort, () => {
         console.log('ngrok err', err);
         process.exit();
       }
+      config.smartHomeProviderCloudEndpoint = url;
 
       console.log('|###################################################|');
       console.log('|                                                   |');
