@@ -11,9 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* eslint require-jsdoc: "off" */
+/* eslint valid-jsdoc: "off" */
+/* eslint max-len: "off" */
+
 const bodyParser = require('body-parser');
 const express = require('express');
-const fetch = require('node-fetch');
 const morgan = require('morgan');
 const ngrok = require('ngrok');
 const session = require('express-session');
@@ -439,7 +442,7 @@ app.changeState = (command) => {
         }
         const data = 'event: change\n' + 'data: ' + JSON.stringify(deviceChanges) + '\n\n\n\n';
         console.log('>>> changeState: deviceChanges', data);
-        
+
         connection.write(data);
       }
       resolve();
@@ -500,11 +503,12 @@ const server = app.listen(appPort, () => {
         console.log('ngrok err', err);
         process.exit();
       }
+
       config.smartHomeProviderCloudEndpoint = url;
 
       console.log('|###################################################|');
       console.log('|                                                   |');
-      console.log('|        COPY & PASTE NGROK URL BELOW:              |');
+      console.log('|        COPY & PASTE URL BELOW:                    |');
       console.log('|                                                   |');
       console.log('|          ' + url + '                |');
       console.log('|                                                   |');
@@ -525,6 +529,19 @@ const server = app.listen(appPort, () => {
 
       console.log('Finally press the \'TEST DRAFT\' button');
     });
+  } else {
+    console.log('###################################################');
+    console.log('Use these URL\'s');
+    console.log('In the Action (actions.devices (Smart Home) ' + config.smartHomeProviderCloudEndpoint + '/smarthome');
+    console.log('In the Account linking -> Client information:  ');
+    console.log('            Client ID: ' + config.smartHomeProviderGoogleClientId);
+    console.log('        Client secret: ' + config.smartHomeProvideGoogleClientSecret);
+    console.log('    Authorization URL: ' + config.smartHomeProviderCloudEndpoint + '/oauth');
+    console.log('            Token URL: ' + config.smartHomeProviderCloudEndpoint + '/token');
+    console.log('Then press the \'SAVE\' button');
+    console.log('Then press the \'TEST\' button');
+    console.log('Goto the URL ' + config.smartHomeProviderCloudEndpoint + ' in your browser');
+    console.log('###################################################');
   }
 });
 

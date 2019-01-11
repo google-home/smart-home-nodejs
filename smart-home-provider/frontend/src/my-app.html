@@ -570,9 +570,11 @@ limitations under the License.
           .then((response) => {
             return response.json();
           }).then((json) => {
-            var devices = [];
+            let devices = [];
             for (const key in json) {
-              devices[key] = json[key];
+              if ({}.hasOwnProperty.call(json, key)) {
+                devices[key] = json[key];
+              }
             }
             console.log(devices);
             this._handleRefresh(devices);
@@ -581,6 +583,7 @@ limitations under the License.
 
       /**
        * Handles response from server that gets current status.
+       * @param {array} devices the list of devices to refresh
        */
       _handleRefresh(devices) {
         if (Object.keys(devices).length == 0) {
