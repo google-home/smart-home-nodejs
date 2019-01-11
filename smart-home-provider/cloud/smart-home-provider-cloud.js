@@ -11,9 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* eslint require-jsdoc: "off" */
+/* eslint valid-jsdoc: "off" */
+/* eslint max-len: "off" */
+
 const bodyParser = require('body-parser');
 const express = require('express');
-const fetch = require('node-fetch');
 const morgan = require('morgan');
 const ngrok = require('ngrok');
 const session = require('express-session');
@@ -33,6 +36,8 @@ if (config.smartHomeProviderApiKey === '<API_KEY>') {
   process.exit();
 }
 
+datastore.init();
+
 const app = express();
 app.use(cors());
 app.use(morgan('dev'));
@@ -49,8 +54,6 @@ app.use(session({
   cookie: {secure: false},
 }));
 const deviceConnections = {};
-// eslint-disable-next-line max-len
-const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:requestSync?key=';
 
 /**
  * auth method
@@ -64,7 +67,7 @@ const requestSyncEndpoint = 'https://homegraph.googleapis.com/v1/devices:request
  *       (http://expressjs.com/en/guide/writing-middleware.html)
  */
 app.post('/smart-home-api/auth', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!uid || !authToken) {
@@ -111,7 +114,7 @@ app.post('/smart-home-api/auth', (request, response) => {
  * }
  */
 app.post('/smart-home-api/register-device', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -133,7 +136,7 @@ app.post('/smart-home-api/register-device', (request, response) => {
     return;
   }
 
-  app.requestSync(authToken, uid);
+  app.requestSync(uid);
 
   // otherwise, all good!
   response.status(200)
@@ -147,7 +150,7 @@ app.post('/smart-home-api/register-device', (request, response) => {
  * Can be used to reset all devices for a user account.
  */
 app.post('/smart-home-api/reset-devices', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -167,7 +170,7 @@ app.post('/smart-home-api/reset-devices', (request, response) => {
     datastore.resetDevices(uid);
 
     // Resync for the user
-    app.requestSync(authToken, uid);
+    app.requestSync(uid);
   }
 
   // otherwise, all good!
@@ -183,7 +186,7 @@ app.post('/smart-home-api/reset-devices', (request, response) => {
  * Removing a device would be supplying the device id without any traits.
  */
 app.post('/smart-home-api/remove-device', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -205,7 +208,7 @@ app.post('/smart-home-api/remove-device', (request, response) => {
     return;
   }
 
-  app.requestSync(authToken, uid);
+  app.requestSync(uid);
 
   // otherwise, all good!
   response.status(200)
@@ -230,7 +233,7 @@ app.post('/smart-home-api/remove-device', (request, response) => {
  * }
  */
 app.post('/smart-home-api/exec', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -250,7 +253,7 @@ app.post('/smart-home-api/exec', (request, response) => {
 
   if (request.body.nameChanged) {
     console.log('calling request sync from exec to update name');
-    app.requestSync(authToken, uid);
+    app.requestSync(uid);
   }
 
   // otherwise, all good!
@@ -262,7 +265,7 @@ app.post('/smart-home-api/exec', (request, response) => {
 });
 
 app.post('/smart-home-api/execute-scene', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   reqdata = request.body;
@@ -301,7 +304,7 @@ app.post('/smart-home-api/execute-scene', (request, response) => {
 app.post('/smart-home-api/status', (request, response) => {
   // console.log('post /smart-home-api/status');
 
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -334,7 +337,7 @@ app.post('/smart-home-api/status', (request, response) => {
  */
 app.get('/smart-home-api/device-connection/:deviceId', (request, response) => {
   const deviceId = request.params.deviceId;
-  // console.log('get /smart-home-api/device-connection/' + deviceId);
+  console.log('get /smart-home-api/device-connection/' + deviceId);
   deviceConnections[deviceId] = response;
 
   response.writeHead(200, {
@@ -353,7 +356,7 @@ app.get('/smart-home-api/device-connection/:deviceId', (request, response) => {
 // frontend UI
 app.set('jsonp callback name', 'cid');
 
-app.get('/getauthcode', (req, resp) => {
+app.get(['/getauthcode', '/frontend/getauthcode'], (req, resp) => {
   /* forbid caching to force reload of getauthcode */
   resp.set('Cache-Control', 'no-store, must-revalidate');
   /* set correct mime type else browser will refuse to execute the script*/
@@ -362,15 +365,16 @@ app.get('/getauthcode', (req, resp) => {
   if (!req.session.user) {
     resp.status(200).send('' +
       '(function(){' +
-      'window.location.replace("/login?client_id=' +
+      'window.location.replace("' + config.smartHomeProviderCloudEndpoint + '/login?client_id=' +
       config.smartHomeProviderGoogleClientId +
-      '&redirect_uri=/frontend&state=cool_jazz")' +
+      '&redirect_uri=' + config.smartHomeProviderCloudEndpoint + '/frontend/&state=cool_jazz")' +
       '})();' +
       '');// redirect to login
   } else {
     resp.status(200).send('' +
       'var AUTH_TOKEN = "' + req.session.user.tokens[0] + '";' +
       'var USERNAME = "' + req.session.user.name + '";' +
+      'var SMART_HOME_PROVIDER_CLOUD_ENDPOINT = "' + config.smartHomeProviderCloudEndpoint + '/smart-home-api";' +
       '');
   }
 });
@@ -428,17 +432,18 @@ app.changeState = (command) => {
       for (let deviceId in command.state) {
         if (!command.state.hasOwnProperty(deviceId)) continue;
         const deviceChanges = command.state[deviceId];
-        // console.log('>>> changeState: deviceChanges', deviceChanges);
+        console.log('>>> changeState: deviceChanges', deviceChanges);
 
         const connection = deviceConnections[deviceId];
         if (!connection) {
-          // console.log('>>> changeState: connection not found for', deviceId);
+          console.log('>>> changeState: connection not found for', deviceId);
           return reject(new Error('Device ' + deviceId +
             ' unknown to Amce Cloud'));
         }
+        const data = 'event: change\n' + 'data: ' + JSON.stringify(deviceChanges) + '\n\n\n\n';
+        console.log('>>> changeState: deviceChanges', data);
 
-        connection.write('event: change\n');
-        connection.write('data: ' + JSON.stringify(deviceChanges) + '\n\n');
+        connection.write(data);
       }
       resolve();
     } else if (command.type === 'delete') {
@@ -449,32 +454,15 @@ app.changeState = (command) => {
   });
 };
 
-app.requestSync = (authToken, uid) => {
-  // REQUEST_SYNC
-  const apiKey = config.smartHomeProviderApiKey;
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-  optBody = {
-    'agentUserId': uid,
-  };
-  options.body = JSON.stringify(optBody);
-  console.info('POST REQUEST_SYNC', requestSyncEndpoint + apiKey);
-  console.info(`POST payload: ${JSON.stringify(options)}`);
-  fetch(requestSyncEndpoint + apiKey, options)
-    .then((res) => {
-      console.log('request-sync response', res.status, res.statusText);
-    });
+app.requestSync = (uid) => {
+  googleHa.registerAgent.requestSync(uid);
 };
 
 /**
  * Pushes the current state of a device to the HomeGraph
  */
 app.post('/smart-home-api/report-state', (request, response) => {
-  let authToken = authProvider.getAccessToken(request);
+  let authToken = authProvider.getAccessToken(request.headers);
   let uid = datastore.Auth.tokens[authToken].uid;
 
   if (!datastore.isValidAuth(uid, authToken)) {
@@ -486,7 +474,7 @@ app.post('/smart-home-api/report-state', (request, response) => {
   }
 
   let device = request.body;
-  app.reportState(authToken, uid, device);
+  app.reportState(uid, device);
 
   // otherwise, all good!
   response.status(200)
@@ -497,73 +485,8 @@ app.post('/smart-home-api/report-state', (request, response) => {
 });
 
 
-app.reportState = (authToken, uid, device) => {
-  const https = require('https');
-  const {google} = require('googleapis');
-  const jwtClient = new google.auth.JWT(
-    config.jwt.client_email,
-    null,
-    config.jwt.private_key,
-    ['https://www.googleapis.com/auth/homegraph'],
-    null
-  );
-
-  const reportedStates = {};
-  if (!device.reportStates) {
-    console.warn(`Device ${device.id} has no states to report`);
-    return;
-  }
-  device.reportStates.map((key) => {
-    reportedStates[key] = device.states[key];
-  });
-  const postData = {
-    requestId: 'ff366a3cc', // Any unique ID
-    agentUserId: uid,
-    payload: {
-      devices: {
-        states: {
-          [device.id]: reportedStates,
-        },
-      },
-    },
-  };
-
-  console.log('Report State request', JSON.stringify(postData));
-
-  jwtClient.authorize((err, tokens) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    const options = {
-      hostname: 'homegraph.googleapis.com',
-      port: 443,
-      path: '/v1/devices:reportStateAndNotification',
-      method: 'POST',
-      headers: {
-        Authorization: ` Bearer ${tokens.access_token}`,
-      },
-    };
-    return new Promise((resolve, reject) => {
-      let responseData = '';
-      const req = https.request(options, (res) => {
-        res.on('data', (d) => {
-          responseData += d.toString();
-        });
-        res.on('end', () => {
-          resolve(responseData);
-        });
-      });
-      req.on('error', (e) => {
-        reject(e);
-      });
-      // Write data to request body
-      req.write(JSON.stringify(postData));
-      req.end();
-    }).then((data) => {
-      console.info('Report State response', data);
-    });
-  });
+app.reportState = (uid, device) => {
+  googleHa.registerAgent.reportState(uid, device);
 };
 
 const appPort = process.env.PORT || config.devPortSmartHome;
@@ -581,9 +504,11 @@ const server = app.listen(appPort, () => {
         process.exit();
       }
 
+      config.smartHomeProviderCloudEndpoint = url;
+
       console.log('|###################################################|');
       console.log('|                                                   |');
-      console.log('|        COPY & PASTE NGROK URL BELOW:              |');
+      console.log('|        COPY & PASTE URL BELOW:                    |');
       console.log('|                                                   |');
       console.log('|          ' + url + '                |');
       console.log('|                                                   |');
@@ -604,6 +529,19 @@ const server = app.listen(appPort, () => {
 
       console.log('Finally press the \'TEST DRAFT\' button');
     });
+  } else {
+    console.log('###################################################');
+    console.log('Use these URL\'s');
+    console.log('In the Action (actions.devices (Smart Home) ' + config.smartHomeProviderCloudEndpoint + '/smarthome');
+    console.log('In the Account linking -> Client information:  ');
+    console.log('            Client ID: ' + config.smartHomeProviderGoogleClientId);
+    console.log('        Client secret: ' + config.smartHomeProvideGoogleClientSecret);
+    console.log('    Authorization URL: ' + config.smartHomeProviderCloudEndpoint + '/oauth');
+    console.log('            Token URL: ' + config.smartHomeProviderCloudEndpoint + '/token');
+    console.log('Then press the \'SAVE\' button');
+    console.log('Then press the \'TEST\' button');
+    console.log('Goto the URL ' + config.smartHomeProviderCloudEndpoint + ' in your browser');
+    console.log('###################################################');
   }
 });
 

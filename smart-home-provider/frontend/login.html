@@ -61,8 +61,6 @@ limitations under the License.
     <meta name="google-signin-scope" content="profile email">
 
     <script>
-        const SMART_HOME_PROVIDER_CLOUD_ENDPOINT = '/smart-home-api';
-
         // Setup Polymer options
         window.Polymer = {
             dom: 'shadow',
@@ -199,7 +197,7 @@ limitations under the License.
         <h1>Link your devices to Google</h1>
         <img src='images/assistant-small.png' />
 
-        <form action='/login' method='post' id='loginform'>
+        <form action='login' method='post' id='loginform'>
             <paper-input label="Username" value="rick" name="paper_username">
                 <iron-icon icon="social:person" prefix></iron-icon>
             </paper-input>

@@ -1,0 +1,179 @@
+{
+	"info": {
+		"_postman_id": "f7d0b1f6-7fc4-4458-a9de-42a4728a1387",
+		"name": "Home Control",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sync",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "psokmCxKjfhk7qHLeYd1",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"requestId\": \"ff36a3cc-ec34-11e6-b1a0-64510650abcf\",\n    \"inputs\": [{\n      \"intent\": \"action.devices.SYNC\"\n    }\n    ]\n\t\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/smarthome",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"smarthome"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "query",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "psokmCxKjfhk7qHLeYd1",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"requestId\": \"ff36a3cc-ec34-11e6-b1a0-64510650abcf\",\n    \"inputs\": [{\n      \"intent\": \"action.devices.QUERY\",\n        \"payload\": {\n\t        \"devices\": [\n\t        \t{\n\t        \t\t\"id\": \"0\"\n\t\t        },\n\t        \t{\n\t        \t\t\"id\": \"1\"\n\t\t        }\n        \t]\n    \t}\n    }]\n\t\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/smarthome",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"smarthome"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Execute",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "psokmCxKjfhk7qHLeYd1",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"requestId\": \"ff36a3cc-ec34-11e6-b1a0-64510650abcf\",\n    \"inputs\": [{\n      \"intent\": \"action.devices.EXECUTE\",\n        \"payload\": {\n        \t\"commands\":[{\n\t\t        \"devices\": [\n\t\t        \t{\n\t\t        \t\t\"id\": \"0\"\n\t\t\t        }\n\t\t        \n\t        \t],\n\t        \t\"execution\": [{\n\t        \t\t\"command\": \"action.devices.commands.OnOff\",\n\t        \t\t\"params\": {\n\t        \t\t\t\"on\": true\n\t        \t\t}\n\t        \t}]\n        \t}]\n    \t}\n    }]\n\t\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/smarthome",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"smarthome"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "accessToken",
+				"value": "psokmCxKjfhk7qHLeYd1",
+				"type": "string"
+			},
+			{
+				"key": "tokenType",
+				"value": "bearer",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	}
+}

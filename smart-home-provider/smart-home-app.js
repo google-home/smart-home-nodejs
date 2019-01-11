@@ -15,155 +15,113 @@
 /* eslint valid-jsdoc: "off" */
 
 const datastore = require('./cloud/datastore');
+const config = require('./cloud/config-provider');
 const authProvider = require('./cloud/auth-provider');
+const {smarthome} = require('actions-on-google');
+const bodyParser = require('body-parser');
+
+let smartHomeApp;
+
+function makeRequestId() {
+  return new Date().getTime().toString();
+}
 
 function registerAgent(app) {
   console.log('smart-home-app registerAgent');
 
-  /**
-   *
-   * action: {
-   *   initialTrigger: {
-   *     intent: [
-   *       "action.devices.SYNC",
-   *       "action.devices.QUERY",
-   *       "action.devices.EXECUTE"
-   *     ]
-   *   },
-   *   httpExecution: "https://example.org/device/agent",
-   *   accountLinking: {
-   *     authenticationUrl: "https://example.org/device/auth"
-   *   }
-   * }
-   */
-  app.post('/smarthome', function(request, response) {
-    console.log('post /smarthome', request.headers);
-    let reqdata = request.body;
-    console.log('post /smarthome', reqdata);
-
-    let authToken = authProvider.getAccessToken(request);
-    let uid = datastore.Auth.tokens[authToken].uid;
-
-    if (!reqdata.inputs) {
-      response.status(401).set({
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }).json({error: 'missing inputs'});
-    }
-    for (let i = 0; i < reqdata.inputs.length; i++) {
-      let input = reqdata.inputs[i];
-      let intent = input.intent;
-      if (!intent) {
-        response.status(401).set({
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }).json({error: 'missing inputs'});
-        continue;
-      }
-      switch (intent) {
-        case 'action.devices.SYNC':
-          console.log('post /smarthome SYNC');
-          /**
-           * request:
-           * {
-           *  "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
-           *  "inputs": [{
-           *      "intent": "action.devices.SYNC",
-           *  }]
-           * }
-           */
-          sync({
-            uid: uid,
-            auth: authToken,
-            requestId: reqdata.requestId,
-          }, response);
-          break;
-        case 'action.devices.QUERY':
-          console.log('post /smarthome QUERY');
-          /**
-           * request:
-           * {
-           *   "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
-           *   "inputs": [{
-           *       "intent": "action.devices.QUERY",
-           *       "payload": {
-           *          "devices": [{
-           *            "id": "123",
-           *            "customData": {
-           *              "fooValue": 12,
-           *              "barValue": true,
-           *              "bazValue": "alpaca sauce"
-           *            }
-           *          }, {
-           *            "id": "234",
-           *            "customData": {
-           *              "fooValue": 74,
-           *              "barValue": false,
-           *              "bazValue": "sheep dip"
-           *            }
-           *          }]
-           *       }
-           *   }]
-           * }
-           */
-          query({
-            uid: uid,
-            auth: authToken,
-            requestId: reqdata.requestId,
-            devices: reqdata.inputs[0].payload.devices,
-          }, response);
-
-          break;
-        case 'action.devices.EXECUTE':
-          console.log('post /smarthome EXECUTE');
-          /**
-           * request:
-           * {
-           *   "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
-           *   "inputs": [{
-           *     "intent": "action.devices.EXECUTE",
-           *     "payload": {
-           *       "commands": [{
-           *         "devices": [{
-           *           "id": "123",
-           *           "customData": {
-           *             "fooValue": 12,
-           *             "barValue": true,
-           *             "bazValue": "alpaca sauce"
-           *           }
-           *         }, {
-           *           "id": "234",
-           *           "customData": {
-           *              "fooValue": 74,
-           *              "barValue": false,
-           *              "bazValue": "sheep dip"
-           *           }
-           *         }],
-           *         "execution": [{
-           *           "command": "action.devices.commands.OnOff",
-           *           "params": {
-           *             "on": true
-           *           }
-           *         }]
-           *       }]
-           *     }
-           *   }]
-           * }
-           */
-          exec({
-            uid: uid,
-            auth: authToken,
-            requestId: reqdata.requestId,
-            commands: reqdata.inputs[0].payload.commands,
-          }, response);
-
-          break;
-        default:
-          response.status(401).set({
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          }).json({error: 'missing intent'});
-          break;
-      }
-    }
+  smartHomeApp = smarthome({
+    debug: true,
+    jwt: config.jwt,
+    key: config.smartHomeProviderApiKey,
   });
+
+  app.use(bodyParser.json());
+  app.post('/smarthome', smartHomeApp);
+
+  smartHomeApp.onSync((body, headers) => {
+    console.log('post /smarthome SYNC');
+    /**
+     * request:
+     * {
+     *  "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
+     *  "inputs": [{
+     *      "intent": "action.devices.SYNC",
+     *  }]
+     * }
+     */
+    return sync(body, headers);
+  });
+
+  smartHomeApp.onQuery((body, headers) => {
+    console.log('post /smarthome QUERY');
+    /**
+     * request:
+     * {
+     *   "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
+     *   "inputs": [{
+     *       "intent": "action.devices.QUERY",
+     *       "payload": {
+     *          "devices": [{
+     *            "id": "123",
+     *            "customData": {
+     *              "fooValue": 12,
+     *              "barValue": true,
+     *              "bazValue": "alpaca sauce"
+     *            }
+     *          }, {
+     *            "id": "234",
+     *            "customData": {
+     *              "fooValue": 74,
+     *              "barValue": false,
+     *              "bazValue": "sheep dip"
+     *            }
+     *          }]
+     *       }
+     *   }]
+     * }
+     */
+    return query(body, headers);
+  });
+
+  smartHomeApp.onExecute((body, headers) => {
+    console.log('post /smarthome EXECUTE');
+    /**
+     * request:
+     * {
+     *   "requestId": "ff36a3cc-ec34-11e6-b1a0-64510650abcf",
+     *   "inputs": [{
+     *     "intent": "action.devices.EXECUTE",
+     *     "payload": {
+     *       "commands": [{
+     *         "devices": [{
+     *           "id": "123",
+     *           "customData": {
+     *             "fooValue": 12,
+     *             "barValue": true,
+     *             "bazValue": "alpaca sauce"
+     *           }
+     *         }, {
+     *           "id": "234",
+     *           "customData": {
+     *              "fooValue": 74,
+     *              "barValue": false,
+     *              "bazValue": "sheep dip"
+     *           }
+     *         }],
+     *         "execution": [{
+     *           "command": "action.devices.commands.OnOff",
+     *           "params": {
+     *             "on": true
+     *           }
+     *         }]
+     *       }]
+     *     }
+     *   }]
+     * }
+     */
+    return exec(body, headers);
+  });
+
   /**
    * Enables prelight (OPTIONS) requests made cross-domain.
    */
@@ -251,14 +209,16 @@ function registerAgent(app) {
    *   }
    * }
    */
-  function sync(data, response) {
-    console.log('sync', JSON.stringify(data));
-    let devices = app.smartHomePropertiesSync(data.uid);
+  function sync(request, headers) {
+    console.log('sync', JSON.stringify(request));
+    let authToken = authProvider.getAccessToken(headers);
+    let uid = datastore.Auth.tokens[authToken].uid;
+
+    let devices = app.smartHomePropertiesSync(uid);
     if (!devices) {
-      response.status(500).set({
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }).json({error: 'failed'});
-      return;
+      return {
+        error: 'failed',
+      };
     }
     let deviceList = [];
     Object.keys(devices).forEach(function(key) {
@@ -270,14 +230,13 @@ function registerAgent(app) {
       }
     });
     let deviceProps = {
-      requestId: data.requestId,
+      requestId: request.requestId,
       payload: {
-        agentUserId: data.uid,
+        agentUserId: uid,
         devices: deviceList,
       },
     };
     console.log('sync response', JSON.stringify(deviceProps));
-    response.status(200).json(deviceProps);
     return deviceProps;
   }
 
@@ -323,25 +282,27 @@ function registerAgent(app) {
    *   }
    * }
    */
-  function query(data, response) {
-    console.log('query', JSON.stringify(data));
-    let deviceIds = getDeviceIds(data.devices);
+  function query(request, headers) {
+    console.log('query', JSON.stringify(request));
+    let authToken = authProvider.getAccessToken(headers);
+    let uid = datastore.Auth.tokens[authToken].uid;
 
-    let devices = app.smartHomeQueryStates(data.uid, deviceIds);
+    let deviceIds = getDeviceIds(request.inputs[0].payload.devices);
+
+    let devices = app.smartHomeQueryStates(uid, deviceIds);
     if (!devices) {
-      response.status(500).set({
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }).json({error: 'failed'});
-      return;
+      // response.status(500).set({
+      //   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      // }).json({error: 'failed'});
+      return {error: 'failed'};
     }
     let deviceStates = {
-      requestId: data.requestId,
+      requestId: request.requestId,
       payload: {
         devices: devices,
       },
     };
     console.log('query response', JSON.stringify(deviceStates));
-    response.status(200).json(deviceStates);
     return deviceStates;
   }
 
@@ -429,16 +390,20 @@ function registerAgent(app) {
    *   }
    * }
    */
-  function exec(data, response) {
-    console.log('exec', JSON.stringify(data));
+  function exec(request, headers) {
+    console.log('exec', JSON.stringify(request));
+    let authToken = authProvider.getAccessToken(headers);
+    let uid = datastore.Auth.tokens[authToken].uid;
+
     let respCommands = [];
-    for (let i = 0; i < data.commands.length; i++) {
-      let curCommand = data.commands[i];
+    let commands = request.inputs[0].payload.commands;
+    for (let i = 0; i < commands.length; i++) {
+      let curCommand = commands[i];
       for (let j = 0; j < curCommand.execution.length; j++) {
         let curExec = curCommand.execution[j];
         let devices = curCommand.devices;
         for (let k = 0; k < devices.length; k++) {
-          let executionResponse = execDevice(data.uid, curExec, devices[k]);
+          let executionResponse = execDevice(uid, curExec, devices[k]);
           console.log('Device exec response',
               JSON.stringify(executionResponse));
           const execState = {};
@@ -460,13 +425,12 @@ function registerAgent(app) {
       }
     }
     let resBody = {
-      requestId: data.requestId,
+      requestId: request.requestId,
       payload: {
         commands: respCommands,
       },
     };
     console.log('exec response', JSON.stringify(resBody));
-    response.status(200).json(resBody);
     return resBody;
   }
 
@@ -530,7 +494,10 @@ function registerAgent(app) {
     // TODO - add error and debug to response
 
     deviceCommand.state[curDevice.id] = execDevice[curDevice.id].states;
-    app.changeState(deviceCommand);
+    app.changeState(deviceCommand)
+      .catch((error) =>{
+        console.error('changeState failed', error);
+      });
 
     execDevice = execDevice[curDevice.id];
 
@@ -550,5 +517,47 @@ function registerAgent(app) {
     };
   }
 }
+
+function requestSync(uid) {
+  smartHomeApp.requestSync(uid)
+  .then((res) => {
+    console.log('requestSync success ' + res);
+  })
+  .catch((res) => {
+    console.log('requestSync error ' + res);
+  });
+}
+
+function reportState(uid, device) {
+  if (!device.reportStates) {
+    console.warn(`Device ${device.id} has no states to report`);
+    return;
+  }
+
+  const reportedStates = {};
+  device.reportStates.map((key) => {
+    reportedStates[key] = device.states[key];
+  });
+  smartHomeApp.reportState( {
+    requestId: makeRequestId(), // Any unique ID
+    agentUserId: uid,
+    payload: {
+      devices: {
+        states: {
+          [device.id]: reportedStates,
+        },
+      },
+    },
+  })
+  .then((res) => {
+    console.log('reportState success ' + res);
+  })
+  .catch((res) => {
+    console.log('reportState error ' + res);
+  });
+}
+
+registerAgent.requestSync = requestSync;
+registerAgent.reportState = reportState;
 
 exports.registerAgent = registerAgent;

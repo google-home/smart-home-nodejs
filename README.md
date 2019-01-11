@@ -56,8 +56,10 @@ for your project id.
 1. Click Credentials
 1. Click 'Create credentials'
 1. Click 'API key'
-1. Copy the API key shown and insert it in
-`smart-home-provider/cloud/config-provider.js`
+1. Copy the API key shown and add it to a new file
+`smart-home-provider/cloud/provider-api-key.json`
+   with the json contents { "key": "YOUR-API-KEY" }
+
    Enable Request-Sync API using [these
    instructions](https://developers.google.com/actions/smarthome/create-app#request-sync).
 
@@ -95,6 +97,12 @@ start reporting state when the state changes locally.
     * If running in a hosted env,
 
           node cloud/smart-home-provider-cloud.js smart-home="https://your_domain.com"
+
+    * If running via a web server proxy,
+
+          node cloud/smart-home-provider-cloud.js smart-home=https://your_domain.com/root_path
+
+    * If you wish to save the configured devices between runs, add the parameter "disableReset"
 
 1. In the resulting output, note the config data. In particular the client ID and client Secret.
 1. In a browser, open the ngrok URL shown.

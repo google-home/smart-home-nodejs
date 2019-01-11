@@ -116,7 +116,7 @@ limitations under the License.
           if (!this.device.states) {
             return;
           }
-          
+      
           if (this.device.states.updateToggleSettings) {
             this.device.states.currentToggleSettings =
               this.device.states.updateToggleSettings;
@@ -223,20 +223,20 @@ limitations under the License.
               isRunning: false,
               isPaused: false,
               currentRunCycle: [{
-                currentCycle: "rinse",
-                nextCycle: "spin",
-                lang: "en"
+                currentCycle: 'rinse',
+                nextCycle: 'spin',
+                lang: 'en',
               }],
               currentTotalRemainingTime: 3600,
               currentCycleRemainingTime: 1800,
               currentModeSettings: {
-                load: "large"
+                load: 'large',
               },
               currentToggleSettings: {
                 extraRinse: false,
-                permanentPress: false
-              }
-            }
+                permanentPress: false,
+              },
+            },
           };
          }
       }

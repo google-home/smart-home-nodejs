@@ -25,13 +25,14 @@ const authstore = require('./datastore').Auth;
 const util = require('util');
 // eslint-disable-next-line no-unused-vars
 const session = require('express-session');
+const config = require('./config-provider');
 
-Auth.getAccessToken = function(request) {
-  return request.headers.authorization ?
-      request.headers.authorization.split(' ')[1] : null;
+Auth.getAccessToken = function(headers) {
+  return headers.authorization ?
+      headers.authorization.split(' ')[1] : null;
 };
-Auth.getUid = function(request) {
-  return request.headers.uid;
+Auth.getUid = function(headers) {
+  return headers.uid;
 };
 
 const SmartHomeModel = {};
@@ -172,6 +173,10 @@ Auth.registerAuth = function(app) {
     let responseType = req.query.response_type;
     let authCode = req.query.code;
 
+    if (redirectUri == '/') {
+      redirectUri = config.smartHomeProviderCloudEndpoint;
+    }
+
     if ('code' != responseType) {
       return res.status(500)
         .send('response_type ' + responseType + ' must equal "code"');
@@ -192,8 +197,11 @@ Auth.registerAuth = function(app) {
     // Redirect anonymous users to login page.
     if (!user) {
       return res.redirect(util.format(
-          '/login?client_id=%s&redirect_uri=%s&redirect=%s&state=%s',
-          clientId, encodeURIComponent(redirectUri), req.path, state));
+          '%s/login?client_id=%s&redirect_uri=%s&redirect=%s&state=%s',
+          config.smartHomeProviderCloudEndpoint,
+          clientId,
+          encodeURIComponent(redirectUri),
+          req.path, state));
     }
 
     console.log('login successful ', user.name);
@@ -213,34 +221,44 @@ Auth.registerAuth = function(app) {
   // Post login.
   app.post('/login', function(req, res) {
     console.log('/login ', req.body);
+
+    let clientId = req.body.client_id;
+    let redirectUri = decodeURIComponent(req.body.redirect_uri);
+    if (redirectUri == '/' || redirectUri == 'undefined') {
+      redirectUri = config.smartHomeProviderCloudEndpoint;
+    }
+
     let user = SmartHomeModel.getUser(req.body.username, req.body.password);
     if (!user) {
       console.log('not a user', user);
       return res.redirect(util.format(
-          '%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
-          '/frontend', req.body.client_id,
-          encodeURIComponent(req.body.redirect_uri), req.body.state));
+          '%s/%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
+          config.smartHomeProviderCloudEndpoint,
+          'frontend/', clientId,
+          encodeURIComponent(redirectUri), req.body.state));
     }
 
     console.log('logging in ', user);
     req.session.user = user;
 
     // Successful logins should send the user back to /oauth/.
-    let path = decodeURIComponent(req.body.redirect) || '/frontend';
+    let path = decodeURIComponent(req.body.redirect) ||
+      config.smartHomeProviderCloudEndpoint + '/frontend/';
 
     console.log('login successful ', user.name);
     let authCode = SmartHomeModel.generateAuthCode(user.uid,
-        req.body.client_id);
+      clientId);
 
     if (authCode) {
       console.log('authCode successful ', authCode);
       return res.redirect(util.format('%s?code=%s&state=%s',
-        decodeURIComponent(req.body.redirect_uri), authCode, req.body.state));
+        redirectUri, authCode, req.body.state));
     } else {
       console.log('authCode failed');
       return res.redirect(util.format(
-          '%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
-          path, req.body.client_id, encodeURIComponent(req.body.redirect_uri),
+          '%s/%s?client_id=%s&redirect_uri=%s&state=%s&response_type=code',
+          config.smartHomeProviderCloudEndpoint,
+          path, clientId, encodeURIComponent(redirectUri),
           req.body.state));
     }
   });
