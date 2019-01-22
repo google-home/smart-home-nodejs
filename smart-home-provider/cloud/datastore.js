@@ -563,6 +563,8 @@ isValidAuth = function(uid, authToken) {
   // return (authToken == Auth[uid]);
 };
 
+Auth.registerUser = registerUser;
+
 exports.getUid = getUid;
 exports.getStatus = getStatus;
 exports.getStates = getStates;

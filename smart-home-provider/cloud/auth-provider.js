@@ -369,6 +369,7 @@ function handleAuthCode(req, res) {
     console.error('unable to generate a token', token);
     return res.status(400).send('unable to generate a token');
   }
+  authstore.registerUser(authCode.uid, token);
 
   console.log('respond success', token);
   return res.status(200).json(token);

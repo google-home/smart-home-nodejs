@@ -36,6 +36,23 @@ function registerAgent(app) {
   });
 
   app.use(bodyParser.json());
+
+  app.post('/smarthome', (request, response, next) => {
+    let authToken = authProvider.getAccessToken(request.headers);
+    let uid = datastore.Auth.tokens[authToken].uid;
+
+    if (!datastore.isValidAuth(uid, authToken)) {
+      console.error('Invalid auth', authToken, 'for user', uid);
+      response.status(403).set({
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }).json({error: 'invalid auth'});
+      return;
+    } else {
+      next();
+    }
+  });
+
+
   app.post('/smarthome', smartHomeApp);
 
   smartHomeApp.onSync((body, headers) => {
@@ -291,9 +308,6 @@ function registerAgent(app) {
 
     let devices = app.smartHomeQueryStates(uid, deviceIds);
     if (!devices) {
-      // response.status(500).set({
-      //   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      // }).json({error: 'failed'});
       return {error: 'failed'};
     }
     let deviceStates = {
