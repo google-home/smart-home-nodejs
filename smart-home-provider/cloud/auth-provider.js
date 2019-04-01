@@ -304,6 +304,7 @@ Auth.registerAuth = function(app) {
 
 /**
  * Decode authorization into client_id and client_secret.
+ * @param {Object} req ExpressJS request object
  * @return {{}}
  * {
  *   client_id: "CLIENT_ID",
@@ -311,22 +312,23 @@ Auth.registerAuth = function(app) {
  * }
  */
 function getHeaderAuthorization(req){
-  let headerAuthor = {};
-    try{
-      if(!!req.headers.authorization){
-        let authorizationString = Buffer.from(req.headers.authorization.split(" ")[1], 'base64').toString();
-        if(!!authorizationString){
-          let authorizationArray = authorizationString.split(':');
-          headerAuthor = {
-            client_id: authorizationArray[0],
-            client_secret: authorizationArray[1]
-          }
-        }
-      }
-    }catch(e){
+  try{
+    if(!req.headers.authorization)
       return {};
+
+    const authorizationString = Buffer.from(req.headers.authorization.split(" ")[1], 'base64').toString();
+    if(!authorizationString)
+      return {};
+
+    const [client_id, client_secret] = authorizationString.split(':');
+    return {
+      client_id,
+      client_secret
     }
-    return headerAuthor;
+  }catch(e){
+    return {};
+  }
+  return {};
 }
 
 /**
@@ -334,7 +336,9 @@ function getHeaderAuthorization(req){
  *   - Request's query string
  *   - Request's body
  *   - Request's header (from `authorization`)
- * @return string
+ * @param {string} key Client's key
+ * @param {Object} req ExpressJS request object
+ * @return {(string|undefined)} Return either client's value or `undefined` if it doesn't exist.
  */
 function getClientValue(key, req){
   if(!!req.query[key])
@@ -342,7 +346,7 @@ function getClientValue(key, req){
   if(!!req.body[key])
     return req.body[key];
 
-  let headerAuthor = getHeaderAuthorization(req);
+  const headerAuthor = getHeaderAuthorization(req);
   if(!!headerAuthor[key])
     return headerAuthor[key];
 
