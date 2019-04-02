@@ -312,20 +312,18 @@ Auth.registerAuth = function(app) {
  * }
  */
 function getHeaderAuthorization(req){
-  try{
-    if(!req.headers.authorization)
-      return {};
+  try {
+    if (!req.headers.authorization) return {};
 
     const authorizationString = Buffer.from(req.headers.authorization.split(" ")[1], 'base64').toString();
-    if(!authorizationString)
-      return {};
+    if(!authorizationString) return {};
 
     const [client_id, client_secret] = authorizationString.split(':');
     return {
       client_id,
       client_secret
     }
-  }catch(e){
+  } catch (e) {
     return {};
   }
   return {};
@@ -341,14 +339,11 @@ function getHeaderAuthorization(req){
  * @return {(string|undefined)} Return either client's value or `undefined` if it doesn't exist.
  */
 function getClientValue(key, req){
-  if(!!req.query[key])
-    return req.query[key];
-  if(!!req.body[key])
-    return req.body[key];
+  if(!!req.query[key]) return req.query[key];
+  if(!!req.body[key]) return req.body[key];
 
   const headerAuthor = getHeaderAuthorization(req);
-  if(!!headerAuthor[key])
-    return headerAuthor[key];
+  if(!!headerAuthor[key]) return headerAuthor[key];
 
   return undefined;
 }
