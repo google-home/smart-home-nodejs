@@ -277,20 +277,17 @@ Your app will need to handle these 3 basic requests from the Google Assistant.
         }]
     }
 
-## References and How to report bugs
-* Actions on Google documentation: [https://developers.google.com/actions/](https://developers.google.com/actions/).
-* If you find any issues, please open a bug here on GitHub.
-* Questions are answered on [StackOverflow](https://stackoverflow.com/questions/tagged/actions-on-google).
-
-## How to make contributions?
-Please read and follow the steps in the CONTRIBUTING.md.
-
+## References & Issues
++ Questions? Go to [StackOverflow](https://stackoverflow.com/questions/tagged/actions-on-google), [Assistant Developer Community on Reddit](https://www.reddit.com/r/GoogleAssistantDev/) or [Support](https://developers.google.com/actions/support/).
++ For bugs, please report an issue on Github.
++ Actions on Google [Documentation](https://developers.google.com/actions/extending-the-assistant)
++ Actions on Google [Codelabs](https://codelabs.developers.google.com/?cat=Assistant).
+ 
+## Make Contributions
+Please read and follow the steps in the [CONTRIBUTING.md](CONTRIBUTING.md).
+ 
 ## License
-See LICENSE.md.
-
+See [LICENSE](LICENSE).
+ 
 ## Terms
 Your use of this sample is subject to, and by using or downloading the sample files you agree to comply with, the [Google APIs Terms of Service](https://developers.google.com/terms/).
-
-## Google+
-Actions on Google Developers Community on Google+ [https://g.co/actionsdev](https://g.co/actionsdev).
-
