@@ -324,6 +324,7 @@ function getHeaderAuthorization(req){
       client_secret
     }
   } catch (e) {
+    console.error("Error while parsing authorization header", e);
     return {};
   }
   return {};
