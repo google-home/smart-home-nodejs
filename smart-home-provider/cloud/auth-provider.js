@@ -264,10 +264,8 @@ Auth.registerAuth = function(app) {
   app.all('/token', function(req, res) {
     console.log('/token query', req.query);
     console.log('/token body', req.body);
-    let clientId = req.query.client_id
-        ? req.query.client_id : req.body.client_id;
-    let clientSecret = req.query.client_secret
-        ? req.query.client_secret : req.body.client_secret;
+    let clientId = getClientValue('client_id', req);
+    let clientSecret = getClientValue('client_secret', req);
     let grantType = req.query.grant_type
         ? req.query.grant_type : req.body.grant_type;
 
@@ -305,6 +303,53 @@ Auth.registerAuth = function(app) {
 
 
 /**
+ * Decode authorization into client_id and client_secret.
+ * @param {Object} req ExpressJS request object
+ * @return {{}}
+ * {
+ *   client_id: "CLIENT_ID",
+ *   client_secret: "CLIENT_SECRET"
+ * }
+ */
+function getHeaderAuthorization(req){
+  try {
+    if (!req.headers.authorization) return {};
+
+    const authorizationString = Buffer.from(req.headers.authorization.split(" ")[1], 'base64').toString();
+    if(!authorizationString) return {};
+
+    const [client_id, client_secret] = authorizationString.split(':');
+    return {
+      client_id,
+      client_secret
+    }
+  } catch (e) {
+    console.error("Error while parsing authorization header", e);
+    return {};
+  }
+  return {};
+}
+
+/**
+ * Get client's key from the following order:
+ *   - Request's query string
+ *   - Request's body
+ *   - Request's header (from `authorization`)
+ * @param {string} key Client's key
+ * @param {Object} req ExpressJS request object
+ * @return {(string|undefined)} Return either client's value or `undefined` if it doesn't exist.
+ */
+function getClientValue(key, req){
+  if(!!req.query[key]) return req.query[key];
+  if(!!req.body[key]) return req.body[key];
+
+  const headerAuthor = getHeaderAuthorization(req);
+  if(!!headerAuthor[key]) return headerAuthor[key];
+
+  return undefined;
+}
+
+/**
  * @return {{}}
  * {
  *   token_type: "bearer",
@@ -314,10 +359,8 @@ Auth.registerAuth = function(app) {
  */
 function handleAuthCode(req, res) {
   console.log('handleAuthCode', req.query);
-  let clientId = req.query.client_id
-      ? req.query.client_id : req.body.client_id;
-  let clientSecret = req.query.client_secret
-      ? req.query.client_secret : req.body.client_secret;
+  let clientId = getClientValue('client_id', req);
+  let clientSecret = getClientValue('client_secret', req);
   let code = req.query.code ? req.query.code : req.body.code;
 
   let client = SmartHomeModel.getClient(clientId, clientSecret);
@@ -364,10 +407,8 @@ function handleAuthCode(req, res) {
  * }
  */
 function handleRefreshToken(req, res) {
-  let clientId = req.query.client_id
-      ? req.query.client_id : req.body.client_id;
-  let clientSecret = req.query.client_secret
-      ? req.query.client_secret : req.body.client_secret;
+  let clientId = getClientValue('client_id', req);
+  let clientSecret = getClientValue('client_secret', req);
   let refreshToken = req.query.refresh_token
       ? req.query.refresh_token : req.body.refresh_token;
 
