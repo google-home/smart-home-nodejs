@@ -149,6 +149,27 @@ export async function execute(userId: string, deviceId: string,
     throw new Error('deviceOffline')
   }
   switch (execution.command) {
+    // action.devices.traits.ArmDisarm
+    case 'action.devices.commands.ArmDisarm':
+      if (execution.params.arm !== undefined) {
+        states.isArmed = execution.params.arm
+      } else if (execution.params.cancel) {
+        // Cancel value is in relation to the arm value
+        states.isArmed = !data!!.states.isArmed
+      }
+      if (execution.params.armLevel) {
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.isArmed': states.isArmed || data!!.states.isArmed,
+          'states.currentArmLevel': execution.params.armLevel,
+        })
+        states['currentArmLevel'] = execution.params.armLevel
+      } else {
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.isArmed': states.isArmed || data!!.states.isArmed,
+        })
+      }
+      break
+
     // action.devices.traits.Brightness
     case 'action.devices.commands.BrightnessAbsolute':
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
@@ -230,6 +251,14 @@ export async function execute(userId: string, deviceId: string,
       states['generatedAlert'] = true
       break
 
+    // action.devices.traits.LockUnlock
+    case 'action.devices.commands.LockUnlock':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.isLocked': execution.params.lock,
+      })
+      states['isLocked'] = execution.params.lock
+      break
+
     // action.devices.traits.Modes
     case 'action.devices.commands.SetModes':
       const currentModeSettings: {
@@ -251,6 +280,33 @@ export async function execute(userId: string, deviceId: string,
         'states.on': execution.params.on,
       })
       states['on'] = execution.params.on
+      break
+
+    // action.devices.traits.OpenClose
+    case 'action.devices.commands.OpenClose':
+      // Check if the device can open in multiple directions
+      if (data!!.attributes && data!!.attributes.openDirection) {
+        // The device can open in more than one direction
+        const direction = execution.params.openDirection
+        interface OpenState {
+          openPercent: number,
+          openDirection: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'IN' | 'OUT'
+        }
+        data!!.states.openState.forEach((state: OpenState) => {
+          if (state.openDirection === direction) {
+            state.openPercent = execution.params.openPercent
+          }
+        })
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.openState': data!!.states.openState,
+        })
+      } else {
+        // The device can only open in one direction
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.openPercent': execution.params.openPercent,
+        })
+        states['openPercent'] = execution.params.openPercent
+      }
       break
 
     // action.devices.traits.RunCycle - No execution
@@ -322,6 +378,62 @@ export async function execute(userId: string, deviceId: string,
       states['thermostatTemperatureSetpoint'] = data!!.states.thermostatTemperatureSetpoint
       states['thermostatTemperatureAmbient'] = data!!.states.thermostatTemperatureAmbient
       states['thermostatHumidityAmbient'] = data!!.states.thermostatHumidityAmbient
+      break
+
+    // action.devices.traits.Timer
+    case 'action.devices.commands.TimerStart':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.timerRemainingSec': execution.params.timerTimeSec,
+      })
+      states['timerRemainingSec'] = execution.params.timerTimeSec
+      break
+
+    case 'action.devices.commands.TimerAdjust':
+      if (data!!.states.timerRemainingSec === -1) {
+        // No timer exists
+        throw new Error('noTimerExists')
+      }
+      const newTimerRemainingSec = data!!.states.timerRemainingSec + execution.params.timerTimeSec
+      if (newTimerRemainingSec < 0) {
+        throw new Error('valueOutOfRange')
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.timerRemainingSec': newTimerRemainingSec,
+      })
+      states['timerRemainingSec'] = newTimerRemainingSec
+      break
+
+    case 'action.devices.commands.TimerPause':
+      if (data!!.states.timerRemainingSec === -1) {
+        // No timer exists
+        throw new Error('noTimerExists')
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.timerPaused': true,
+      })
+      states['timerPaused'] = true
+      break
+
+    case 'action.devices.commands.TimerResume':
+      if (data!!.states.timerRemainingSec === -1) {
+        // No timer exists
+        throw new Error('noTimerExists')
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.timerPaused': false,
+      })
+      states['timerPaused'] = false
+      break
+
+    case 'action.devices.commands.TimerCancel':
+      if (data!!.states.timerRemainingSec === -1) {
+        // No timer exists
+        throw new Error('noTimerExists')
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.timerRemainingSec': -1,
+      })
+      states['timerRemainingSec'] = 0
       break
 
     // action.devices.traits.Toggles
