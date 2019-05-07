@@ -24,7 +24,7 @@ git clone sso://devrel/samples/assistant/smarthome/frontend
 
 ## Steps for testing with Google Assistant
 
-### Create and setup project in Actions Console
+### Create and set up project in Actions Console
 
 1. Use the [Actions on Google Console](https://console.actions.google.com) to add a new project with a name of your choosing and click *Create Project*.
 1. Select *Home Control*, then click *Smart Home*.
@@ -124,7 +124,7 @@ path
 authentication your app. Click *Save*.
 1. On the left navigation menu under *Test*, click on *Simulator*, to begin testing this app.
 
-### Setup Account linking
+### Set up Account linking
 
 1. On a device with the Google Assistant logged into the same account used
 to create the project in the Actions Console, enter your Assistant settings.
