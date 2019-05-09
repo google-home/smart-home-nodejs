@@ -19,7 +19,7 @@ Clone the project and the included frontend as a subdirectory:
 ```
 git clone https://github.com/actions-on-google/smart-home-nodejs.git
 cd smart-home-nodejs
-git clone sso://devrel/samples/assistant/smarthome/frontend
+git clone https://github.com/actions-on-google/smart-home-frontend.git
 ```
 
 ## Steps for testing with Google Assistant
@@ -68,6 +68,8 @@ for your project id.
 ```
 
 1. Update the `googleCloudProjectId` field in `src/config.provider.ts` with your project ID.
+1. Install Firebase tools by running `npm install -g firebase-tools`
+1. Run `firebase use --add <project-id>`
 
 **Note**: If you are not using Google App Engine to host your server, but still want to
 integrate with Firestore, read [this guide](https://firebase.google.com/docs/admin/setup) on
