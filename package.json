@@ -6,11 +6,11 @@
   "private": true,
   "scripts": {
     "build": "./node_modules/.bin/tsc && cp src/*.json dist/",
-    "deploy": "yarn build && gcloud app deploy && gcloud app logs tail -s default",
+    "deploy": "npm run build && gcloud app deploy && gcloud app logs tail -s default",
     "lint": "./node_modules/.bin/tslint -p .",
     "start": "node dist/index.js",
     "start:local": "node dist/index.js isLocal",
-    "test": "yarn lint"
+    "test": "npm run lint"
   },
   "author": "Google Inc.",
   "license": "Apache-2.0",

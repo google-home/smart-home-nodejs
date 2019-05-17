@@ -75,7 +75,7 @@ for your project id.
 integrate with Firestore, read [this guide](https://firebase.google.com/docs/admin/setup) on
 setting up the Firebase Admin SDK.
 
-### Deploying server
+### Deploy server to App Engine
 
 1. Run `npm install`
 1. Run `npm run build`
@@ -83,7 +83,29 @@ setting up the Firebase Admin SDK.
 You can deploy directly to [Google App Engine](https://cloud.google.com/appengine/) by running
 `npm run deploy`. If you do, you will first need the [gcloud CLI](https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version).
 
-You can run locally using Ngrok by running `npm run start:local`
+### Running the sample locally
+You can run the sample locally using ngrok, with a few modifications:
+
+1. Navigate to the [Google Cloud Console API & Services page](https://console.cloud.google.com/apis/credentials)
+1. Select **Create Credentials** and create a **Service account key**.
+    1. Create a new Service account.
+    1. Use the role **Firebase > Firebase Admin SDK Administrator Service Agent**.
+1. Create the account and download the JSON file that the console generated for you.
+   Save this as `src/firebase-admin-key.json`.
+1. Modify the initialization code at [`src/firestore`](https://github.com/actions-on-google/smart-home-nodejs/blob/master/src/firestore.ts).
+
+```
+const serviceAccount = require('./firebase-admin-key.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: https://${googleCloudProjectId}.firebaseio.com,
+})
+```
+
+1. Run `npm run build`.
+1. Run `npm run start:local`. This should print a URL in the format `https://{random-id}.ngrok.io`
+1. Edit [`frontend/index.html`](https://github.com/actions-on-google/smart-home-frontend/blob/master/index.html) to update the `API_ENDPOINT` constant to this URL.
 
 ### Setup sample service
 
