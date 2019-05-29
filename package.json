@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "private": true,
   "scripts": {
-    "build": "./node_modules/.bin/tsc && cp src/*.json dist/",
+    "build": "tsc && cp src/*.json dist/",
     "deploy": "npm run build && gcloud app deploy && gcloud app logs tail -s default",
-    "lint": "./node_modules/.bin/tslint -p .",
+    "lint": "tslint -p .",
     "start": "node dist/index.js",
     "start:local": "node dist/index.js isLocal",
     "test": "npm run lint"
@@ -36,6 +36,7 @@
   "devDependencies": {
     "tslint": "^5.9.1",
     "tslint-eslint-rules": "^5.1.0",
-    "typescript": "^3.1.3"
+    "typescript": "^3.1.3",
+    "firebase-tools": "^6.10.0"
   }
 }

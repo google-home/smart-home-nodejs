@@ -68,7 +68,6 @@ for your project id.
 ```
 
 1. Update the `googleCloudProjectId` field in `src/config.provider.ts` with your project ID.
-1. Install Firebase tools by running `npm install -g firebase-tools`
 1. Run `firebase use --add <project-id>`
 
 **Note**: If you are not using Google App Engine to host your server, but still want to
