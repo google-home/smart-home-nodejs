@@ -8,7 +8,7 @@ user authentication service with sample users and a user web portal to
 demonstrate the user experience when controlling their lights with your action.
 
 An example of a Smart Home IoT cloud engine is written here. This project can be
-integrated with a web potral for an interactive experience.
+integrated with a web portal for an interactive experience.
 
 ## Setup Instructions
 
@@ -81,7 +81,7 @@ setting up the Firebase Admin SDK.
 1. Run `npm run build`
 
 You can deploy directly to [Google App Engine](https://cloud.google.com/appengine/) by running
-`npm run deploy`. If you do, you will first need the [gcloud CLI](https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version).
+`npm run deploy`. If you do, you will first need the [gcloud CLI](https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version) configured on the same project (see `gcloud config list`)
 
 ### Running the sample locally
 You can run the sample locally using ngrok, with a few modifications:
