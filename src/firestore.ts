@@ -107,7 +107,7 @@ export async function getDevices(userId: string): Promise<SmartHomeV1SyncDevices
       },
       willReportState: data.willReportState,
       attributes: data.attributes,
-      otherDeviceIds: data.otherDeviceIds.map((id: string) => ({deviceId: id})),
+      otherDeviceIds: data.otherDeviceIds,
     }
     devices.push(device)
   })
