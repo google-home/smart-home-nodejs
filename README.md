@@ -31,9 +31,9 @@ git clone https://github.com/actions-on-google/smart-home-frontend.git
 
 ### Optional: Customize your action
 
-1. On the left navigation menu under *SETUP*, click on *Invocation*.
+1. From the top menu under *Develop*, click on *Invocation*.
 1. Add your App's name. Click *Save*.
-1. On the left navigation menu under *DEPLOY*, click on *Directory Information*.
+1. From the top menu under *DEPLOY*, click on *Directory Information*.
 1. Add your App info, including images, a contact email and privacy policy. This information can all be edited before submitting for review.
 1. Click *Save*.
 
@@ -125,7 +125,7 @@ enable it for cloud control.
 ### Start testing
 
 1. Navigate back to the [Actions on Google Console](https://console.actions.google.com).
-1. On the left navigation menu under *BUILD*, click on *Actions*. Click on *Add Your First Action* and choose your app's language(s).
+1. From the top menu under *Develop*, click on *Actions* (left nav). Click on *Add your first action* and choose your app's language(s).
 1. Enter the URL for fulfillment and click *Done*.
     1. If using Ngrok, the URL will be printed in the console, https://{random-id}.ngrok.io/smarthome
     1. If using Google App Engine, the URL will be https://{project-id}.appspot.com/smarthome
