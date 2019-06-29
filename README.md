@@ -92,7 +92,7 @@ You can run the sample locally using ngrok, with a few modifications:
     1. Use the role **Firebase > Firebase Admin SDK Administrator Service Agent**.
 1. Create the account and download the JSON file that the console generated for you.
    Save this as `src/firebase-admin-key.json`.
-1. Modify the initialization code at [`src/firestore`](https://github.com/actions-on-google/smart-home-nodejs/blob/master/src/firestore.ts).
+1. Modify the initialization code at [`src/firestore.ts`](https://github.com/actions-on-google/smart-home-nodejs/blob/master/src/firestore.ts).
 
 ```
 const serviceAccount = require('./firebase-admin-key.json');
