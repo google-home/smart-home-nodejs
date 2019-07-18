@@ -163,25 +163,30 @@ expressApp.post('/smarthome', app)
 
 expressApp.post('/smarthome/update', async (req, res) => {
   console.log(req.body)
-  const {userId, deviceId, name, nickname, states} = req.body
+  const {userId, deviceId, name, nickname, states, localDeviceId} = req.body
   try {
-    await Firestore.updateDevice(userId, deviceId, name, nickname, states)
-    const reportStateResponse = await app.reportState({
-      agentUserId: userId,
-      requestId: Math.random().toString(),
-      payload: {
-        devices: {
-          states: {
-            [deviceId]: states,
+    await Firestore.updateDevice(userId, deviceId, name, nickname, states, localDeviceId)
+    if (localDeviceId || localDeviceId === null) {
+      await app.requestSync(userId)
+    }
+    if (states) {
+      const reportStateResponse = await app.reportState({
+        agentUserId: userId,
+        requestId: Math.random().toString(),
+        payload: {
+          devices: {
+            states: {
+              [deviceId]: states,
+            },
           },
         },
-      },
-    })
-    console.log(reportStateResponse)
+      })
+      console.log(reportStateResponse)
+    }
     res.status(200).send('OK')
   } catch(e) {
     console.error(e)
-    res.status(400).send(`Error reporting state: ${e}`)
+    res.status(400).send(`Error updating device: ${e}`)
   }
 })
 
