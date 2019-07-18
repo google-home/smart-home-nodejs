@@ -24,14 +24,10 @@
     "actions-on-google": "^2.8.0",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
-    "ejs": "^2.5.7",
     "express": "^4.16.0",
-    "express-session": "^1.15.6",
     "firebase-admin": "~5.13.0",
-    "googleapis": "^27.0.0",
     "morgan": "^1.9.0",
-    "ngrok": "^2.3.0",
-    "node-fetch": "^1.6.3"
+    "ngrok": "^2.3.0"
   },
   "devDependencies": {
     "tslint": "^5.9.1",
