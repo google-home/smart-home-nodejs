@@ -57,7 +57,9 @@ export async function setHomegraphEnable(userId: string, enable: boolean) {
 }
 
 export async function updateDevice(userId: string, deviceId: string,
-    name: string, nickname: string, states: ApiClientObjectMap<string | boolean | number>) {
+                                   name: string, nickname: string,
+                                   states: ApiClientObjectMap<string | boolean | number>,
+                                   localDeviceId: string) {
 
   // Payload can contain any state data
   // tslint:disable-next-line
@@ -70,6 +72,11 @@ export async function updateDevice(userId: string, deviceId: string,
   }
   if (states) {
     updatePayload['states'] = states
+  }
+  if (localDeviceId === null) { // null means local execution has been disabled.
+    updatePayload['otherDeviceIds'] = admin.firestore.FieldValue.delete()
+  } else if (localDeviceId !== undefined) { // undefined means localDeviceId was not updated.
+    updatePayload['otherDeviceIds'] = [{deviceId: localDeviceId}]
   }
   await db.collection('users').doc(userId).collection('devices').doc(deviceId)
     .update(updatePayload)
