@@ -59,7 +59,8 @@ export async function setHomegraphEnable(userId: string, enable: boolean) {
 export async function updateDevice(userId: string, deviceId: string,
                                    name: string, nickname: string,
                                    states: ApiClientObjectMap<string | boolean | number>,
-                                   localDeviceId: string) {
+                                   localDeviceId: string,
+                                   errorCode: string) {
 
   // Payload can contain any state data
   // tslint:disable-next-line
@@ -78,7 +79,13 @@ export async function updateDevice(userId: string, deviceId: string,
   } else if (localDeviceId !== undefined) { // undefined means localDeviceId was not updated.
     updatePayload['otherDeviceIds'] = [{deviceId: localDeviceId}]
   }
-  await db.collection('users').doc(userId).collection('devices').doc(deviceId)
+  if (errorCode) {
+    updatePayload['errorCode'] = errorCode
+  }
+  await db.collection('users')
+    .doc(userId)
+    .collection('devices')
+    .doc(deviceId)
     .update(updatePayload)
 }
 
@@ -155,6 +162,9 @@ export async function execute(userId: string, deviceId: string,
   const data = doc.data()
   if (!data!!.states.online) {
     throw new Error('deviceOffline')
+  }
+  if (data!!.errorCode) {
+    throw new Error(data!!.errorCode)
   }
   switch (execution.command) {
     // action.devices.traits.ArmDisarm

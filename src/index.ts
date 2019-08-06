@@ -112,18 +112,19 @@ app.onQuery(async (body, headers) => {
 
 app.onExecute(async (body, headers) => {
   const userId = await getUserIdOrThrow(headers)
-  const commands: SmartHomeV1ExecuteResponseCommands[] = [{
+  const commands: SmartHomeV1ExecuteResponseCommands[] = []
+  const successCommand: SmartHomeV1ExecuteResponseCommands = {
     ids: [],
     status: 'SUCCESS',
     states: {},
-  }]
+  }
 
   const {devices, execution} = body.inputs[0].payload.commands[0]
   await asyncForEach(devices, async (device: {id: string}) => {
     try {
       const states = await Firestore.execute(userId, device.id, execution[0])
-      commands[0].ids.push(device.id)
-      commands[0].states = states
+      successCommand.ids.push(device.id)
+      successCommand.states = states
 
       // Report state back to Homegraph
       await app.reportState({
@@ -138,6 +139,37 @@ app.onExecute(async (body, headers) => {
         },
       })
     } catch (e) {
+      if (e.message === 'pinNeeded') {
+        commands.push({
+          ids: [device.id],
+          status: 'ERROR',
+          errorCode: 'challengeNeeded',
+          challengeNeeded: {
+            type: 'pinNeeded',
+          },
+        })
+        return
+      } else if (e.message === 'challengeFailedPinNeeded') {
+        commands.push({
+          ids: [device.id],
+          status: 'ERROR',
+          errorCode: 'challengeNeeded',
+          challengeNeeded: {
+            type: 'challengeFailedPinNeeded',
+          },
+        })
+        return
+      } else if (e.message === 'ackNeeded') {
+        commands.push({
+          ids: [device.id],
+          status: 'ERROR',
+          errorCode: 'challengeNeeded',
+          challengeNeeded: {
+            type: 'ackNeeded',
+          },
+        })
+        return
+      }
       commands.push({
         ids: [device.id],
         status: 'ERROR',
@@ -145,6 +177,10 @@ app.onExecute(async (body, headers) => {
       })
     }
   })
+
+  if (successCommand.ids.length) {
+    commands.push(successCommand)
+  }
 
   return {
     requestId: body.requestId,
@@ -163,26 +199,24 @@ expressApp.post('/smarthome', app)
 
 expressApp.post('/smarthome/update', async (req, res) => {
   console.log(req.body)
-  const {userId, deviceId, name, nickname, states, localDeviceId} = req.body
+  const {userId, deviceId, name, nickname, states, localDeviceId, errorCode} = req.body
   try {
-    await Firestore.updateDevice(userId, deviceId, name, nickname, states, localDeviceId)
+    await Firestore.updateDevice(userId, deviceId, name, nickname, states, localDeviceId, errorCode)
     if (localDeviceId || localDeviceId === null) {
       await app.requestSync(userId)
     }
-    if (states) {
-      const reportStateResponse = await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [deviceId]: states,
-            },
+    const reportStateResponse = await app.reportState({
+      agentUserId: userId,
+      requestId: Math.random().toString(),
+      payload: {
+        devices: {
+          states: {
+            [deviceId]: states,
           },
         },
-      })
-      console.log(reportStateResponse)
-    }
+      },
+    })
+    console.log(reportStateResponse)
     res.status(200).send('OK')
   } catch(e) {
     console.error(e)
