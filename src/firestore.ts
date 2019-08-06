@@ -60,7 +60,8 @@ export async function updateDevice(userId: string, deviceId: string,
                                    name: string, nickname: string,
                                    states: ApiClientObjectMap<string | boolean | number>,
                                    localDeviceId: string,
-                                   errorCode: string) {
+                                   errorCode: string,
+                                   tfa: string) {
 
   // Payload can contain any state data
   // tslint:disable-next-line
@@ -81,6 +82,11 @@ export async function updateDevice(userId: string, deviceId: string,
   }
   if (errorCode) {
     updatePayload['errorCode'] = errorCode
+  } else if (!errorCode) {
+    updatePayload['errorCode'] = ''
+  }
+  if (tfa) {
+    updatePayload['tfa'] = tfa
   }
   await db.collection('users')
     .doc(userId)
@@ -165,6 +171,15 @@ export async function execute(userId: string, deviceId: string,
   }
   if (data!!.errorCode) {
     throw new Error(data!!.errorCode)
+  }
+  if (data!!.tfa === 'ack' && !execution.challenge) {
+    throw new Error('ackNeeded')
+  } else if (data!!.tfa !== '' && !execution.challenge) {
+    throw new Error('pinNeeded')
+  } else if (data!!.tfa && execution.challenge) {
+    if (execution.challenge.pin && execution.challenge.pin !== data!!.tfa) {
+      throw new Error('challengeFailedPinNeeded')
+    }
   }
   switch (execution.command) {
     // action.devices.traits.ArmDisarm

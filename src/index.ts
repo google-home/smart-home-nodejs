@@ -199,9 +199,10 @@ expressApp.post('/smarthome', app)
 
 expressApp.post('/smarthome/update', async (req, res) => {
   console.log(req.body)
-  const {userId, deviceId, name, nickname, states, localDeviceId, errorCode} = req.body
+  const {userId, deviceId, name, nickname, states, localDeviceId, errorCode, tfa} = req.body
   try {
-    await Firestore.updateDevice(userId, deviceId, name, nickname, states, localDeviceId, errorCode)
+    await Firestore.updateDevice(userId, deviceId, name, nickname, states, localDeviceId,
+      errorCode, tfa)
     if (localDeviceId || localDeviceId === null) {
       await app.requestSync(userId)
     }
