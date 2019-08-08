@@ -87,6 +87,8 @@ export async function updateDevice(userId: string, deviceId: string,
   }
   if (tfa) {
     updatePayload['tfa'] = tfa
+  } else if (tfa !== undefined) {
+    updatePayload['tfa'] = ''
   }
   await db.collection('users')
     .doc(userId)
@@ -174,7 +176,7 @@ export async function execute(userId: string, deviceId: string,
   }
   if (data!!.tfa === 'ack' && !execution.challenge) {
     throw new Error('ackNeeded')
-  } else if (data!!.tfa !== '' && !execution.challenge) {
+  } else if (data!!.tfa && !execution.challenge) {
     throw new Error('pinNeeded')
   } else if (data!!.tfa && execution.challenge) {
     if (execution.challenge.pin && execution.challenge.pin !== data!!.tfa) {
