@@ -138,6 +138,7 @@ app.onExecute(async (body, headers) => {
           },
         },
       })
+      console.log('device state reported:', states)
     } catch (e) {
       if (e.message === 'pinNeeded') {
         commands.push({
@@ -206,18 +207,20 @@ expressApp.post('/smarthome/update', async (req, res) => {
     if (localDeviceId || localDeviceId === null) {
       await app.requestSync(userId)
     }
-    const reportStateResponse = await app.reportState({
-      agentUserId: userId,
-      requestId: Math.random().toString(),
-      payload: {
-        devices: {
-          states: {
-            [deviceId]: states,
+    if (states !== undefined) {
+      await app.reportState({
+        agentUserId: userId,
+        requestId: Math.random().toString(),
+        payload: {
+          devices: {
+            states: {
+              [deviceId]: states,
+            },
           },
         },
-      },
-    })
-    console.log(reportStateResponse)
+      })
+      console.log('device state reported:', states)
+    }
     res.status(200).send('OK')
   } catch(e) {
     console.error(e)
