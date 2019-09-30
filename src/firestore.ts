@@ -345,6 +345,15 @@ export async function execute(userId: string, deviceId: string,
       }
       break
 
+    // action.devices.traits.Reboot
+    case 'action.devices.commands.Reboot':
+      // When the device reboots, we can make it go offline until the frontend turns it back on
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.online': false,
+      })
+      // Reboot trait is stateless
+      break
+
     // action.devices.traits.Rotation
     case 'action.devices.commands.RotateAbsolute':
       if (execution.params.rotationPercent) {
