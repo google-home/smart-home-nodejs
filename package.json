@@ -27,7 +27,7 @@
     "express": "^4.16.0",
     "firebase-admin": "~5.13.0",
     "morgan": "^1.9.0",
-    "ngrok": "^2.3.0"
+    "ngrok": "^3.2.5"
   },
   "devDependencies": {
     "tslint": "^5.9.1",

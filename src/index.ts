@@ -256,20 +256,15 @@ expressApp.post('/smarthome/delete', async (req, res) => {
 
 const appPort = process.env.PORT || Config.expressPort
 
-const expressServer = expressApp.listen(appPort, () => {
+const expressServer = expressApp.listen(appPort, async () => {
   const server = expressServer.address() as AddressInfo
   const {address, port} = server
 
   console.log(`Smart home server listening at ${address}:${port}`)
 
   if (Config.useNgrok) {
-    ngrok.connect(Config.expressPort, (err, url) => {
-      if (err) {
-        console.error('Ngrok was unable to start')
-        console.error(err)
-        process.exit()
-      }
-
+    try {
+      const url = await ngrok.connect(Config.expressPort)
       console.log('')
       console.log('COPY & PASTE NGROK URL BELOW')
       console.log(url)
@@ -289,6 +284,10 @@ const expressServer = expressApp.listen(appPort, () => {
       console.log('')
 
       console.log('Finally press the \'TEST DRAFT\' button')
-    })
+    } catch (err) {
+      console.error('Ngrok was unable to start')
+      console.error(err)
+      process.exit()
+    }
   }
 })
