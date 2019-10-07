@@ -208,7 +208,13 @@ expressApp.post('/smarthome/update', async (req, res) => {
       await app.requestSync(userId)
     }
     if (states !== undefined) {
-      await app.reportState({
+      // Do state name replacement for ColorSetting trait
+      // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
+      if (states.color && states.color.spectrumRgb) {
+        states.color.spectrumRGB = states.color.spectrumRgb
+        states.color.spectrumRgb = undefined
+      }
+      const res = await app.reportState({
         agentUserId: userId,
         requestId: Math.random().toString(),
         payload: {
@@ -219,7 +225,7 @@ expressApp.post('/smarthome/update', async (req, res) => {
           },
         },
       })
-      console.log('device state reported:', states)
+      console.log('device state reported:', states, res)
     }
     res.status(200).send('OK')
   } catch(e) {
