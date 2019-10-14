@@ -345,6 +345,21 @@ export async function execute(userId: string, deviceId: string,
       }
       break
 
+    // action.devices.traits.Rotation
+    case 'action.devices.commands.RotateAbsolute':
+      if (execution.params.rotationPercent) {
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.rotationPercent': execution.params.rotationPercent,
+        })
+        states['rotationPercent'] = execution.params.rotationPercent
+      } else if (execution.params.rotationDegrees) {
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.rotationDegrees': execution.params.rotationDegrees,
+        })
+        states['rotationDegrees'] = execution.params.rotationDegrees
+      }
+      break
+
     // action.devices.traits.RunCycle - No execution
     // action.devices.traits.Scene
     case 'action.devices.commands.ActivateScene':
