@@ -378,6 +378,16 @@ export async function execute(userId: string, deviceId: string,
       // Scenes are stateless
       break
 
+    // action.devices.traits.SoftwareUpdate
+    case 'action.devices.commands.SoftwareUpdate':
+      // When the device reboots, we can make it go offline until the frontend turns it back on
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.lastSoftwareUpdateUnixTimestampSec': Math.floor(new Date().getTime() / 1000),
+        'states.online': false,
+      })
+      // SoftwareUpdate trait is stateless
+      break
+
     // action.devices.traits.StartStop
     case 'action.devices.commands.StartStop':
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
