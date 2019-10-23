@@ -278,6 +278,18 @@ export async function execute(userId: string, deviceId: string,
       })
       break
 
+    // action.devices.traits.Fill
+    case 'action.devices.commands.Fill':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.isFilled': execution.params.fill,
+        'states.currentFillLevel': execution.params.fill
+          ? (execution.params.fillLevel || 'half') : 'none',
+      })
+      states['isFilled'] = execution.params.fill
+      states['currentFillLevel'] = execution.params.fill
+        ? (execution.params.fillLevel || 'half') : 'none'
+      break
+
     // action.devices.traits.Locator
     case 'action.devices.commands.Locate':
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({

@@ -140,6 +140,7 @@ app.onExecute(async (body, headers) => {
       })
       console.log('device state reported:', states)
     } catch (e) {
+      console.error(e)
       if (e.message === 'pinNeeded') {
         commands.push({
           ids: [device.id],
