@@ -317,6 +317,14 @@ export async function execute(userId: string, deviceId: string,
         ? (execution.params.fillLevel || 'half') : 'none'
       break
 
+    // action.devices.traits.HumiditySetting
+    case 'action.devices.commands.SetHumidity':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.humiditySetpointPercent': execution.params.humidity,
+      })
+      states['humiditySetpointPercent'] = execution.params.humidity
+      break
+
     // action.devices.traits.Locator
     case 'action.devices.commands.Locate':
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
