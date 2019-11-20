@@ -255,6 +255,33 @@ export async function execute(userId: string, deviceId: string,
       states['color'] = color
       break
 
+    // action.devices.traits.Cook
+    case 'action.devices.commands.Cook':
+      if (execution.params.start) {
+        // Start cooking
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.currentCookingMode': execution.params.cookingMode,
+          'states.currentFoodPreset': execution.params.foodPreset || 'NONE',
+          'states.currentFoodQuantity': execution.params.quantity || 0,
+          'states.currentFoodUnit': execution.params.unit || 'NONE',
+        })
+        states['currentCookingMode'] = execution.params.cookingMode
+        states['currentFoodPreset'] = execution.params.foodPreset
+        states['currentFoodQuantity'] = execution.params.quantity
+        states['currentFoodUnit'] = execution.params.unit
+      } else {
+        // Done cooking, reset
+        await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+          'states.currentCookingMode': 'NONE',
+          'states.currentFoodPreset': 'NONE',
+          'states.currentFoodQuantity': 0,
+          'states.currentFoodUnit': 'NONE',
+        })
+        states['currentCookingMode'] = 'NONE'
+        states['currentFoodPreset'] = 'NONE'
+      }
+      break
+
     // action.devices.traits.Dispense
     case 'action.devices.commands.Dispense':
       if (execution.params.presetName === 'cat food bowl') {
