@@ -255,6 +255,33 @@ export async function execute(userId: string, deviceId: string,
       states['color'] = color
       break
 
+    // action.devices.traits.Dispense
+    case 'action.devices.commands.Dispense':
+      if (execution.params.presetName === 'cat food bowl') {
+        // Fill in params
+        execution.params.amount = 4
+        execution.params.unit = 'CUPS'
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.dispenseItems': [{
+          itemName: execution.params.item,
+          amountLastDispensed: {
+            amount: execution.params.amount,
+            unit: execution.params.unit,
+          },
+          isCurrentlyDispensing: execution.params.presetName !== undefined,
+        }],
+      })
+      states['dispenseItems'] = [{
+        itemName: execution.params.item,
+        amountLastDispensed: {
+          amount: execution.params.amount,
+          unit: execution.params.unit,
+        },
+        isCurrentlyDispensing: execution.params.presetName !== undefined,
+      }]
+      break
+
     // action.devices.traits.Dock
     case 'action.devices.commands.Dock':
       // This has no parameters
