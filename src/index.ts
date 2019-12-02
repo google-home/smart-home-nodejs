@@ -102,6 +102,7 @@ app.onQuery(async (body, headers) => {
     const states = await Firestore.getState(userId, device.id)
     deviceStates[device.id] = states
   })
+  deviceStates.status = 'SUCCESS'
   return {
     requestId: body.requestId,
     payload: {
