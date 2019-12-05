@@ -128,6 +128,12 @@ app.onExecute(async (body, headers) => {
       successCommand.states = states
 
       // Report state back to Homegraph
+      // Do state name replacement for ColorSetting trait
+      // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
+      if (states.color && states.color.spectrumRgb) {
+        states.color.spectrumRGB = states.color.spectrumRgb
+        states.color.spectrumRgb = undefined
+      }
       await app.reportState({
         agentUserId: userId,
         requestId: Math.random().toString(),
