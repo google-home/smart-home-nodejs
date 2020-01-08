@@ -99,10 +99,21 @@ app.onQuery(async (body, headers) => {
   const deviceStates: DeviceStatesMap = {}
   const {devices} = body.inputs[0].payload
   await asyncForEach(devices, async (device: {id: string}) => {
-    const states = await Firestore.getState(userId, device.id)
-    deviceStates[device.id] = states
+    try {
+      const states = await Firestore.getState(userId, device.id)
+      deviceStates[device.id] = {
+        ...states,
+        status: 'SUCCESS',
+      }
+    } catch (e) {
+      console.error(e)
+      deviceStates[device.id] = {
+        status: 'ERROR',
+        errorCode: 'deviceOffline',
+      }
+    }
   })
-  deviceStates.status = 'SUCCESS'
+
   return {
     requestId: body.requestId,
     payload: {
