@@ -318,6 +318,14 @@ export async function execute(userId: string, deviceId: string,
       states['isDocked'] = true
       break
 
+    // action.devices.traits.EnergyStorage
+    case 'action.devices.commands.Charge':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.isCharging': execution.params.charge,
+      })
+      states['isCharging'] = execution.params.charge
+      break
+
     // action.devices.traits.FanSpeed
     case 'action.devices.commands.SetFanSpeed':
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
