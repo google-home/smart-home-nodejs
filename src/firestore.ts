@@ -185,6 +185,31 @@ export async function execute(userId: string, deviceId: string,
     }
   }
   switch (execution.command) {
+    // action.devices.traits.AppSelector
+    case 'action.devices.commands.appSelect': {
+      const {newApplication, newApplicationName} = execution.params!
+      const currentApplication = newApplication || newApplicationName
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentApplication': currentApplication,
+      })
+      states['currentApplication'] = currentApplication
+      break
+    }
+
+    case 'action.devices.commands.appInstall': {
+      const {newApplication, newApplicationName} = execution.params!
+      const currentApplication = newApplication || newApplicationName
+      console.log(`Install app ${currentApplication}`)
+      break
+    }
+
+    case 'action.devices.commands.appSearch': {
+      const {newApplication, newApplicationName} = execution.params!
+      const currentApplication = newApplication || newApplicationName
+      console.log(`Search for app ${currentApplication}`)
+      break
+    }
+
     // action.devices.traits.ArmDisarm
     case 'action.devices.commands.ArmDisarm':
       const {arm, cancel, armLevel} = execution.params!
@@ -370,6 +395,43 @@ export async function execute(userId: string, deviceId: string,
       })
       states['humiditySetpointPercent'] = humidity
       break
+
+    // action.devices.traits.InputSelector
+    case 'action.devices.commands.SetInput':
+      const {newInput} = execution.params!
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentInput': newInput,
+      })
+      states['currentInput'] = newInput
+      break
+
+    case 'action.devices.commands.PreviousInput': {
+      // tslint:disable-next-line
+      const {availableInputs}: {availableInputs: any[]} = data!.attributes
+      const {currentInput} = data!.states
+      const currentInputIndex = availableInputs
+        .findIndex(input => input.key === currentInput)
+      const previousInputIndex = Math.min(currentInputIndex - 1, 0)
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentInput': availableInputs[previousInputIndex].key,
+      })
+      states['currentInput'] = availableInputs[previousInputIndex].key
+      break
+    }
+
+    case 'action.devices.commands.NextInput': {
+      // tslint:disable-next-line
+      const {availableInputs}: {availableInputs: any[]} = data!.attributes
+      const {currentInput} = data!.states
+      const currentInputIndex = availableInputs
+        .findIndex(input => input.key === currentInput)
+      const nextInputIndex = Math.max(currentInputIndex + 1, availableInputs.length - 1)
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentInput': availableInputs[nextInputIndex].key,
+      })
+      states['currentInput'] = availableInputs[nextInputIndex].key
+      break
+    }
 
     // action.devices.traits.Locator
     case 'action.devices.commands.Locate':
@@ -631,6 +693,94 @@ export async function execute(userId: string, deviceId: string,
         'states.currentToggleSettings': currentToggleSettings,
       })
       states['currentToggleSettings'] = currentToggleSettings
+      break
+
+    // action.devices.traits.TransportControl
+    // Traits are considered no-ops as they have no state
+    case 'action.devices.commands.mediaPrevious':
+      console.log('Play the previous media')
+      break
+
+    case 'action.devices.commands.mediaNext':
+      console.log('Play the next media')
+      break
+
+    case 'action.devices.commands.mediaRepeatMode':
+      const {isOn, isSingle} = execution.params!
+      console.log(`Repeat mode enabled: ${isOn}. Single item enabled: ${isSingle}`)
+      break
+
+    case 'action.devices.commands.mediaShuffle':
+      console.log('Shuffle the playlist of media')
+      break
+
+    case 'action.devices.commands.mediaClosedCaptioningOn':
+      const {closedCaptioningLanguage, userQueryLanguage} = execution.params!
+      console.log(`Closed captioning enabled for ${closedCaptioningLanguage} ` +
+        `for user in ${userQueryLanguage}`)
+      break
+
+    case 'action.devices.commands.mediaClosedCaptioningOff':
+      console.log('Closed captioning disabled')
+      break
+
+    case 'action.devices.commands.mediaPause':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.playbackState': 'PAUSED',
+      })
+      states['playbackState'] = 'PAUSED'
+      break
+
+    case 'action.devices.commands.mediaResume':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.playbackState': 'PLAYING',
+      })
+      states['playbackState'] = 'PLAYING'
+      break
+
+    case 'action.devices.commands.mediaStop':
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.playbackState': 'STOPPED',
+      })
+      states['playbackState'] = 'STOPPED'
+      break
+
+    // Traits are considered no-ops as they have no state
+    case 'action.devices.commands.mediaSeekRelative':
+      const {relativePositionMs} = execution.params!
+      console.log(`Seek to (now + ${relativePositionMs}) ms`)
+      break
+
+    case 'action.devices.commands.mediaSeekToPosition':
+      const {absPositionMs} = execution.params!
+      console.log(`Seek to ${absPositionMs} ms`)
+      break
+
+    // action.devices.traits.Volume
+    case 'action.devices.commands.setVolume':
+      const {volumeLevel} = execution.params!
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentVolume': volumeLevel,
+      })
+      states['currentVolume'] = volumeLevel
+      break
+
+    case 'action.devices.commands.volumeRelative':
+      const {relativeSteps} = execution.params!
+      const {currentVolume} = data!.states
+      const newVolume = currentVolume + relativeSteps
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.currentVolume': newVolume,
+      })
+      states['currentVolume'] = newVolume
+      break
+
+    case 'action.devices.commands.mute':
+      const {mute} = execution.params!
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.isMuted': mute,
+      })
+      states['isMuted'] = mute
       break
 
     default:
