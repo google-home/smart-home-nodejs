@@ -187,31 +187,33 @@ export async function execute(userId: string, deviceId: string,
   switch (execution.command) {
     // action.devices.traits.ArmDisarm
     case 'action.devices.commands.ArmDisarm':
-      if (execution.params.arm !== undefined) {
-        states.isArmed = execution.params.arm
-      } else if (execution.params.cancel) {
+      const {arm, cancel, armLevel} = execution.params!
+      if (arm !== undefined) {
+        states.isArmed = arm
+      } else if (cancel) {
         // Cancel value is in relation to the arm value
-        states.isArmed = !data!!.states.isArmed
+        states.isArmed = !data!.states.isArmed
       }
-      if (execution.params.armLevel) {
+      if (armLevel) {
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.isArmed': states.isArmed || data!!.states.isArmed,
-          'states.currentArmLevel': execution.params.armLevel,
+          'states.isArmed': states.isArmed || data!.states.isArmed,
+          'states.currentArmLevel': armLevel,
         })
-        states['currentArmLevel'] = execution.params.armLevel
+        states['currentArmLevel'] = armLevel
       } else {
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.isArmed': states.isArmed || data!!.states.isArmed,
+          'states.isArmed': states.isArmed || data!.states.isArmed,
         })
       }
       break
 
     // action.devices.traits.Brightness
     case 'action.devices.commands.BrightnessAbsolute':
+      const {brightness} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.brightness': execution.params.brightness,
+        'states.brightness': brightness,
       })
-      states['brightness'] = execution.params.brightness
+      states['brightness'] = brightness
       break
 
     // action.devices.traits.CameraStream
@@ -222,32 +224,35 @@ export async function execute(userId: string, deviceId: string,
     // action.devices.traits.ColorSetting
     case 'action.devices.commands.ColorAbsolute':
       let color = {}
-      if (execution.params.color.spectrumRGB) {
+      if (execution.params!.color.spectrumRGB) {
+        const {spectrumRGB} = execution.params!.color
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
           'states.color': {
-            spectrumRgb: execution.params.color.spectrumRGB,
+            spectrumRgb: spectrumRGB,
           },
         })
         color = {
-          spectrumRgb: execution.params.color.spectrumRGB,
+          spectrumRgb: spectrumRGB,
         }
-      } else if (execution.params.color.spectrumHSV) {
+      } else if (execution.params!.color.spectrumHSV) {
+        const {spectrumHSV} = execution.params!.color
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
           'states.color': {
-            spectrumHsv: execution.params.color.spectrumHSV,
+            spectrumHsv: spectrumHSV,
           },
         })
         color = {
-          spectrumHsv: execution.params.color.spectrumHSV,
+          spectrumHsv: spectrumHSV,
         }
-      } else if (execution.params.color.temperature) {
+      } else if (execution.params!.color.temperature) {
+        const {temperature} = execution.params!.color
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
           'states.color': {
-            temperatureK: execution.params.color.temperature,
+            temperatureK: temperature,
           },
         })
         color = {
-          temperatureK: execution.params.color.temperature,
+          temperatureK: temperature,
         }
       } else {
         throw new Error('notSupported')
@@ -257,18 +262,19 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.Cook
     case 'action.devices.commands.Cook':
-      if (execution.params.start) {
+      if (execution.params!.start) {
+        const {cookingMode, foodPreset, quantity, unit} = execution.params!
         // Start cooking
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.currentCookingMode': execution.params.cookingMode,
-          'states.currentFoodPreset': execution.params.foodPreset || 'NONE',
-          'states.currentFoodQuantity': execution.params.quantity || 0,
-          'states.currentFoodUnit': execution.params.unit || 'NONE',
+          'states.currentCookingMode': cookingMode,
+          'states.currentFoodPreset': foodPreset || 'NONE',
+          'states.currentFoodQuantity': quantity || 0,
+          'states.currentFoodUnit': unit || 'NONE',
         })
-        states['currentCookingMode'] = execution.params.cookingMode
-        states['currentFoodPreset'] = execution.params.foodPreset
-        states['currentFoodQuantity'] = execution.params.quantity
-        states['currentFoodUnit'] = execution.params.unit
+        states['currentCookingMode'] = cookingMode
+        states['currentFoodPreset'] = foodPreset
+        states['currentFoodQuantity'] = quantity
+        states['currentFoodUnit'] = unit
       } else {
         // Done cooking, reset
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
@@ -284,28 +290,30 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.Dispense
     case 'action.devices.commands.Dispense':
-      if (execution.params.presetName === 'cat food bowl') {
+      let {amount, unit} = execution.params!
+      const {item, presetName} = execution.params!
+      if (presetName === 'cat food bowl') {
         // Fill in params
-        execution.params.amount = 4
-        execution.params.unit = 'CUPS'
+        amount = 4
+        unit = 'CUPS'
       }
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
         'states.dispenseItems': [{
-          itemName: execution.params.item,
+          itemName: item,
           amountLastDispensed: {
-            amount: execution.params.amount,
-            unit: execution.params.unit,
+            amount,
+            unit,
           },
-          isCurrentlyDispensing: execution.params.presetName !== undefined,
+          isCurrentlyDispensing: presetName !== undefined,
         }],
       })
       states['dispenseItems'] = [{
-        itemName: execution.params.item,
+        itemName: item,
         amountLastDispensed: {
-          amount: execution.params.amount,
-          unit: execution.params.unit,
+          amount,
+          unit,
         },
-        isCurrentlyDispensing: execution.params.presetName !== undefined,
+        isCurrentlyDispensing: presetName !== undefined,
       }]
       break
 
@@ -320,18 +328,20 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.EnergyStorage
     case 'action.devices.commands.Charge':
+      const {charge} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.isCharging': execution.params.charge,
+        'states.isCharging': charge,
       })
-      states['isCharging'] = execution.params.charge
+      states['isCharging'] = charge
       break
 
     // action.devices.traits.FanSpeed
     case 'action.devices.commands.SetFanSpeed':
+      const {fanSpeed} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.currentFanSpeedSetting': execution.params.fanSpeed,
+        'states.currentFanSpeedSetting': fanSpeed,
       })
-      states['currentFanSpeedSetting'] = execution.params.fanSpeed
+      states['currentFanSpeedSetting'] = fanSpeed
       break
 
     case 'action.devices.commands.Reverse':
@@ -342,28 +352,30 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.Fill
     case 'action.devices.commands.Fill':
+      const {fill, fillLevel} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.isFilled': execution.params.fill,
-        'states.currentFillLevel': execution.params.fill
-          ? (execution.params.fillLevel || 'half') : 'none',
+        'states.isFilled': fill,
+        'states.currentFillLevel': fill
+          ? (fillLevel || 'half') : 'none',
       })
-      states['isFilled'] = execution.params.fill
-      states['currentFillLevel'] = execution.params.fill
-        ? (execution.params.fillLevel || 'half') : 'none'
+      states['isFilled'] = fill
+      states['currentFillLevel'] = fill ? (fillLevel || 'half') : 'none'
       break
 
     // action.devices.traits.HumiditySetting
     case 'action.devices.commands.SetHumidity':
+      const {humidity} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.humiditySetpointPercent': execution.params.humidity,
+        'states.humiditySetpointPercent': humidity,
       })
-      states['humiditySetpointPercent'] = execution.params.humidity
+      states['humiditySetpointPercent'] = humidity
       break
 
     // action.devices.traits.Locator
     case 'action.devices.commands.Locate':
+      const {silent} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.silent': execution.params.silent,
+        'states.silent': silent,
         'states.generatedAlert': true,
       })
       states['generatedAlert'] = true
@@ -371,19 +383,22 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.LockUnlock
     case 'action.devices.commands.LockUnlock':
+      const {lock} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.isLocked': execution.params.lock,
+        'states.isLocked': lock,
       })
-      states['isLocked'] = execution.params.lock
+      states['isLocked'] = lock
       break
 
     // action.devices.traits.Modes
     case 'action.devices.commands.SetModes':
+      const {updateModeSettings} = execution.params!
       const currentModeSettings: {
         [key: string]: string,
-      } = data!!.states.currentModeSettings
-      for (const mode of Object.keys(execution.params.updateModeSettings)) {
-        const setting = execution.params.updateModeSettings[mode]
+      } = data!.states.currentModeSettings
+
+      for (const mode of Object.keys(updateModeSettings)) {
+        const setting = updateModeSettings[mode]
         currentModeSettings[mode] = setting
       }
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
@@ -394,36 +409,38 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.OnOff
     case 'action.devices.commands.OnOff':
+      const {on} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.on': execution.params.on,
+        'states.on': on,
       })
-      states['on'] = execution.params.on
+      states['on'] = on
       break
 
     // action.devices.traits.OpenClose
     case 'action.devices.commands.OpenClose':
       // Check if the device can open in multiple directions
-      if (data!!.attributes && data!!.attributes.openDirection) {
+      if (data!.attributes && data!.attributes.openDirection) {
         // The device can open in more than one direction
-        const direction = execution.params.openDirection
+        const {openDirection} = execution.params!
         interface OpenState {
           openPercent: number,
           openDirection: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'IN' | 'OUT'
         }
-        data!!.states.openState.forEach((state: OpenState) => {
-          if (state.openDirection === direction) {
-            state.openPercent = execution.params.openPercent
+        data!.states.openState.forEach((state: OpenState) => {
+          if (state.openDirection === openDirection) {
+            state.openPercent = execution.params!.openPercent
           }
         })
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.openState': data!!.states.openState,
+          'states.openState': data!.states.openState,
         })
       } else {
+        const {openPercent} = execution.params!
         // The device can only open in one direction
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.openPercent': execution.params.openPercent,
+          'states.openPercent': openPercent,
         })
-        states['openPercent'] = execution.params.openPercent
+        states['openPercent'] = openPercent
       }
       break
 
@@ -438,24 +455,26 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.Rotation
     case 'action.devices.commands.RotateAbsolute':
-      if (execution.params.rotationPercent) {
+      const {rotationPercent, rotationDegrees} = execution.params!
+      if (rotationPercent) {
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.rotationPercent': execution.params.rotationPercent,
+          'states.rotationPercent': rotationPercent,
         })
-        states['rotationPercent'] = execution.params.rotationPercent
-      } else if (execution.params.rotationDegrees) {
+        states['rotationPercent'] = rotationPercent
+      } else if (rotationDegrees) {
         await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-          'states.rotationDegrees': execution.params.rotationDegrees,
+          'states.rotationDegrees': rotationDegrees,
         })
-        states['rotationDegrees'] = execution.params.rotationDegrees
+        states['rotationDegrees'] = rotationDegrees
       }
       break
 
     // action.devices.traits.RunCycle - No execution
     // action.devices.traits.Scene
     case 'action.devices.commands.ActivateScene':
+      const {deactivate} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.deactivate': execution.params.deactivate,
+        'states.deactivate': deactivate,
       })
       // Scenes are stateless
       break
@@ -472,80 +491,88 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.StartStop
     case 'action.devices.commands.StartStop':
+      const {start} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.isRunning': execution.params.start,
+        'states.isRunning': start,
       })
-      states['isRunning'] = execution.params.start
-      states['isPaused'] = data!!.states.isPaused
+      states['isRunning'] = start
+      states['isPaused'] = data!.states.isPaused
       break
 
     case 'action.devices.commands.PauseUnpause':
+      const {pause} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.isPaused': execution.params.pause,
+        'states.isPaused': pause,
       })
-      states['isPaused'] = execution.params.pause
-      states['isRunning'] = data!!.states.isRunning
+      states['isPaused'] = pause
+      states['isRunning'] = data!.states.isRunning
       break
 
     // action.devices.traits.TemperatureControl
     case 'action.devices.commands.SetTemperature':
+      const {temperature} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.temperatureSetpointCelsius': execution.params.temperature,
+        'states.temperatureSetpointCelsius': temperature,
       })
-      states['temperatureSetpointCelsius'] = execution.params.temperature
-      states['temperatureAmbientCelsius'] = data!!.states.temperatureAmbientCelsius
+      states['temperatureSetpointCelsius'] = temperature
+      states['temperatureAmbientCelsius'] = data!.states.temperatureAmbientCelsius
       break
 
     // action.devices.traits.TemperatureSetting
     case 'action.devices.commands.ThermostatTemperatureSetpoint':
+      const {thermostatTemperatureSetpoint} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.thermostatTemperatureSetpoint': execution.params.thermostatTemperatureSetpoint,
+        'states.thermostatTemperatureSetpoint': thermostatTemperatureSetpoint,
       })
-      states['thermostatTemperatureSetpoint'] = execution.params.thermostatTemperatureSetpoint
-      states['thermostatMode'] = data!!.states.thermostatMode
-      states['thermostatTemperatureAmbient'] = data!!.states.thermostatTemperatureAmbient
-      states['thermostatHumidityAmbient'] = data!!.states.thermostatHumidityAmbient
+      states['thermostatTemperatureSetpoint'] = thermostatTemperatureSetpoint
+      states['thermostatMode'] = data!.states.thermostatMode
+      states['thermostatTemperatureAmbient'] = data!.states.thermostatTemperatureAmbient
+      states['thermostatHumidityAmbient'] = data!.states.thermostatHumidityAmbient
       break
 
     case 'action.devices.commands.ThermostatTemperatureSetRange':
       const {
         thermostatTemperatureSetpointLow,
         thermostatTemperatureSetpointHigh,
-      } = execution.params
+      } = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
         'states.thermostatTemperatureSetpointLow': thermostatTemperatureSetpointLow,
         'states.thermostatTemperatureSetpointHigh': thermostatTemperatureSetpointHigh,
       })
-      states['thermostatTemperatureSetpoint'] = data!!.states.thermostatTemperatureSetpoint
-      states['thermostatMode'] = data!!.states.thermostatMode
-      states['thermostatTemperatureAmbient'] = data!!.states.thermostatTemperatureAmbient
-      states['thermostatHumidityAmbient'] = data!!.states.thermostatHumidityAmbient
+      states['thermostatTemperatureSetpoint'] = data!.states.thermostatTemperatureSetpoint
+      states['thermostatMode'] = data!.states.thermostatMode
+      states['thermostatTemperatureAmbient'] = data!.states.thermostatTemperatureAmbient
+      states['thermostatHumidityAmbient'] = data!.states.thermostatHumidityAmbient
       break
 
     case 'action.devices.commands.ThermostatSetMode':
+      const {thermostatMode} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.thermostatMode': execution.params.thermostatMode,
+        'states.thermostatMode': thermostatMode,
       })
-      states['thermostatMode'] = execution.params.thermostatMode
-      states['thermostatTemperatureSetpoint'] = data!!.states.thermostatTemperatureSetpoint
-      states['thermostatTemperatureAmbient'] = data!!.states.thermostatTemperatureAmbient
-      states['thermostatHumidityAmbient'] = data!!.states.thermostatHumidityAmbient
+      states['thermostatMode'] = thermostatMode
+      states['thermostatTemperatureSetpoint'] = data!.states.thermostatTemperatureSetpoint
+      states['thermostatTemperatureAmbient'] = data!.states.thermostatTemperatureAmbient
+      states['thermostatHumidityAmbient'] = data!.states.thermostatHumidityAmbient
       break
 
     // action.devices.traits.Timer
-    case 'action.devices.commands.TimerStart':
+    case 'action.devices.commands.TimerStart': {
+      const {timerTimeSec} = execution.params!
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
-        'states.timerRemainingSec': execution.params.timerTimeSec,
+        'states.timerRemainingSec': timerTimeSec,
       })
-      states['timerRemainingSec'] = execution.params.timerTimeSec
+      states['timerRemainingSec'] = timerTimeSec
       break
+    }
 
-    case 'action.devices.commands.TimerAdjust':
-      if (data!!.states.timerRemainingSec === -1) {
+    case 'action.devices.commands.TimerAdjust': {
+      if (data!.states.timerRemainingSec === -1) {
         // No timer exists
         throw new Error('noTimerExists')
       }
-      const newTimerRemainingSec = data!!.states.timerRemainingSec + execution.params.timerTimeSec
+      const {timerTimeSec} = execution.params!
+      const newTimerRemainingSec = data!.states.timerRemainingSec + timerTimeSec
       if (newTimerRemainingSec < 0) {
         throw new Error('valueOutOfRange')
       }
@@ -554,9 +581,10 @@ export async function execute(userId: string, deviceId: string,
       })
       states['timerRemainingSec'] = newTimerRemainingSec
       break
+    }
 
     case 'action.devices.commands.TimerPause':
-      if (data!!.states.timerRemainingSec === -1) {
+      if (data!.states.timerRemainingSec === -1) {
         // No timer exists
         throw new Error('noTimerExists')
       }
@@ -567,7 +595,7 @@ export async function execute(userId: string, deviceId: string,
       break
 
     case 'action.devices.commands.TimerResume':
-      if (data!!.states.timerRemainingSec === -1) {
+      if (data!.states.timerRemainingSec === -1) {
         // No timer exists
         throw new Error('noTimerExists')
       }
@@ -578,7 +606,7 @@ export async function execute(userId: string, deviceId: string,
       break
 
     case 'action.devices.commands.TimerCancel':
-      if (data!!.states.timerRemainingSec === -1) {
+      if (data!.states.timerRemainingSec === -1) {
         // No timer exists
         throw new Error('noTimerExists')
       }
@@ -590,11 +618,13 @@ export async function execute(userId: string, deviceId: string,
 
     // action.devices.traits.Toggles
     case 'action.devices.commands.SetToggles':
+      const {updateToggleSettings} = execution.params!
       const currentToggleSettings: {
         [key: string]: boolean,
-      } = data!!.states.currentToggleSettings
-      for (const toggle of Object.keys(execution.params.updateToggleSettings)) {
-        const enable = execution.params.updateToggleSettings[toggle]
+      } = data!.states.currentToggleSettings
+
+      for (const toggle of Object.keys(updateToggleSettings)) {
+        const enable = updateToggleSettings[toggle]
         currentToggleSettings[toggle] = enable
       }
       await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
