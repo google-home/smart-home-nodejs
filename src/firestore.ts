@@ -139,7 +139,7 @@ export async function getDevices(userId: string): Promise<SmartHomeV1SyncDevices
 }
 
 export async function getState(userId: string, deviceId: string):
-    Promise<ApiClientObjectMap<string | boolean | number>> {
+    Promise<StatesMap> {
 
   const doc = await db.collection('users').doc(userId)
     .collection('devices').doc(deviceId).get()
@@ -153,7 +153,7 @@ export async function getState(userId: string, deviceId: string):
 
 // Payload can contain any state data
 // tslint:disable-next-line
-type StatesMap = ApiClientObjectMap<any>
+export type StatesMap = ApiClientObjectMap<any>
 
 export async function execute(userId: string, deviceId: string,
     execution: SmartHomeV1ExecuteRequestExecution):

@@ -76,6 +76,28 @@ async function getUserIdOrThrow(headers: Headers): Promise<string> {
   return userId
 }
 
+async function reportState(agentUserId: string, deviceId: string,
+    states: Firestore.StatesMap) {
+  // Report state back to Homegraph
+  // Do state name replacement for ColorSetting trait
+  // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
+  if (states.color && states.color.spectrumRgb) {
+    states.color.spectrumRGB = states.color.spectrumRgb
+    states.color.spectrumRgb = undefined
+  }
+  return await app.reportState({
+    agentUserId,
+    requestId: Math.random().toString(),
+    payload: {
+      devices: {
+        states: {
+          [deviceId]: states,
+        },
+      },
+    },
+  })
+}
+
 app.onSync(async (body, headers) => {
   const userId = await getUserIdOrThrow(headers)
   await Firestore.setHomegraphEnable(userId, true)
@@ -105,6 +127,7 @@ app.onQuery(async (body, headers) => {
         ...states,
         status: 'SUCCESS',
       }
+      await reportState(userId, device.id, states)
     } catch (e) {
       console.error(e)
       deviceStates[device.id] = {
@@ -137,25 +160,7 @@ app.onExecute(async (body, headers) => {
       const states = await Firestore.execute(userId, device.id, execution[0])
       successCommand.ids.push(device.id)
       successCommand.states = states
-
-      // Report state back to Homegraph
-      // Do state name replacement for ColorSetting trait
-      // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
-      if (states.color && states.color.spectrumRgb) {
-        states.color.spectrumRGB = states.color.spectrumRgb
-        states.color.spectrumRgb = undefined
-      }
-      await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [device.id]: states,
-            },
-          },
-        },
-      })
+      await reportState(userId, device.id, states)
       console.log('device state reported:', states)
     } catch (e) {
       console.error(e)
@@ -227,23 +232,7 @@ expressApp.post('/smarthome/update', async (req, res) => {
       await app.requestSync(userId)
     }
     if (states !== undefined) {
-      // Do state name replacement for ColorSetting trait
-      // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
-      if (states.color && states.color.spectrumRgb) {
-        states.color.spectrumRGB = states.color.spectrumRgb
-        states.color.spectrumRgb = undefined
-      }
-      const res = await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [deviceId]: states,
-            },
-          },
-        },
-      })
+      const res = await reportState(userId, deviceId, states)
       console.log('device state reported:', states, res)
     }
     res.status(200).send('OK')
