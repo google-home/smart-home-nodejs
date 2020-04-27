@@ -194,6 +194,12 @@ app.onExecute(async (body, headers) => {
           },
         })
         return
+      } else if (e.message === 'PENDING') {
+        commands.push({
+          ids: [device.id],
+          status: 'PENDING',
+        })
+        return
       }
       commands.push({
         ids: [device.id],

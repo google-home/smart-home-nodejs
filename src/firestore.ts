@@ -469,6 +469,57 @@ export async function execute(userId: string, deviceId: string,
       states['currentModeSettings'] = currentModeSettings
       break
 
+    // action.devices.traits.NetworkControl
+    case 'action.devices.commands.EnableDisableGuestNetwork': {
+      const {enable} = execution.params!
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.guestNetworkEnabled': enable,
+      })
+      states['guestNetworkEnabled'] = enable
+      break
+    }
+
+    case 'action.devices.commands.EnableDisableNetworkProfile': {
+      const {profile} = execution.params!
+      if (!data!.attributes.networkProfiles.includes(profile)) {
+        throw new Error('networkProfileNotRecognized')
+      }
+      // No state change occurs
+      break
+    }
+
+    case 'action.devices.commands.TestNetworkSpeed': {
+      const {testDownloadSpeed, testUploadSpeed} = execution.params!
+      const {
+        lastNetworkDownloadSpeedTest,
+        lastNetworkUploadSpeedTest,
+      } = data!.states
+      if (testDownloadSpeed) {
+        // Randomly generate new download speed
+        lastNetworkDownloadSpeedTest.downloadSpeedMbps =
+          (Math.random() * 100).toFixed(1) // To one degree of precision
+        lastNetworkDownloadSpeedTest.unixTimestampSec =
+          Math.floor(Date.now()/1000)
+      }
+      if (testUploadSpeed) {
+        // Randomly generate new upload speed
+        lastNetworkUploadSpeedTest.uploadSpeedMbps =
+          (Math.random() * 100).toFixed(1) // To one degree of precision
+        lastNetworkUploadSpeedTest.unixTimestampSec =
+          Math.floor(Date.now()/1000)
+      }
+      await db.collection('users').doc(userId).collection('devices').doc(deviceId).update({
+        'states.lastNetworkDownloadSpeedTest': lastNetworkDownloadSpeedTest,
+        'states.lastNetworkUploadSpeedTest': lastNetworkUploadSpeedTest,
+      })
+      // This operation is asynchronous and will be pending
+      throw new Error('PENDING')
+    }
+
+    case 'action.devices.commands.GetGuestNetworkPassword':
+      states['guestNetworkPassword'] = 'wifi-password-123'
+      break
+
     // action.devices.traits.OnOff
     case 'action.devices.commands.OnOff':
       const {on} = execution.params!
