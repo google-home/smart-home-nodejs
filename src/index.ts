@@ -81,10 +81,11 @@ async function reportState(agentUserId: string, deviceId: string,
   // Report state back to Homegraph
   // Do state name replacement for ColorSetting trait
   // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
-  if (states.color && states.color.spectrumRgb) {
+  if (states.color && typeof states.color.spectrumRgb === 'number') {
     states.color.spectrumRGB = states.color.spectrumRgb
-    states.color.spectrumRgb = undefined
+    delete states.color.spectrumRgb
   }
+
   return await app.reportState({
     agentUserId,
     requestId: Math.random().toString(),
