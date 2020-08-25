@@ -68,7 +68,7 @@ for your project id.
 ```
 
 1. Update the `googleCloudProjectId` field in `src/config-provider.ts` with your project ID.
-1. Run `firebase use --add <project-id>`
+1. Run `firebase use <project-id>`
 
 **Note**: If you are not using Google App Engine to host your server, but still want to
 integrate with Firestore, read [this guide](https://firebase.google.com/docs/admin/setup) on
@@ -164,12 +164,12 @@ to create the project in the Actions Console, enter your Assistant settings.
 + For bugs, please report an issue on Github.
 + Actions on Google [Documentation](https://developers.google.com/assistant)
 + Actions on Google [Codelabs](https://codelabs.developers.google.com/?cat=Assistant).
- 
+
 ## Make Contributions
 Please read and follow the steps in the [CONTRIBUTING.md](CONTRIBUTING.md).
- 
+
 ## License
 See [LICENSE](LICENSE).
- 
+
 ## Terms
 Your use of this sample is subject to, and by using or downloading the sample files you agree to comply with, the [Google APIs Terms of Service](https://developers.google.com/terms/).

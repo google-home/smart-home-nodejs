@@ -294,7 +294,7 @@ export async function execute(userId: string, deviceId: string,
           'states.currentCookingMode': cookingMode,
           'states.currentFoodPreset': foodPreset || 'NONE',
           'states.currentFoodQuantity': quantity || 0,
-          'states.currentFoodUnit': unit || 'NONE',
+          'states.currentFoodUnit': unit || 'NO_UNITS',
         })
         states['currentCookingMode'] = cookingMode
         states['currentFoodPreset'] = foodPreset
@@ -306,7 +306,7 @@ export async function execute(userId: string, deviceId: string,
           'states.currentCookingMode': 'NONE',
           'states.currentFoodPreset': 'NONE',
           'states.currentFoodQuantity': 0,
-          'states.currentFoodUnit': 'NONE',
+          'states.currentFoodUnit': 'NO_UNITS',
         })
         states['currentCookingMode'] = 'NONE'
         states['currentFoodPreset'] = 'NONE'

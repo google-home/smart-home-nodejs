@@ -78,6 +78,7 @@ async function getUserIdOrThrow(headers: Headers): Promise<string> {
 
 async function reportState(agentUserId: string, deviceId: string,
     states: Firestore.StatesMap) {
+  console.log(`Reporting state payload for ${deviceId}`, states)
   // Report state back to Homegraph
   // Do state name replacement for ColorSetting trait
   // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
@@ -162,7 +163,6 @@ app.onExecute(async (body, headers) => {
       successCommand.ids.push(device.id)
       successCommand.states = states
       await reportState(userId, device.id, states)
-      console.log('device state reported:', states)
     } catch (e) {
       console.error(e)
       if (e.message === 'pinNeeded') {
