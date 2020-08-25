@@ -129,7 +129,6 @@ app.onQuery(async (body, headers) => {
         ...states,
         status: 'SUCCESS',
       }
-      await reportState(userId, device.id, states)
     } catch (e) {
       console.error(e)
       deviceStates[device.id] = {
