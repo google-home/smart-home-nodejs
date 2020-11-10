@@ -1,6 +1,6 @@
 node_modules/
 frontend/
-dist/
+build/
 .vscode/
 
 # service account keys

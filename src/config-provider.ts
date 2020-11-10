@@ -12,29 +12,29 @@
  * limitations under the License.
  */
 
- /**
-  * This provides a number of parameters that may be used throughout this sample.
-  */
+/**
+ * This provides a number of parameters that may be used throughout this sample.
+ */
 
 // Port used for Express server
-export const expressPort = 3000
+export const expressPort = 3000;
 
 // Client id that Google will use to make authorized requests
 // In a production environment you should change this value
-export const googleClientId = 'sampleClientId'
+export const googleClientId = 'sampleClientId';
 
 // Client secret that Google will use to make authorized requests
 // In a production environment you should change this value
-export const googleClientSecret = 'sampleClientSecret'
+export const googleClientSecret = 'sampleClientSecret';
 
-let ngrok = false
-process.argv.forEach((value) => {
+let ngrok = false;
+process.argv.forEach(value => {
   if (value.includes('isLocal')) {
-    ngrok = true
+    ngrok = true;
   }
-})
+});
 
 // Running server locally using ngrok
-export const useNgrok = ngrok
+export const useNgrok = ngrok;
 
-export const googleCloudProjectId = 'insert-your-project-id'
+export const googleCloudProjectId = 'insert-your-project-id';
