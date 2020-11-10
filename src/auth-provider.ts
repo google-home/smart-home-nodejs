@@ -19,10 +19,11 @@
  * https://developers.google.com/assistant/smarthome/develop/implement-oauth
  * for more details about implementing OAuth account linking.
  */
-
-import express from 'express';
 import util from 'util';
+
 import {Headers} from 'actions-on-google';
+import express from 'express';
+import * as functions from 'firebase-functions';
 
 import * as firestore from './firestore';
 
@@ -56,7 +57,7 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   // Here, you should validate the user account.
   // In this sample, we do not do that.
-  const responseurl = decodeURIComponent(req.body.responseurl);
+  const responseurl = decodeURIComponent(req.body.responseurl as string);
   console.log(`Redirect to ${responseurl}`);
   return res.redirect(responseurl);
 });
@@ -64,7 +65,7 @@ app.post('/login', async (req, res) => {
 app.get('/fakeauth', async (req, res) => {
   const responseurl = util.format(
     '%s?code=%s&state=%s',
-    decodeURIComponent(req.query.redirect_uri),
+    decodeURIComponent(req.query.redirect_uri as string),
     'xxxxxx',
     req.query.state
   );
@@ -98,4 +99,4 @@ app.all('/faketoken', async (req, res) => {
   res.status(HTTP_STATUS_OK).json(obj);
 });
 
-export default app;
+export const authProvider = functions.https.onRequest(app);

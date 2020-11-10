@@ -18,8 +18,8 @@ Clone the project and the included frontend as a subdirectory:
 
 ```
 git clone https://github.com/actions-on-google/smart-home-nodejs.git
+git clone https://github.com/actions-on-google/smart-home-frontend.git smart-home-nodejs/frontend
 cd smart-home-nodejs
-git clone https://github.com/actions-on-google/smart-home-frontend.git
 ```
 
 ## Steps for testing with Google Assistant
@@ -54,7 +54,7 @@ for your project id.
 1. Create the account and download a JSON file.
    Save this as `src/smart-home-key.json`.
 
-### Connect to Firebase
+### Configure Cloud Firestore
 
 1. Open your project in the [Firebase console](https://console.firebase.google.com/), and configure a Cloud Firestore database.
 1. Configure a `users` collection with a default user and a few default fields
@@ -67,68 +67,25 @@ for your project id.
             homegraph: false
 ```
 
-1. Update the `googleCloudProjectId` field in `src/config-provider.ts` with your project ID.
-1. Run `firebase use <project-id>`
+### Deploy to Firebase Cloud Functions and Hosting
 
-**Note**: If you are not using Google App Engine to host your server, but still want to
-integrate with Firestore, read [this guide](https://firebase.google.com/docs/admin/setup) on
-setting up the Firebase Admin SDK.
-
-### Deploy server to App Engine
-
-1. Run `npm install`
-1. Run `npm run build`
-
-You can deploy directly to [Google App Engine](https://cloud.google.com/appengine/) by running
-`npm run deploy`. If you do, you will first need the [gcloud CLI](https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version) configured on the same project (see `gcloud config list`)
-
-### Running the sample locally
-You can run the sample locally using ngrok, with a few modifications:
-
-1. Navigate to the [Google Cloud Console API & Services page](https://console.cloud.google.com/apis/credentials)
-1. Select **Create Credentials** and create a **Service account key**.
-    1. Create a new Service account.
-    1. Use the role **Firebase > Firebase Admin SDK Administrator Service Agent**.
-1. Create the account and download the JSON file that the console generated for you.
-   Save this as `src/firebase-admin-key.json`.
-1. Modify the initialization code at [`src/firestore`](https://github.com/actions-on-google/smart-home-nodejs/blob/master/src/firestore.ts).
+1. Run the following commands:
 
 ```
-const serviceAccount = require('./firebase-admin-key.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: `https://${googleCloudProjectId}.firebaseio.com`,
-})
-```
-
-1. Run `npm run build`.
-1. Run `npm run start:local`. This should print a URL in the format `https://{random-id}.ngrok.io`
-1. Edit [`frontend/index.html`](https://github.com/actions-on-google/smart-home-frontend/blob/master/index.html) to update the `API_ENDPOINT` constant to this URL.
-
-### Setup sample service
-
-1. Set up the web portal
-
-```
-cd frontend
 npm install
-npm run create-firebase-config
-npm run serve
+npm --prefix frontend install
+npm run deploy
 ```
 
-1. Open the web portal URL.
-1. Configure the virtual devices
-shown as you please. Click the cloud icon shown above at least one of them to
-enable it for cloud control.
+1. Open the web frontend URL.
+1. Configure the virtual devices shown as you please. Click the cloud icon shown
+   above at least one of them to enable it for cloud control.
 
 ### Start testing
 
 1. Navigate back to the [Actions on Google Console](https://console.actions.google.com).
 1. From the top menu under *Develop*, click on *Actions* (left nav). Click on *Add your first action* and choose your app's language(s).
-1. Enter the URL for fulfillment and click *Done*.
-    1. If using Ngrok, the URL will be printed in the console, https://{random-id}.ngrok.io/smarthome
-    1. If using Google App Engine, the URL will be https://{project-id}.appspot.com/smarthome
+1. Enter the URL for fulfillment: [`PROJECT_ID`](https://firebase.google.com/docs/projects/learn-more#project-id)`.web.app/fulfillment`. and click *Done*.
 1. On the left navigation menu under *ADVANCED OPTIONS*, click on *Account Linking*.
     1. Select *No, I only want to allow account creation on my website*. Click *Next*.
     1. For Linking Type, select *OAuth*.
@@ -136,15 +93,10 @@ enable it for cloud control.
     1. Under Client Information, enter the client ID and secret as defined `src/config-provider.ts`:
         * Client Id: `sampleClientId`
         * Client Secret: `sampleClientSecret`
-1. The Authorization URL is the hosted URL of your app with '/fakeauth' as the
-path
-    1. If using Ngrok, the URL will be printed in the console, https://{random-id}.ngrok.io/fakeauth
-    1. If using Google App Engine, the URL will be https://{project-id}.appspot.com/fakeauth
-1. The Token URL is the hosted URL of your app with '/faketoken' as the path
-    1. If using Ngrok, the URL will be printed in the console, https://{random-id}.ngrok.io/faketoken
-    1. If using Google App Engine, the URL will be https://{project-id}.appspot.com/faketoken
-1. Enter any remaining necessary information you might need for
-authentication your app. Click *Save*.
+    1. The Authorization URL: [`PROJECT_ID`](https://firebase.google.com/docs/projects/learn-more#project-id)`.web.app/fakeauth`
+path.
+    1. The Token URL: [`PROJECT_ID`](https://firebase.google.com/docs/projects/learn-more#project-id)`.web.app/faketoken`
+    1. Click *Save*.
 1. On the left navigation menu under *Test*, click on *Simulator*, to begin testing this app.
 
 ### Set up Account linking

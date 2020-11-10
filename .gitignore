@@ -2,6 +2,7 @@ node_modules/
 frontend/
 build/
 .vscode/
+.firebase/
 
 # service account keys
 src/*.json

@@ -15,7 +15,6 @@
 /**
  * https://developers.google.com/assistant/smarthome/develop/process-intents
  */
-
 import fs from 'fs';
 import path from 'path';
 
@@ -24,6 +23,7 @@ import {
   SmartHomeV1ExecuteResponseCommands,
   Headers,
 } from 'actions-on-google';
+import * as functions from 'firebase-functions';
 
 import {getUser} from './auth-provider';
 import * as firestore from './firestore';
@@ -38,9 +38,8 @@ try {
   console.warn('Report state and Request sync will be unavailable');
 }
 
-const app = smarthome({
+export const app = smarthome({
   jwt,
-  debug: true,
 });
 
 // Array could be of any type
@@ -192,4 +191,4 @@ app.onDisconnect(async (body, headers) => {
   await firestore.disconnect(userId);
 });
 
-export default app;
+export const fulfillment = functions.https.onRequest(app);

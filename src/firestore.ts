@@ -16,19 +16,14 @@
  * Communicates with Firestore for a user's devices to control them or read
  * the current state.
  */
-
-import * as admin from 'firebase-admin';
 import {
   SmartHomeV1SyncDevices,
   SmartHomeV1ExecuteRequestExecution,
 } from 'actions-on-google';
 import {ApiClientObjectMap} from 'actions-on-google/dist/common';
-import {googleCloudProjectId} from './config-provider';
+import * as admin from 'firebase-admin';
 
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-  databaseURL: `https://${googleCloudProjectId}.firebaseio.com`,
-});
+admin.initializeApp();
 const db = admin.firestore();
 const settings = {timestampsInSnapshots: true};
 db.settings(settings);

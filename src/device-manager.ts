@@ -15,10 +15,11 @@
 /**
  * device-manager implements a CRUD endpoint for managing smarthome devices.
  */
+import * as functions from 'firebase-functions';
 import express from 'express';
 
 import * as firestore from './firestore';
-import smarthome from './fulfillment';
+import {app as smarthome} from './fulfillment';
 
 const app = express();
 
@@ -95,4 +96,4 @@ app.post('/smarthome/delete', async (req, res) => {
   }
 });
 
-export default app;
+export const deviceManager = functions.https.onRequest(app);
