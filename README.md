@@ -56,7 +56,7 @@ for your project id.
 
 ### Connect to Firebase
 
-1. Open your project in the Firebase console, and configure a Cloud Firestore database.
+1. Open your project in the [Firebase console](https://console.firebase.google.com/), and configure a Cloud Firestore database.
 1. Configure a `users` collection with a default user and a few default fields
 
 ```
