@@ -130,18 +130,16 @@ app.onQuery(async (body, headers) => {
 app.onExecute(async (body, headers) => {
   const userId = await getUserIdOrThrow(headers);
   const commands: SmartHomeV1ExecuteResponseCommands[] = [];
-  const successCommand: SmartHomeV1ExecuteResponseCommands = {
-    ids: [],
-    status: 'SUCCESS',
-    states: {},
-  };
 
   const {devices, execution} = body.inputs[0].payload.commands[0];
   await asyncForEach(devices, async (device: {id: string}) => {
     try {
       const states = await Firestore.execute(userId, device.id, execution[0]);
-      successCommand.ids.push(device.id);
-      successCommand.states = states;
+      commands.push({
+        ids: [device.id],
+        status: 'SUCCESS',
+        states,
+      });
       const res = await app.reportState({
         agentUserId: userId,
         requestId: Math.random().toString(),
@@ -200,10 +198,6 @@ app.onExecute(async (body, headers) => {
       });
     }
   });
-
-  if (successCommand.ids.length) {
-    commands.push(successCommand);
-  }
 
   return {
     requestId: body.requestId,
