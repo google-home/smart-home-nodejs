@@ -12,292 +12,38 @@
  * limitations under the License.
  */
 
-/**
- * This is the main server code that processes requests and sends responses
- * back to users and to the HomeGraph.
- */
-
-// Express imports
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import morgan from 'morgan';
 import ngrok from 'ngrok';
 import net from 'net';
-import fs from 'fs';
-import path from 'path';
 
-// Smart home imports
-import {
-  smarthome,
-  SmartHomeV1ExecuteResponseCommands,
-  Headers,
-} from 'actions-on-google';
+import * as configProvider from './config-provider';
+import authProvider from './auth-provider';
+import deviceManager from './device-manager';
+import fulfillment from './fulfillment';
 
-// Local imports
-import * as Firestore from './firestore';
-import * as Auth from './auth-provider';
-import * as Config from './config-provider';
+const app = express();
+app.use(cors());
+app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.set('trust proxy', 1);
+app.use(authProvider);
+app.use(fulfillment);
+app.use(deviceManager);
 
-const expressApp = express();
-expressApp.use(cors());
-expressApp.use(morgan('dev'));
-expressApp.use(bodyParser.json());
-expressApp.use(bodyParser.urlencoded({extended: true}));
-expressApp.set('trust proxy', 1);
+const appPort = process.env.PORT || configProvider.expressPort;
 
-Auth.registerAuthEndpoints(expressApp);
-
-let jwt;
-try {
-  jwt = JSON.parse(
-    fs.readFileSync(path.join(__dirname, 'smart-home-key.json')).toString()
-  );
-} catch (e) {
-  console.warn('Service account key is not found');
-  console.warn('Report state and Request sync will be unavailable');
-}
-
-const app = smarthome({
-  jwt,
-  debug: true,
-});
-
-// Array could be of any type
-async function asyncForEach<T>(array: T[], callback: Function) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-}
-
-async function getUserIdOrThrow(headers: Headers): Promise<string> {
-  const userId = await Auth.getUser(headers);
-  const userExists = await Firestore.userExists(userId);
-  if (!userExists) {
-    throw new Error(
-      `User ${userId} has not created an account, so there are no devices`
-    );
-  }
-  return userId;
-}
-
-app.onSync(async (body, headers) => {
-  const userId = await getUserIdOrThrow(headers);
-  await Firestore.setHomegraphEnable(userId, true);
-
-  const devices = await Firestore.getDevices(userId);
-  return {
-    requestId: body.requestId,
-    payload: {
-      agentUserId: userId,
-      devices,
-    },
-  };
-});
-
-interface DeviceStatesMap {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
-}
-app.onQuery(async (body, headers) => {
-  const userId = await getUserIdOrThrow(headers);
-  const deviceStates: DeviceStatesMap = {};
-  const {devices} = body.inputs[0].payload;
-  await asyncForEach(devices, async (device: {id: string}) => {
-    try {
-      const states = await Firestore.getState(userId, device.id);
-      deviceStates[device.id] = {
-        ...states,
-        status: 'SUCCESS',
-      };
-    } catch (e) {
-      console.error(e);
-      deviceStates[device.id] = {
-        status: 'ERROR',
-        errorCode: 'deviceOffline',
-      };
-    }
-  });
-
-  return {
-    requestId: body.requestId,
-    payload: {
-      devices: deviceStates,
-    },
-  };
-});
-
-app.onExecute(async (body, headers) => {
-  const userId = await getUserIdOrThrow(headers);
-  const commands: SmartHomeV1ExecuteResponseCommands[] = [];
-
-  const {devices, execution} = body.inputs[0].payload.commands[0];
-  await asyncForEach(devices, async (device: {id: string}) => {
-    try {
-      const states = await Firestore.execute(userId, device.id, execution[0]);
-      commands.push({
-        ids: [device.id],
-        status: 'SUCCESS',
-        states,
-      });
-      const res = await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [device.id]: states,
-            },
-          },
-        },
-      });
-      console.log('device state reported:', states, res);
-    } catch (e) {
-      console.error(e);
-      if (e.message === 'pinNeeded') {
-        commands.push({
-          ids: [device.id],
-          status: 'ERROR',
-          errorCode: 'challengeNeeded',
-          challengeNeeded: {
-            type: 'pinNeeded',
-          },
-        });
-        return;
-      } else if (e.message === 'challengeFailedPinNeeded') {
-        commands.push({
-          ids: [device.id],
-          status: 'ERROR',
-          errorCode: 'challengeNeeded',
-          challengeNeeded: {
-            type: 'challengeFailedPinNeeded',
-          },
-        });
-        return;
-      } else if (e.message === 'ackNeeded') {
-        commands.push({
-          ids: [device.id],
-          status: 'ERROR',
-          errorCode: 'challengeNeeded',
-          challengeNeeded: {
-            type: 'ackNeeded',
-          },
-        });
-        return;
-      } else if (e.message === 'PENDING') {
-        commands.push({
-          ids: [device.id],
-          status: 'PENDING',
-        });
-        return;
-      }
-      commands.push({
-        ids: [device.id],
-        status: 'ERROR',
-        errorCode: e.message,
-      });
-    }
-  });
-
-  return {
-    requestId: body.requestId,
-    payload: {
-      commands,
-    },
-  };
-});
-
-app.onDisconnect(async (body, headers) => {
-  const userId = await getUserIdOrThrow(headers);
-  await Firestore.disconnect(userId);
-});
-
-expressApp.post('/smarthome', app);
-
-expressApp.post('/smarthome/update', async (req, res) => {
-  console.log(req.body);
-  const {
-    userId,
-    deviceId,
-    name,
-    nickname,
-    states,
-    localDeviceId,
-    errorCode,
-    tfa,
-  } = req.body;
-  try {
-    await Firestore.updateDevice(
-      userId,
-      deviceId,
-      name,
-      nickname,
-      states,
-      localDeviceId,
-      errorCode,
-      tfa
-    );
-    if (localDeviceId || localDeviceId === null) {
-      await app.requestSync(userId);
-    }
-    if (states !== undefined) {
-      const res = await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [deviceId]: states,
-            },
-          },
-        },
-      });
-      console.log('device state reported:', states, res);
-    }
-    res.status(200).send('OK');
-  } catch (e) {
-    console.error(e);
-    res.status(400).send(`Error updating device: ${e}`);
-  }
-});
-
-expressApp.post('/smarthome/create', async (req, res) => {
-  console.log(req.body);
-  const {userId, data} = req.body;
-  try {
-    await Firestore.addDevice(userId, data);
-    await app.requestSync(userId);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    res.status(200).send('OK');
-  }
-});
-
-expressApp.post('/smarthome/delete', async (req, res) => {
-  console.log(req.body);
-  const {userId, deviceId} = req.body;
-  try {
-    await Firestore.deleteDevice(userId, deviceId);
-    await app.requestSync(userId);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    res.status(200).send('OK');
-  }
-});
-
-const appPort = process.env.PORT || Config.expressPort;
-
-const expressServer = expressApp.listen(appPort, async () => {
-  const server = expressServer.address() as net.AddressInfo;
-  const {address, port} = server;
+const server = app.listen(appPort, async () => {
+  const {address, port} = server.address() as net.AddressInfo;
 
   console.log(`Smart home server listening at ${address}:${port}`);
 
-  if (Config.useNgrok) {
+  if (configProvider.useNgrok) {
     try {
-      const url = await ngrok.connect(Config.expressPort);
+      const url = await ngrok.connect(configProvider.expressPort);
       console.log('');
       console.log('COPY & PASTE NGROK URL BELOW');
       console.log(url);
