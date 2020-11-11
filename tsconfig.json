@@ -1,24 +1,12 @@
 {
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "moduleResolution": "node",
-      "outDir": "./dist",
-      "sourceMap": true,
-      "allowSyntheticDefaultImports": false,
-      "allowUnreachableCode": false,
-      "allowUnusedLabels": false,
-      "declaration": true,
-      "forceConsistentCasingInFileNames": true,
-      "noFallthroughCasesInSwitch": true,
-      "noEmitOnError": true,
-      "noImplicitReturns": true,
-      "noImplicitAny": true,
-      "strictNullChecks": true,
-      "alwaysStrict": true,
-      "noUnusedLocals": true
-    },
-    "include": [
-      "src/**/*"
-    ]
+  "extends": "./node_modules/gts/tsconfig-google.json",
+  "compilerOptions": {
+    "rootDir": "src/",
+    "outDir": "build",
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ]
 }
