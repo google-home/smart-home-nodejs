@@ -81,33 +81,6 @@ async function getUserIdOrThrow(headers: Headers): Promise<string> {
   return userId;
 }
 
-async function reportState(
-  agentUserId: string,
-  deviceId: string,
-  states: Firestore.StatesMap
-) {
-  console.log(`Reporting state payload for ${deviceId}`, states);
-  // Report state back to Homegraph
-  // Do state name replacement for ColorSetting trait
-  // See https://developers.google.com/assistant/smarthome/traits/colorsetting#device-states
-  if (states.color && typeof states.color.spectrumRgb === 'number') {
-    states.color.spectrumRGB = states.color.spectrumRgb;
-    delete states.color.spectrumRgb;
-  }
-
-  return await app.reportState({
-    agentUserId,
-    requestId: Math.random().toString(),
-    payload: {
-      devices: {
-        states: {
-          [deviceId]: states,
-        },
-      },
-    },
-  });
-}
-
 app.onSync(async (body, headers) => {
   const userId = await getUserIdOrThrow(headers);
   await Firestore.setHomegraphEnable(userId, true);
@@ -169,7 +142,18 @@ app.onExecute(async (body, headers) => {
       const states = await Firestore.execute(userId, device.id, execution[0]);
       successCommand.ids.push(device.id);
       successCommand.states = states;
-      await reportState(userId, device.id, states);
+      const res = await app.reportState({
+        agentUserId: userId,
+        requestId: Math.random().toString(),
+        payload: {
+          devices: {
+            states: {
+              [device.id]: states,
+            },
+          },
+        },
+      });
+      console.log('device state reported:', states, res);
     } catch (e) {
       console.error(e);
       if (e.message === 'pinNeeded') {
@@ -263,7 +247,17 @@ expressApp.post('/smarthome/update', async (req, res) => {
       await app.requestSync(userId);
     }
     if (states !== undefined) {
-      const res = await reportState(userId, deviceId, states);
+      const res = await app.reportState({
+        agentUserId: userId,
+        requestId: Math.random().toString(),
+        payload: {
+          devices: {
+            states: {
+              [deviceId]: states,
+            },
+          },
+        },
+      });
       console.log('device state reported:', states, res);
     }
     res.status(200).send('OK');
