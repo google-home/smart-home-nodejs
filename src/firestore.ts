@@ -22,6 +22,7 @@ import {
 } from 'actions-on-google';
 import {ApiClientObjectMap} from 'actions-on-google/dist/common';
 import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -219,6 +220,12 @@ export async function execute(
       throw new Error('challengeFailedPinNeeded');
     }
   }
+  functions.logger.debug(
+    'command:',
+    execution.command,
+    'params:',
+    execution.params
+  );
   switch (execution.command) {
     // action.devices.traits.AppSelector
     case 'action.devices.commands.appSelect': {
@@ -237,16 +244,10 @@ export async function execute(
     }
 
     case 'action.devices.commands.appInstall': {
-      const {newApplication, newApplicationName} = execution.params!;
-      const currentApplication = newApplication || newApplicationName;
-      console.log(`Install app ${currentApplication}`);
       break;
     }
 
     case 'action.devices.commands.appSearch': {
-      const {newApplication, newApplicationName} = execution.params!;
-      const currentApplication = newApplication || newApplicationName;
-      console.log(`Search for app ${currentApplication}`);
       break;
     }
 
@@ -1068,44 +1069,6 @@ export async function execute(
     }
 
     // action.devices.traits.TransportControl
-    // Traits are considered no-ops as they have no state
-    case 'action.devices.commands.mediaPrevious': {
-      console.log('Play the previous media');
-      break;
-    }
-
-    case 'action.devices.commands.mediaNext': {
-      console.log('Play the next media');
-      break;
-    }
-
-    case 'action.devices.commands.mediaRepeatMode': {
-      const {isOn, isSingle} = execution.params!;
-      console.log(
-        `Repeat mode enabled: ${isOn}. Single item enabled: ${isSingle}`
-      );
-      break;
-    }
-
-    case 'action.devices.commands.mediaShuffle': {
-      console.log('Shuffle the playlist of media');
-      break;
-    }
-
-    case 'action.devices.commands.mediaClosedCaptioningOn': {
-      const {closedCaptioningLanguage, userQueryLanguage} = execution.params!;
-      console.log(
-        `Closed captioning enabled for ${closedCaptioningLanguage} ` +
-          `for user in ${userQueryLanguage}`
-      );
-      break;
-    }
-
-    case 'action.devices.commands.mediaClosedCaptioningOff': {
-      console.log('Closed captioning disabled');
-      break;
-    }
-
     case 'action.devices.commands.mediaPause': {
       await db
         .collection('users')
@@ -1147,14 +1110,10 @@ export async function execute(
 
     // Traits are considered no-ops as they have no state
     case 'action.devices.commands.mediaSeekRelative': {
-      const {relativePositionMs} = execution.params!;
-      console.log(`Seek to (now + ${relativePositionMs}) ms`);
       break;
     }
 
     case 'action.devices.commands.mediaSeekToPosition': {
-      const {absPositionMs} = execution.params!;
-      console.log(`Seek to ${absPositionMs} ms`);
       break;
     }
 

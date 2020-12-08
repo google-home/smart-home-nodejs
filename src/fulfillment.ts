@@ -34,8 +34,8 @@ try {
     fs.readFileSync(path.join(__dirname, 'smart-home-key.json')).toString()
   );
 } catch (e) {
-  console.warn('Service account key is not found');
-  console.warn('Report state and Request sync will be unavailable');
+  functions.logger.warn('error reading service account key:', e);
+  functions.logger.warn('reportState and requestSync operation will fail');
 }
 
 export const app = smarthome({
@@ -61,17 +61,20 @@ async function getUserIdOrThrow(headers: Headers): Promise<string> {
 }
 
 app.onSync(async (body, headers) => {
+  functions.logger.debug('SyncRequest:', body);
   const userId = await getUserIdOrThrow(headers);
   await firestore.setHomegraphEnable(userId, true);
 
   const devices = await firestore.getDevices(userId);
-  return {
+  const syncResponse = {
     requestId: body.requestId,
     payload: {
       agentUserId: userId,
       devices,
     },
   };
+  functions.logger.debug('SyncResponse:', syncResponse);
+  return syncResponse;
 });
 
 interface DeviceStatesMap {
@@ -79,6 +82,7 @@ interface DeviceStatesMap {
   [key: string]: any;
 }
 app.onQuery(async (body, headers) => {
+  functions.logger.debug('QueryRequest:', body);
   const userId = await getUserIdOrThrow(headers);
   const deviceStates: DeviceStatesMap = {};
   const {devices} = body.inputs[0].payload;
@@ -90,23 +94,25 @@ app.onQuery(async (body, headers) => {
         status: 'SUCCESS',
       };
     } catch (e) {
-      console.error(e);
+      functions.logger.error('error getting device state:', e);
       deviceStates[device.id] = {
         status: 'ERROR',
         errorCode: 'deviceOffline',
       };
     }
   });
-
-  return {
+  const queryResponse = {
     requestId: body.requestId,
     payload: {
       devices: deviceStates,
     },
   };
+  functions.logger.debug('QueryResponse:', queryResponse);
+  return queryResponse;
 });
 
 app.onExecute(async (body, headers) => {
+  functions.logger.debug('ExecuteRequest:', body);
   const userId = await getUserIdOrThrow(headers);
   const commands: SmartHomeV1ExecuteResponseCommands[] = [];
 
@@ -119,20 +125,35 @@ app.onExecute(async (body, headers) => {
         status: 'SUCCESS',
         states,
       });
-      const res = await app.reportState({
-        agentUserId: userId,
-        requestId: Math.random().toString(),
-        payload: {
-          devices: {
-            states: {
-              [device.id]: states,
+      try {
+        const reportStateRequest = {
+          agentUserId: userId,
+          requestId: Math.random().toString(),
+          payload: {
+            devices: {
+              states: {
+                [device.id]: states,
+              },
             },
           },
-        },
-      });
-      console.log('device state reported:', states, res);
+        };
+        functions.logger.debug('RequestStateRequest:', reportStateRequest);
+        const reportStateResponse = JSON.parse(
+          await app.reportState(reportStateRequest)
+        );
+        functions.logger.debug('ReportStateResponse:', reportStateResponse);
+      } catch (e) {
+        const errorResponse = JSON.parse(e);
+        functions.logger.error(
+          'error reporting device state to homegraph:',
+          errorResponse
+        );
+      }
     } catch (e) {
-      console.error(e);
+      functions.logger.error(
+        'error returned by execution on firestore device document',
+        e
+      );
       if (e.message === 'pinNeeded') {
         commands.push({
           ids: [device.id],
@@ -142,7 +163,6 @@ app.onExecute(async (body, headers) => {
             type: 'pinNeeded',
           },
         });
-        return;
       } else if (e.message === 'challengeFailedPinNeeded') {
         commands.push({
           ids: [device.id],
@@ -152,7 +172,6 @@ app.onExecute(async (body, headers) => {
             type: 'challengeFailedPinNeeded',
           },
         });
-        return;
       } else if (e.message === 'ackNeeded') {
         commands.push({
           ids: [device.id],
@@ -162,33 +181,37 @@ app.onExecute(async (body, headers) => {
             type: 'ackNeeded',
           },
         });
-        return;
       } else if (e.message === 'PENDING') {
         commands.push({
           ids: [device.id],
           status: 'PENDING',
         });
-        return;
+      } else {
+        commands.push({
+          ids: [device.id],
+          status: 'ERROR',
+          errorCode: e.message,
+        });
       }
-      commands.push({
-        ids: [device.id],
-        status: 'ERROR',
-        errorCode: e.message,
-      });
     }
   });
-
-  return {
+  const executeResponse = {
     requestId: body.requestId,
     payload: {
       commands,
     },
   };
+  functions.logger.debug('ExecuteResponse:', executeResponse);
+  return executeResponse;
 });
 
 app.onDisconnect(async (body, headers) => {
+  functions.logger.debug('DisconnectRequest:', body);
   const userId = await getUserIdOrThrow(headers);
   await firestore.disconnect(userId);
+  const disconnectResponse = {};
+  functions.logger.debug('DisconnectResponse:', disconnectResponse);
+  return disconnectResponse;
 });
 
 export const fulfillment = functions.https.onRequest(app);

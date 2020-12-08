@@ -55,48 +55,51 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
+  functions.logger.debug('/login', req.query);
   // Here, you should validate the user account.
   // In this sample, we do not do that.
-  const responseurl = decodeURIComponent(req.body.responseurl as string);
-  console.log(`Redirect to ${responseurl}`);
-  return res.redirect(responseurl);
+  const responseUrl = decodeURIComponent(req.body.response_url as string);
+  functions.logger.debug('redirect:', responseUrl);
+  return res.redirect(responseUrl);
 });
 
 app.get('/fakeauth', async (req, res) => {
-  const responseurl = util.format(
+  functions.logger.debug('/fakeauth', req.query);
+  const responseUrl = util.format(
     '%s?code=%s&state=%s',
     decodeURIComponent(req.query.redirect_uri as string),
     'xxxxxx',
     req.query.state
   );
-  console.log(`Set redirect as ${responseurl}`);
-  return res.redirect(`/login?responseurl=${encodeURIComponent(responseurl)}`);
+  const redirectUrl = `/login?response_url=${encodeURIComponent(responseUrl)}`;
+  functions.logger.debug('redirect:', redirectUrl);
+  return res.redirect(redirectUrl);
 });
 
 app.all('/faketoken', async (req, res) => {
+  functions.logger.debug('/faketoken', req.query);
   const grantType = req.query.grant_type
     ? req.query.grant_type
     : req.body.grant_type;
   const secondsInDay = 86400; // 60 * 60 * 24
   const HTTP_STATUS_OK = 200;
-  console.log(`Grant type ${grantType}`);
-
-  let obj;
+  let token;
   if (grantType === 'authorization_code') {
-    obj = {
+    token = {
       token_type: 'bearer',
       access_token: '123access',
       refresh_token: '123refresh',
       expires_in: secondsInDay,
     };
   } else if (grantType === 'refresh_token') {
-    obj = {
+    token = {
       token_type: 'bearer',
       access_token: '123access',
       expires_in: secondsInDay,
     };
   }
-  res.status(HTTP_STATUS_OK).json(obj);
+  functions.logger.debug('token:', token);
+  res.status(HTTP_STATUS_OK).json(token);
 });
 
 export const authProvider = functions.https.onRequest(app);
