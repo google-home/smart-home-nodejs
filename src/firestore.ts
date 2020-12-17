@@ -470,16 +470,28 @@ export async function execute(
 
     // action.devices.traits.FanSpeed
     case 'action.devices.commands.SetFanSpeed': {
-      const {fanSpeed} = execution.params!;
-      await db
-        .collection('users')
-        .doc(userId)
-        .collection('devices')
-        .doc(deviceId)
-        .update({
-          'states.currentFanSpeedSetting': fanSpeed,
-        });
-      states['currentFanSpeedSetting'] = fanSpeed;
+      const {fanSpeed, fanSpeedPercent} = execution.params!;
+      if (fanSpeed) {
+        await db
+          .collection('users')
+          .doc(userId)
+          .collection('devices')
+          .doc(deviceId)
+          .update({
+            'states.currentFanSpeedSetting': fanSpeed,
+          });
+        states['currentFanSpeedSetting'] = fanSpeed;
+      } else if (fanSpeedPercent) {
+        await db
+          .collection('users')
+          .doc(userId)
+          .collection('devices')
+          .doc(deviceId)
+          .update({
+            'states.currentFanSpeedPercent': fanSpeedPercent,
+          });
+        states['currentFanSpeedPercent'] = fanSpeedPercent;
+      }
       break;
     }
 
