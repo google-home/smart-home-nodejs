@@ -85,7 +85,7 @@ npm run deploy
 
 1. Navigate back to the [Actions on Google Console](https://console.actions.google.com).
 1. From the top menu under *Develop*, click on *Actions* (left nav). Click on *Add your first action* and choose your app's language(s).
-1. Enter the URL for fulfillment: [`PROJECT_ID`](https://firebase.google.com/docs/projects/learn-more#project-id)`.web.app/fulfillment`. and click *Done*.
+1. Enter the URL for fulfillment: [`PROJECT_ID`](https://firebase.google.com/docs/projects/learn-more#project-id)`.web.app/smarthome`. and click *Done*.
 1. On the left navigation menu under *ADVANCED OPTIONS*, click on *Account Linking*.
     1. Select *No, I only want to allow account creation on my website*. Click *Next*.
     1. For Linking Type, select *OAuth*.
