@@ -46,7 +46,7 @@ app.get('/login', (req, res) => {
   res.send(`<html>
 <body>
 <form action="/login" method="post">
-<input type="hidden" name="responseurl" value="${req.query.responseurl}" />
+<input type="hidden" name="response_url" value="${req.query.response_url}" />
 <button type="submit" style="font-size:14pt">Link this service to Google</button>
 </form>
 </body>
