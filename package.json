@@ -29,8 +29,8 @@
     "firebase-functions": "^3.11.0"
   },
   "devDependencies": {
-    "firebase-tools": "^9.1.2",
-    "gts": "^3.0.2",
+    "firebase-tools": "^13.27.0",
+    "gts": "^6.0.2",
     "typescript": "^4.0.3"
   }
 }
